@@ -1,33 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-
-class LoginBody extends StatelessWidget{
-
-
+//this widget is stateful because there is a form
+class LoginBody extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
-    return Container(
-      height: size.height,
-      width: double.infinity,
-      color:Colors.white,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children:<Widget>[
-          Image.asset("assets/icons/icons8-chains-emoji-96.png"),
-          const Text("Login to BlockVerse"),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 20,vertical: 5),
-
-          )
-
-
-        ],
-      ),
-    );
-
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    throw UnimplementedError();
   }
-
-
 }

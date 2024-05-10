@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
+import 'package:katena_dashboard/screens/signup/signup_screen.dart';
 
 
 class Body extends StatelessWidget{
@@ -20,7 +21,7 @@ class Body extends StatelessWidget{
            ElevatedButton(
           onPressed: () {
           //here I handle the event on pressed
-            Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
+            Navigator.push(context, MaterialPageRoute(builder: (context){return SignupScreen();},),);
       },
       style: ElevatedButton.styleFrom(
       shape: RoundedRectangleBorder(
