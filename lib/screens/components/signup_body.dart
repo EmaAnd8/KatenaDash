@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:katena_dashboard/screens/login/login_screen.dart';
 
 import '../../firebase_options.dart';
 
@@ -9,7 +10,11 @@ import '../../firebase_options.dart';
 String username = "";
 String email = "";
 String password = "";
-
+String birthdate = "";
+String name = "";
+String surname = "";
+String  pattern = r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$';
+RegExp regExp = new RegExp(pattern);
 class SignupBody extends StatefulWidget{
   const SignupBody({super.key});
 
@@ -57,6 +62,13 @@ class _SignUpFormState extends State<SignupBody> {
               if (value!.isEmpty) {
                 return "Please enter your username";
               }
+
+              //Logic to validate the username
+              // Add name validation logic here (e.g., check for @ and .)
+              if(!RegExp(r'^[a-z0-9_-]{3,15}$').hasMatch(value!))
+              {
+                return "Please enter a valid username.";
+              }
               return null;
             },
             onSaved: (value) {
@@ -71,11 +83,16 @@ class _SignUpFormState extends State<SignupBody> {
                 if (value!.isEmpty) {
                 return "Please enter your Name";
                 }
-                // Add email validation logic here (e.g., check for @ and .)
+                // Add name validation logic here (e.g., check for @ and .)
+                    if(!RegExp(r'^[a-z0-9_-]{3,15}$').hasMatch(value!))
+                    {
+                      return "Please enter a valid name.";
+                    }
+
                 return null;
                 },
                 onSaved: (value) {
-                email = value!;
+                name = value!;
                 },
 
           ),
@@ -88,11 +105,15 @@ class _SignUpFormState extends State<SignupBody> {
               if (value!.isEmpty) {
                 return "Please enter your Birthdate";
               }
-              // Add email validation logic here (e.g., check for @ and .)
+              // Add birthdate validation logic here (e.g., check for @ and .)
+              if(!RegExp(r'^(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])-\d{4}$').hasMatch(value!))
+              {
+                return "Please enter a valid Birthdate.";
+              }
               return null;
             },
             onSaved: (value) {
-              email = value!;
+              birthdate = value!;
             },
 
           ),
@@ -105,6 +126,10 @@ class _SignUpFormState extends State<SignupBody> {
                 return "Please enter your email";
               }
               // Add email validation logic here (e.g., check for @ and .)
+              if(!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!))
+              {
+                return "enter a valid Email address.";
+              }
               return null;
             },
             onSaved: (value) {
@@ -121,6 +146,10 @@ class _SignUpFormState extends State<SignupBody> {
                 return "Please enter your password";
               }
               // Add password strength validation logic here (e.g., min length)
+                if(!regExp.hasMatch(value!))
+                  {
+                    return "Please enter a valid password";
+                  }
               return null;
             },
             onSaved: (value) {
@@ -139,6 +168,15 @@ class _SignUpFormState extends State<SignupBody> {
 
               },
               child: const Text('Sign Up'),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
+            },
+            child:const Text(
+              'Go back',
+              style: TextStyle(color: Colors.blue),
             ),
           ),
         ],
