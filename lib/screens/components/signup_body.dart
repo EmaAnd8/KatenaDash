@@ -2,11 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../firebase_options.dart';
 
-//constants
-
+//constants and variables
+final storage = FirebaseStorage.instance;
+final db = FirebaseFirestore.instance;
 String username = "";
 String email = "";
 String password = "";
@@ -37,7 +40,22 @@ class _SignUpFormState extends State<SignupBody> {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+      // I create a User
       await  FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+
+    // Create a new user with a first and last name
+    final user = <String, dynamic>{
+      "Name": name,
+      "email": email,
+      "Birthdate": birthdate,
+      "Username": username,
+
+    };
+
+// Add a new document with a generated ID
+    db.collection("Users").add(user).then((DocumentReference doc) =>
+        print('DocumentSnapshot added with ID: ${doc.id}'));
   }
 
 
@@ -51,6 +69,7 @@ class _SignUpFormState extends State<SignupBody> {
       key: _formKey,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+
         children: <Widget>[
           Image.asset("assets/icons/icons8-chains-emoji-96.png"),
           const Text("Welcome to BlockVerse"),
@@ -164,6 +183,7 @@ class _SignUpFormState extends State<SignupBody> {
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
                   Register();
+                  Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
                 }
 
               },
