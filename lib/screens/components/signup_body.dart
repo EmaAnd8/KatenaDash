@@ -5,6 +5,7 @@ import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+
 import '../../firebase_options.dart';
 
 //constants and variables
@@ -41,7 +42,9 @@ class _SignUpFormState extends State<SignupBody> {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
+
       // I create a User
+
       await  FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
 
     // Create a new user with a first and last name
@@ -52,10 +55,18 @@ class _SignUpFormState extends State<SignupBody> {
       "Username": username,
 
     };
+    // I send and email for saying if the provided email is fine
+    FirebaseAuth.instance.currentUser?.sendEmailVerification();
+    //if the user is verified I can add him to the database
+      if(FirebaseAuth.instance.currentUser!.emailVerified) {
+        // Add a new document with a generated ID
+        db.collection("Users").add(user).then((DocumentReference doc) =>
+            print('DocumentSnapshot added with ID: ${doc.id}'));
 
-// Add a new document with a generated ID
-    db.collection("Users").add(user).then((DocumentReference doc) =>
-        print('DocumentSnapshot added with ID: ${doc.id}'));
+      }else
+        {
+            print('you have to verify the email');
+        }
   }
 
 
@@ -182,8 +193,11 @@ class _SignUpFormState extends State<SignupBody> {
               onPressed: ()async {
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
-                  Register();
+
+                  Register() ;
+
                   Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
+
                 }
 
               },
