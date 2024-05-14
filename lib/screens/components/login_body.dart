@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:katena_dashboard/screens/forgotpwd/forgot_password_screen.dart';
 import 'package:katena_dashboard/screens/signup/signup_screen.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import '../../firebase_options.dart';
@@ -162,10 +163,17 @@ class _LoginFormState extends State<LoginBody> {
             ),
 
           ),
-          const Text(
+        Container(
+        child:GestureDetector(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context){return ResetPasswordScreen();},),);
+          },
+          child: const Text(
             'Forgot password?',
             style: TextStyle(color: Colors.black),
           ),
+        ),
+        ),
       GestureDetector(
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context){return SignupScreen();},),);
@@ -180,6 +188,8 @@ class _LoginFormState extends State<LoginBody> {
         ],
       ),
       ),
+
     );
+
   }
 }
