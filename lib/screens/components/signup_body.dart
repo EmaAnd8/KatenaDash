@@ -1,6 +1,10 @@
+import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -76,17 +80,35 @@ class _SignUpFormState extends State<SignupBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
+    Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
+        return Scaffold(
+
+    body: Container(
+
+      width: size.width,
+    child:Container(
+      color: Colors.white, // Set the background color to white
+     child: Form(
+
       key: _formKey,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
 
         children: <Widget>[
+
           Image.asset("assets/icons/icons8-chains-emoji-96.png"),
           const Text("Welcome to BlockVerse"),
-          TextFormField(
-            decoration: const InputDecoration(
+         Container(
+           margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+         child:SizedBox(
+           width: 400,
+          child:TextFormField(
+            decoration:  InputDecoration(
               labelText: "Username",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+              hintText: "",
             ),
             validator: (value) {
               if (value!.isEmpty) {
@@ -105,9 +127,19 @@ class _SignUpFormState extends State<SignupBody> {
               username = value!;
             },
           ),
-          TextFormField(
-            decoration: const InputDecoration(
+         ),
+         ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child:SizedBox(
+            width: 400,
+          child:TextFormField(
+            decoration:  InputDecoration(
               labelText: "Name",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+              hintText: "",
               ),
                 validator: (value) {
                 if (value!.isEmpty) {
@@ -126,10 +158,19 @@ class _SignUpFormState extends State<SignupBody> {
                 },
 
           ),
-
-          TextFormField(
-            decoration: const InputDecoration(
+          ),
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child:SizedBox(
+            width: 400,
+          child:TextFormField(
+            decoration:  InputDecoration(
               labelText: "Birthdate",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+              hintText: "",
             ),
             validator: (value) {
               if (value!.isEmpty) {
@@ -147,9 +188,19 @@ class _SignUpFormState extends State<SignupBody> {
             },
 
           ),
-          TextFormField(
-            decoration: const InputDecoration(
+          ),
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child:SizedBox(
+            width: 400,
+          child:TextFormField(
+            decoration: InputDecoration(
               labelText: "Email",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+              hintText: "",
             ),
             validator: (value) {
               if (value!.isEmpty) {
@@ -166,9 +217,20 @@ class _SignUpFormState extends State<SignupBody> {
               email = value!;
             },
           ),
-          TextFormField(
-            decoration: const InputDecoration(
+          ),
+          ),
+          Container(
+          margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child:SizedBox(
+            width: 400,
+          child:TextFormField(
+            decoration: InputDecoration(
               labelText: "Password",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+
+              hintText: "",
             ),
             obscureText: true,
             validator: (value) {
@@ -187,9 +249,12 @@ class _SignUpFormState extends State<SignupBody> {
               print(password);
             },
           ),
+          ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: ElevatedButton(
+
               onPressed: ()async {
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
@@ -201,6 +266,11 @@ class _SignUpFormState extends State<SignupBody> {
                 }
 
               },
+
+              style: ElevatedButton.styleFrom(
+                    textStyle: const TextStyle(color: Colors.white)
+              ),
+
               child: const Text('Sign Up'),
             ),
           ),
@@ -210,11 +280,14 @@ class _SignUpFormState extends State<SignupBody> {
             },
             child:const Text(
               'Go back',
-              style: TextStyle(color: Colors.blue),
+              style: TextStyle(color: Colors.black),
             ),
           ),
         ],
       ),
+    ),
+    ),
+    ),
     );
   }
 }

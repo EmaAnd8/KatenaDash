@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:katena_dashboard/screens/signup/signup_screen.dart';
-
+import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import '../../firebase_options.dart';
 
 //constants
@@ -36,8 +36,11 @@ class _LoginFormState extends State<LoginBody> {
     );
     //authentication provided from firebase
      try {
-       await FirebaseAuth.instance.signInWithEmailAndPassword(
-           email: email, password: password);
+       // if my email is verified then I signin otherwise error
+       if(FirebaseAuth.instance.currentUser!.emailVerified) {
+         await FirebaseAuth.instance.signInWithEmailAndPassword(
+             email: email, password: password);
+       }
      }on  FirebaseAuthException catch(e)
     {
         print(e);
@@ -52,16 +55,30 @@ class _LoginFormState extends State<LoginBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
+    Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
+    return Container(
+      width: size.width,
+      child:Form(
       key: _formKey,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Image.asset("assets/icons/icons8-chains-emoji-96.png"),
           const Text("Welcome to BlockVerse"),
-          TextFormField(
-            decoration: const InputDecoration(
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          child: SizedBox(
+            width: 400,
+
+          child:TextFormField(
+            decoration:  InputDecoration(
+              fillColor: Colors.black,
               labelText: "Email",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+
+              hintText: "",
             ),
             validator: (value) {
               if (value!.isEmpty) {
@@ -78,10 +95,21 @@ class _LoginFormState extends State<LoginBody> {
               email = value!;
             },
           ),
-
-          TextFormField(
-            decoration: const InputDecoration(
+          ),
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          child:SizedBox(
+            width: 400,
+          child:TextFormField(
+            decoration:  InputDecoration(
               labelText: "Password",
+              fillColor: Colors.black,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+
+              hintText: "",
             ),
             obscureText: true,
             validator: (value) {
@@ -100,6 +128,8 @@ class _LoginFormState extends State<LoginBody> {
               print(password);
             },
           ),
+          ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: ElevatedButton(
@@ -109,6 +139,19 @@ class _LoginFormState extends State<LoginBody> {
 
                     //Invoke the method for Login
                     Login();
+                    //if I am logged in I go to the dashboard
+                  if(FirebaseAuth.instance.currentUser?.uid != null)
+                    {
+
+                      Navigator.push(context, MaterialPageRoute(builder: (context){return HomeScreen();},),);
+
+                    }else
+                      {
+                          const Text(
+                            'you are not logged in',
+                            style: TextStyle(color: Colors.red),
+                          );
+                      }
                 }
 
               },
@@ -119,13 +162,9 @@ class _LoginFormState extends State<LoginBody> {
             ),
 
           ),
-          Text(
+          const Text(
             'Forgot password?',
-            style: TextStyle(color: Colors.blue),
-          ),
-          Text(
-            'or',
-            style: TextStyle(color: Colors.blue),
+            style: TextStyle(color: Colors.black),
           ),
       GestureDetector(
         onTap: () {
@@ -133,12 +172,13 @@ class _LoginFormState extends State<LoginBody> {
         },
          child:const Text(
             'if you do not have an account go to sign up',
-            style: TextStyle(color: Colors.blue),
+           style: TextStyle(color: Colors.black),
           ),
       ),
 
 
         ],
+      ),
       ),
     );
   }
