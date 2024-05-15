@@ -103,14 +103,15 @@ class  _ForgotPasswordFormState extends State<ResetPasswordBody> {
   @override
   Widget build(BuildContext context) {
     Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
-    return SizedBox(
+    return Container(
       width: size.width,
-      height: size.height,
+
+
       child:Form(
         key: _formKey,
         child:Container(
           width: size.width,
-          height: size.height,
+
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
@@ -120,6 +121,7 @@ class  _ForgotPasswordFormState extends State<ResetPasswordBody> {
               margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
               child: SizedBox(
                 width: 400,
+
 
                 child:TextFormField(
                   decoration:  InputDecoration(
@@ -165,12 +167,12 @@ class  _ForgotPasswordFormState extends State<ResetPasswordBody> {
                         return LoginScreen();
                       },),);
                     }else
-                      {
-                        const Text(
-                          'your password cannot be restored',
-                          style: TextStyle(color: Colors.red),
-                        );
-                      }
+                    {
+                      const Text(
+                        'your password cannot be restored',
+                        style: TextStyle(color: Colors.red),
+                      );
+                    }
                   }
                 },
 
@@ -182,16 +184,17 @@ class  _ForgotPasswordFormState extends State<ResetPasswordBody> {
 
             ),
 
-            const Text(
-              'Go Back',
-              style: TextStyle(color: Colors.black),
-            ),
             GestureDetector(
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
               },
-
+              child:const Text(
+                'Go back',
+                style: TextStyle(color: Colors.black),
+              ),
             ),
+
+
 
 
           ],

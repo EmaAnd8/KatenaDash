@@ -36,11 +36,16 @@ class _LoginFormState extends State<LoginBody> {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     //authentication provided from firebase
+
      try {
        // if my email is verified then I signin otherwise error
+       await FirebaseAuth.instance.signInWithEmailAndPassword(
+           email: email, password: password);
+
        if(FirebaseAuth.instance.currentUser!.emailVerified) {
-         await FirebaseAuth.instance.signInWithEmailAndPassword(
-             email: email, password: password);
+
+         Navigator.push(context, MaterialPageRoute(builder: (context){return HomeScreen();},),);
+
        }
      }on  FirebaseAuthException catch(e)
     {
@@ -138,13 +143,15 @@ class _LoginFormState extends State<LoginBody> {
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
 
-                    //Invoke the method for Login
+                  //Invoke the method for Login
                     Login();
                     //if I am logged in I go to the dashboard
-                  if(FirebaseAuth.instance.currentUser?.uid != null)
+
+                  //FirebaseAuth.instance.signOut();
+                  if(FirebaseAuth.instance.currentUser!.emailVerified)
                     {
 
-                      Navigator.push(context, MaterialPageRoute(builder: (context){return HomeScreen();},),);
+
 
                     }else
                       {
@@ -153,6 +160,10 @@ class _LoginFormState extends State<LoginBody> {
                             style: TextStyle(color: Colors.red),
                           );
                       }
+
+
+
+
                 }
 
               },
