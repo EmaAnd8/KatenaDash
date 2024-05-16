@@ -261,7 +261,7 @@ class _SignUpFormState extends State<SignupBody> {
 
                   Register() ;
 
-                  Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
 
                 }
 
@@ -276,7 +276,7 @@ class _SignUpFormState extends State<SignupBody> {
           ),
           GestureDetector(
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
             },
             child:const Text(
               'Go back',

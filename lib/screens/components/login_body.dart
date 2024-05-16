@@ -177,7 +177,7 @@ class _LoginFormState extends State<LoginBody> {
         Container(
         child:GestureDetector(
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context){return ResetPasswordScreen();},),);
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return ResetPasswordScreen();},),);
           },
           child: const Text(
             'Forgot password?',
