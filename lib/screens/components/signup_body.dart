@@ -62,15 +62,9 @@ class _SignUpFormState extends State<SignupBody> {
     // I send and email for saying if the provided email is fine
     FirebaseAuth.instance.currentUser?.sendEmailVerification();
     //if the user is verified I can add him to the database
-      if(FirebaseAuth.instance.currentUser!.emailVerified) {
-        // Add a new document with a generated ID
-        db.collection("Users").add(user).then((DocumentReference doc) =>
-            print('DocumentSnapshot added with ID: ${doc.id}'));
-
-      }else
-        {
-            print('you have to verify the email');
-        }
+    db.collection("Users").add(user).then((DocumentReference doc) =>
+        print('DocumentSnapshot added with ID: ${doc.id}'));
+    
   }
 
 
