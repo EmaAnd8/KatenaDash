@@ -6,8 +6,9 @@ import 'package:flutter/rendering.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/forgotpwd/forgot_password_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
-import 'package:katena_dashboard/screens/settings/change_name.dart';
+import 'package:katena_dashboard/screens/settings/change_name_screen.dart';
 import '../../firebase_options.dart';
+import '../settings/change_email_screen.dart';
 
 
 class SettingsBody extends StatefulWidget{
@@ -70,7 +71,7 @@ class  _SettingsState extends State<SettingsBody> {
 
             child: GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context){return SettingsBody();},),);
+                Navigator.push(context, MaterialPageRoute(builder: (context){return ChangeEmailScreen();},),);
               },
               child:const Text(
                 'change your email',
