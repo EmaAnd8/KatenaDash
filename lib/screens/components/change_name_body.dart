@@ -39,19 +39,24 @@ class  _ChangeNameState extends State<ChangeNameBody> {
 
       User? user= FirebaseAuth.instance.currentUser;
       CollectionReference users = FirebaseFirestore.instance.collection('Users');
-      print(user);
+      print(user?.email);
+      print(name);
       // Update the population of a city
-      Query<DocumentSnapshot>? query = users.where('email', isEqualTo: user?.email) as Query<DocumentSnapshot<Object?>>?;
-      query?.snapshots().listen((snapshot) {
-        for (DocumentSnapshot doc in snapshot.docs) {
-          doc.reference.update({
-            'Name': name
-          });
-          break;
-        }
+      final query = users.where("email", isEqualTo: FirebaseAuth.instance.currentUser?.email).get()
+      .then((querySnapshot) {
+        print("Successfully completed");
+        for (var docSnapshot in querySnapshot.docs) {
+          final usersRef = users.doc(docSnapshot.id);
+          usersRef.update({"Name": name}).then(
+                  (value) => print("DocumentSnapshot successfully updated!"),
+              onError: (e) => print("Error updating document $e"));
 
-      }
+        }
+      },
+        onError: (e) => print("Error completing: $e"),
       );
+
+
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return SettingsScreen();},),);
     }on  FirebaseAuthException catch(e)
     {
