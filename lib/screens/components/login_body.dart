@@ -1,10 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:katena_dashboard/firebase_options.dart';
 import 'package:katena_dashboard/screens/forgotpwd/forgot_password_screen.dart';
+import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/signup/signup_screen.dart';
-import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
-import '../../firebase_options.dart';
+
 
 //constants
 
@@ -26,32 +27,7 @@ class _LoginFormState extends State<LoginBody> {
   final _formKey = GlobalKey<FormState>();
 
 
-  void Login() async
-  {
 
-
-
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    //authentication provided from firebase
-
-     try {
-       // if my email is verified then I signin otherwise error
-       await FirebaseAuth.instance.signInWithEmailAndPassword(
-           email: email, password: password);
-
-       if(FirebaseAuth.instance.currentUser!.emailVerified) {
-
-         Navigator.push(context, MaterialPageRoute(builder: (context){return HomeScreen();},),);
-
-       }
-     }on  FirebaseAuthException catch(e)
-    {
-        print(e);
-    }
-  }
 
 
 
@@ -123,7 +99,7 @@ class _LoginFormState extends State<LoginBody> {
                 return "Please enter your password";
               }
               // Add password strength validation logic here (e.g., min length)
-              if(!regExp.hasMatch(value!))
+              if(!regExp.hasMatch(value))
               {
                 return "Please enter a valid password";
               }
@@ -131,7 +107,7 @@ class _LoginFormState extends State<LoginBody> {
             },
             onSaved: (value) {
               password = value!;
-              print(password);
+              //print(password);
             },
           ),
           ),
@@ -144,7 +120,12 @@ class _LoginFormState extends State<LoginBody> {
                   _formKey.currentState!.save();
 
                   //Invoke the method for Login
-                    Login();
+                  WidgetsFlutterBinding.ensureInitialized();
+                  await Firebase.initializeApp(
+                    options: DefaultFirebaseOptions.currentPlatform,
+                  );
+                  Provider serviceProvider=Provider.instance;
+                  serviceProvider.Login(context,email,password);
                     //if I am logged in I go to the dashboard
 
                   //FirebaseAuth.instance.signOut();

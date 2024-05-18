@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
+import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/settings/settings_screen.dart';
 import '../../firebase_options.dart';
 
@@ -21,48 +22,6 @@ class ChangeNameBody extends StatefulWidget{
 class  _ChangeNameState extends State<ChangeNameBody> {
   final _formKey = GlobalKey<FormState>();
 
-  void CName() async
-  {
-
-
-
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    //authentication provided from firebase
-
-    try {
-      // if my email is verified then I signin otherwise error
-
-
-
-      User? user= FirebaseAuth.instance.currentUser;
-      CollectionReference users = FirebaseFirestore.instance.collection('Users');
-      print(user?.email);
-      print(name);
-      // Update the population of a city
-      final query = users.where("email", isEqualTo: FirebaseAuth.instance.currentUser?.email).get()
-      .then((querySnapshot) {
-        print("Successfully completed");
-        for (var docSnapshot in querySnapshot.docs) {
-          final usersRef = users.doc(docSnapshot.id);
-          usersRef.update({"Name": name}).then(
-                  (value) => print("DocumentSnapshot successfully updated!"),
-              onError: (e) => print("Error updating document $e"));
-
-        }
-      },
-        onError: (e) => print("Error completing: $e"),
-      );
-
-
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return SettingsScreen();},),);
-    }on  FirebaseAuthException catch(e)
-    {
-      print(e);
-    }
-  }
 
 
 
@@ -130,8 +89,12 @@ class  _ChangeNameState extends State<ChangeNameBody> {
                   onPressed: ()async {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
-
-                        CName();
+                      WidgetsFlutterBinding.ensureInitialized();
+                      await Firebase.initializeApp(
+                        options: DefaultFirebaseOptions.currentPlatform,
+                      );
+                        Provider serviceProvider= Provider.instance;
+                        serviceProvider.CName(context,name);
 
                     }
                   },

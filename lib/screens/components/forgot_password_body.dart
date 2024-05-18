@@ -2,12 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
+import 'package:katena_dashboard/screens/services/services_provider.dart';
 import '../../firebase_options.dart';
 
 //constants
 
 String email = "";
-
 enum AuthStatus {
   successful,
   wrongPassword,
@@ -17,51 +17,6 @@ enum AuthStatus {
   unknown,
 }
 
-
-
-class AuthExceptionHandler {
-  static handleAuthException(FirebaseAuthException e) {
-    AuthStatus status;
-    switch (e.code) {
-      case "invalid-email":
-        status = AuthStatus.invalidEmail;
-        break;
-      case "wrong-password":
-        status = AuthStatus.wrongPassword;
-        break;
-      case "weak-password":
-        status = AuthStatus.weakPassword;
-        break;
-      case "email-already-in-use":
-        status = AuthStatus.emailAlreadyExists;
-        break;
-      default:
-        status = AuthStatus.unknown;
-    }
-    return status;
-  }
-  static String generateErrorMessage(error) {
-    String errorMessage;
-    switch (error) {
-      case AuthStatus.invalidEmail:
-        errorMessage = "Your email address appears to be malformed.";
-        break;
-      case AuthStatus.weakPassword:
-        errorMessage = "Your password should be at least 6 characters.";
-        break;
-      case AuthStatus.wrongPassword:
-        errorMessage = "Your email or password is wrong.";
-        break;
-      case AuthStatus.emailAlreadyExists:
-        errorMessage =
-        "The email address is already in use by another account.";
-        break;
-      default:
-        errorMessage = "An error occured. Please try again later.";
-    }
-    return errorMessage;
-  }
-}
 String  pattern = r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$';
 RegExp regExp = new RegExp(pattern);
 class ResetPasswordBody extends StatefulWidget{
@@ -77,21 +32,6 @@ class  _ForgotPasswordFormState extends State<ResetPasswordBody> {
   final _formKey = GlobalKey<FormState>();
 
 
-  Future<AuthStatus>  PasswordReset() async
-  {
-    AuthStatus _status=AuthStatus.unknown;
-
-
-        WidgetsFlutterBinding.ensureInitialized();
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
-        //authentication provided from firebase
-        await FirebaseAuth.instance.sendPasswordResetEmail(email: email)
-        .then((value) => _status = AuthStatus.successful).catchError((e) => _status = AuthExceptionHandler.handleAuthException(e));
-
-        return _status;
-    }
 
 
 
@@ -160,7 +100,9 @@ class  _ForgotPasswordFormState extends State<ResetPasswordBody> {
                     _formKey.currentState!.save();
 
                     //Invoke the method for the reset of the password
-                    AuthStatus auth = PasswordReset() as AuthStatus;
+                    Provider serviceProvider=Provider.instance;
+                    AuthStatus auth = serviceProvider.PasswordReset(email) as AuthStatus;
+                    print(auth);
                     if (auth == AuthStatus.successful) {
                       Navigator.push(
                         context, MaterialPageRoute(builder: (context) {

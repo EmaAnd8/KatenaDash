@@ -1,15 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:katena_dashboard/screens/login/login_screen.dart';
-import '../../firebase_options.dart';
+
+import 'package:katena_dashboard/screens/services/services_provider.dart';
+
 import '../settings/settings_screen.dart';
 
 //constants
 
 String email = "";
-String previousEmail="";
+
 
 
 
@@ -31,53 +29,12 @@ class  _ChangeEmailState extends State<ChangeEmailBody> {
   final _formKey = GlobalKey<FormState>();
 
 
-  void  ChangeEmail() async
-  {
-    if (FirebaseAuth.instance.currentUser?.email != null) {
-      previousEmail =FirebaseAuth.instance.currentUser!.email! ;
-    } else {
-      previousEmail ="";
-    }
-    if (FirebaseAuth.instance.currentUser?.email?.compareTo(email) != 0){
-          FirebaseAuth.instance.currentUser?.verifyBeforeUpdateEmail(email);
-          FirebaseAuth.instance.currentUser?.reload();
-        if (FirebaseAuth.instance.currentUser!.emailVerified) {
-
-          User? user= FirebaseAuth.instance.currentUser;
-          CollectionReference users = FirebaseFirestore.instance.collection('Users');
-          print(user?.email);
-
-          // Update the population of a city
-          final query = users.where("email", isEqualTo: previousEmail).get()
-              .then((querySnapshot) {
-            print("Successfully completed");
-            for (var docSnapshot in querySnapshot.docs) {
-              final usersRef = users.doc(docSnapshot.id);
-              usersRef.update({"email": email}).then(
-
-                      (value) =>ParadoxSignout(),
-                  onError: (e) => print("Error updating document $e"));
-
-            }
-          },
-            onError: (e) => print("Error completing: $e"),
-          );
-
-        }
-    }else
-      {
-        Navigator.push(context, MaterialPageRoute(builder: (context){return SettingsScreen();},),);
-      }
-  }
 
 
 
 
-void ParadoxSignout()
-{
-  FirebaseAuth.instance.signOut();
-  Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
-}
+
+
 
 
 
@@ -141,7 +98,8 @@ void ParadoxSignout()
                       _formKey.currentState!.save();
 
                         //Invoke the method to change the password
-                       ChangeEmail();
+                      Provider serviceProvider=Provider.instance;
+                       serviceProvider.ChangeEmail(context,email);
                     }
                   },
 

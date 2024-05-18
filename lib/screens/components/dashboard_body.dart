@@ -15,6 +15,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../../firebase_options.dart';
 import '../settings/settings_screen.dart';
+import '../services/services_provider.dart';
 import 'dart:io';
 
 
@@ -31,29 +32,7 @@ class  DashboardBody extends StatefulWidget{
 class _DashboardState extends State<DashboardBody> {
 
 
-  void Signout() async
-  {
 
-
-
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    //authentication provided from firebase
-
-    try {
-      // if my email is verified then I signin otherwise error
-
-
-
-        await FirebaseAuth.instance.signOut();
-
-    }on  FirebaseAuthException catch(e)
-    {
-      print(e);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +53,10 @@ class _DashboardState extends State<DashboardBody> {
             color: Colors.black,
             onPressed: () async {
               //upload image
-
+              WidgetsFlutterBinding.ensureInitialized();
+              await Firebase.initializeApp(
+                options: DefaultFirebaseOptions.currentPlatform,
+              );
               final imageFile = await ImagePicker().pickImage(source: ImageSource.gallery);
               //SharedPreferences prefs = await SharedPreferences.getInstance();
               if(imageFile!=null) {
@@ -100,8 +82,13 @@ class _DashboardState extends State<DashboardBody> {
           IconButton(
             icon: const Icon(Icons.login),
             color: Colors.black,
-            onPressed: () {
-               Signout();
+            onPressed: () async {
+              WidgetsFlutterBinding.ensureInitialized();
+              await Firebase.initializeApp(
+                options: DefaultFirebaseOptions.currentPlatform,
+              );
+               Provider serviceProvider=Provider.instance;
+               serviceProvider.Signout();
                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
 
             },

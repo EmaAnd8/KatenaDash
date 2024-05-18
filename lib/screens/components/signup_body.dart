@@ -1,20 +1,18 @@
 import 'dart:ui';
-
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
+import 'package:katena_dashboard/firebase_options.dart';
+import 'package:katena_dashboard/screens/components/login_body.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:katena_dashboard/screens/services/services_provider.dart';
 
-
-import '../../firebase_options.dart';
 
 //constants and variables
-final storage = FirebaseStorage.instance;
-final db = FirebaseFirestore.instance;
+
 String username = "";
 String email = "";
 String password = "";
@@ -36,36 +34,7 @@ class _SignUpFormState extends State<SignupBody> {
   final _formKey = GlobalKey<FormState>();
 
 
-  void Register() async
-  {
 
-
-
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-
-
-      // I create a User
-
-      await  FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
-
-    // Create a new user with a first and last name
-    final user = <String, dynamic>{
-      "Name": name,
-      "email": email,
-      "Birthdate": birthdate,
-      "Username": username,
-
-    };
-    // I send and email for saying if the provided email is fine
-    FirebaseAuth.instance.currentUser?.sendEmailVerification();
-    //if the user is verified I can add him to the database
-    db.collection("Users").add(user).then((DocumentReference doc) =>
-        print('DocumentSnapshot added with ID: ${doc.id}'));
-    
-  }
 
 
 
@@ -253,7 +222,20 @@ class _SignUpFormState extends State<SignupBody> {
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
 
-                  Register() ;
+                  // Create a new user with a first and last name
+                  final user = <String, dynamic>{
+                    "Name": name,
+                    "email": email,
+                    "Birthdate": birthdate,
+                    "Username": username,
+
+                  };
+                  WidgetsFlutterBinding.ensureInitialized();
+                  await Firebase.initializeApp(
+                    options: DefaultFirebaseOptions.currentPlatform,
+                  );
+                  Provider serviceProvider=Provider.instance;
+                  serviceProvider.Register(user,email,password);
 
                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
 
