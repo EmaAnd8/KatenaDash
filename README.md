@@ -7,7 +7,7 @@ has an underling software which is able to use all the potentialities of Katena
 
 
 # Requirements
-"""
+'''
 
 -Flutter 3.22;  
 -Dart 3.40
@@ -15,6 +15,6 @@ has an underling software which is able to use all the potentialities of Katena
 -Radon Ide;   
 -Firebase console and configuration files;    
 
-"""
+
 
 
