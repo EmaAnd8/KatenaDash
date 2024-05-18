@@ -1,12 +1,15 @@
 
 
 
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:katena_dashboard/firebase_options.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
@@ -81,9 +84,9 @@ class Provider {
 
   // Factory constructor that can return an instance
   static Provider get instance {
-
     return _instance;
   }
+
   /*
   void Begin()
   async {
@@ -94,7 +97,43 @@ class Provider {
   }
 
 
+
+
 */
+
+  void ProfileImage() async {
+
+    final imageFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery);
+    //SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (imageFile != null) {
+      final f=File(imageFile.path);
+
+
+      final profileImagePath = '${FirebaseAuth.instance
+          .currentUser?.uid}/profile_picture.jpg';
+      print(f.absolute.path);
+      final uploadTask = FirebaseStorage.instance.ref()
+          .child('Profile/'+profileImagePath)
+          .putFile(File(f.absolute.path));
+
+      final downloadUrl = await (await uploadTask).ref
+          .getDownloadURL();
+
+
+      // Create a NetworkImage object from the URL
+      print(downloadUrl);
+
+      late ImageProvider downloadedImage =
+          NetworkImage(downloadUrl);
+
+
+    } else {
+      print("wrong path");
+    }
+
+}
+
 
 
   void ParadoxSignout(context)

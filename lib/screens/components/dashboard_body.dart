@@ -1,7 +1,3 @@
-
-
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -10,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../../firebase_options.dart';
@@ -32,7 +27,7 @@ class  DashboardBody extends StatefulWidget{
 class _DashboardState extends State<DashboardBody> {
 
 
-
+String? uid1=FirebaseAuth.instance.currentUser?.email;
 
   @override
   Widget build(BuildContext context) {
@@ -52,27 +47,13 @@ class _DashboardState extends State<DashboardBody> {
             icon: const Icon(Icons.account_circle),
             color: Colors.black,
             onPressed: () async {
-              //upload image
               WidgetsFlutterBinding.ensureInitialized();
               await Firebase.initializeApp(
                 options: DefaultFirebaseOptions.currentPlatform,
               );
-              final imageFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-              //SharedPreferences prefs = await SharedPreferences.getInstance();
-              if(imageFile!=null) {
-                final profileImagePath = 'profile_images/${FirebaseAuth.instance
-                    .currentUser?.uid}/profile_picture.jpg';
-                final uploadTask = storageRef.child(profileImagePath).putFile(
-                    File(imageFile.path));
-                final downloadUrl = await (await uploadTask).ref
-                    .getDownloadURL();
-                await FirebaseAuth.instance.currentUser?.updateProfile(
-                    photoURL: downloadUrl);
-              }else{
-                  print("wrong path");
-              }
-              },
-          ),
+              Provider serviceProvider=Provider.instance;
+              serviceProvider.ProfileImage();
+            }),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
@@ -83,10 +64,13 @@ class _DashboardState extends State<DashboardBody> {
             icon: const Icon(Icons.login),
             color: Colors.black,
             onPressed: () async {
+              /*
               WidgetsFlutterBinding.ensureInitialized();
               await Firebase.initializeApp(
                 options: DefaultFirebaseOptions.currentPlatform,
               );
+
+               */
                Provider serviceProvider=Provider.instance;
                serviceProvider.Signout();
                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
@@ -96,31 +80,45 @@ class _DashboardState extends State<DashboardBody> {
 
         ],
       ),
-      body: Container(
-        //initialize the chart
-         child: Container(
-             width: size.width/3,
-             child: SfCartesianChart(
-                  // Initialize category axis
-                  primaryXAxis: CategoryAxis(),
-              series: <CartesianSeries>[
-              // Initialize line series
-              LineSeries<ChartData, String>(
-              dataSource: [
-              // Bind data source
-                  ChartData('Jan', 35),
-                  ChartData('Feb', 28),
-                  ChartData('Mar', 34),
-                  ChartData('Apr', 32),
-                  ChartData('May', 40)
-              ],
-                  xValueMapper: (ChartData data, _) => data.x,
-                  yValueMapper: (ChartData data, _) => data.y
-                  )
-                  ]
+      body: Column(
+
+      children: <Widget>[
+        Container(
+           padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
+
+           width: size.width/2,
+           child:Text("Hi!\t${uid1!},",
+           style: const TextStyle(color: Colors.black,fontSize: 30),
+           textAlign:TextAlign.left,
+           ),
+        ),
+
+          Container(
+              padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
+              width: size.width/2,
+              height: size.height-132,
+          child: SfCartesianChart(
+               // Initialize category axis
+               primaryXAxis: CategoryAxis(),
+           series: <CartesianSeries>[
+           // Initialize line series
+           LineSeries<ChartData, String>(
+           dataSource: [
+           // Bind data source
+               ChartData('Jan', 35),
+               ChartData('Feb', 28),
+               ChartData('Mar', 34),
+               ChartData('Apr', 32),
+               ChartData('May', 40)
+           ],
+               xValueMapper: (ChartData data, _) => data.x,
+               yValueMapper: (ChartData data, _) => data.y
+               )
+               ]
+           )
               )
-        )
-      )
+          ]
+    ),
         );
 
   }
