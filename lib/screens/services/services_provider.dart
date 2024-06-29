@@ -2,7 +2,9 @@
 
 
 import 'dart:io';
-
+import 'dart:convert';
+import 'package:flutter/services.dart';
+import 'package:yaml/yaml.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -305,5 +307,29 @@ class Provider {
 
     return _status;
   }
+
+  //this function parse a TOSCA file in a JSON in order to create then a Topology
+  String Parser(path)
+  {
+
+    try {
+
+      // String where to find the yaml file
+      String path="";
+      // Load YAML from assets
+      String yamlString = rootBundle.loadString(path) as String;
+
+      // Parse YAML
+      final yamlMap = loadYaml(yamlString);
+
+      // Convert to JSON
+      final jsonString = json.encode(yamlMap);
+      return jsonString;
+    } catch (e) {
+      print("Error converting YAML to JSON: $e");
+      return ""; // Or handle the error
+    }
+  }
+
 
 }

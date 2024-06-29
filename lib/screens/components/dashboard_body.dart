@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
+import 'package:katena_dashboard/screens/topology/topology_management_screen.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-
 import '../../firebase_options.dart';
 import '../settings/settings_screen.dart';
 import '../services/services_provider.dart';
@@ -28,7 +28,17 @@ class _DashboardState extends State<DashboardBody> {
 
 
 String? uid1=FirebaseAuth.instance.currentUser?.email;
+String ToscatoJSON="";
 
+
+void _loadAndConvertYaml() {
+  Provider serviceProvider=Provider.instance;
+
+  String result = serviceProvider.Parser('assets/data.yaml');
+  setState(() {
+    ToscatoJSON = result;
+  });
+}
   @override
   Widget build(BuildContext context) {
     Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
@@ -80,45 +90,85 @@ String? uid1=FirebaseAuth.instance.currentUser?.email;
 
         ],
       ),
-      body: Column(
+      body: SingleChildScrollView(
+      child:Column(
 
       children: <Widget>[
         Container(
            padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
+           alignment:Alignment.topLeft,
 
-           width: size.width/2,
            child:Text("Hi!\t${uid1!},",
            style: const TextStyle(color: Colors.black,fontSize: 30),
            textAlign:TextAlign.left,
            ),
         ),
-
-          Container(
+        Row(
+          children: <Widget>[
+           Container(
               padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
               width: size.width/2,
               height: size.height-132,
-          child: SfCartesianChart(
-               // Initialize category axis
-               primaryXAxis: CategoryAxis(),
-           series: <CartesianSeries>[
-           // Initialize line series
-           LineSeries<ChartData, String>(
-           dataSource: [
-           // Bind data source
-               ChartData('Jan', 35),
-               ChartData('Feb', 28),
-               ChartData('Mar', 34),
-               ChartData('Apr', 32),
-               ChartData('May', 40)
-           ],
-               xValueMapper: (ChartData data, _) => data.x,
-               yValueMapper: (ChartData data, _) => data.y
-               )
-               ]
-           )
+              child: SfCartesianChart(
+                // Initialize category axis
+                  primaryXAxis: CategoryAxis(),
+                  series: <CartesianSeries>[
+                    // Initialize line series
+                    LineSeries<ChartData, String>(
+                        dataSource: [
+                          // Bind data source
+                          ChartData('Jan', 35),
+                          ChartData('Feb', 28),
+                          ChartData('Mar', 34),
+                          ChartData('Apr', 32),
+                          ChartData('May', 40)
+                        ],
+                        xValueMapper: (ChartData data, _) => data.x,
+                        yValueMapper: (ChartData data, _) => data.y
+                    )
+                  ]
               )
+          ),
+            Container(
+              width: size.width/2,
+              height: size.height-132,
+              padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
+             child:  Column(
+                children: <Widget>[
+                  Text("Nodes Topology",
+                  style: TextStyle(color: Colors.black,fontSize: 30),
+                            textAlign:TextAlign.left),
+                Container(
+                  //child: Image.asset("assets/icons/icons8-chains-emoji-96.png"),
+                  child: Text(ToscatoJSON)
+                ),
+                ElevatedButton(
+                onPressed: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return TopologyManagementScreen();},),);
+
+                },
+                child: Text('Manage Your Topology'),
+                style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue, // Set background color
+                foregroundColor: Colors.white, // Set text and icon color
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Add padding
+                shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20), // More rounded corners
+                ),
+                ),
+                )
+            ],
+              ),
+    ),
+
+
+
+            ],// Your list of grid items
+        ),
+
           ]
     ),
+      ),
         );
 
   }
