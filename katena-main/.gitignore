@@ -1,0 +1,13 @@
+.venv/
+.opera/
+.idea
+*.log
+node_modules/
+input.yml
+.vscode/
+build/
+migrations/
+test
+nodes/benchmark/
+nodes/contracts-try/
+log-container.txt

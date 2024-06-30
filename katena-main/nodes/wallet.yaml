@@ -1,0 +1,31 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - network.yaml
+  - relationships.yaml
+  - capabilities.yaml
+
+# Every KATENA specification file needs one wallet coordinates to pay for the deployment.
+node_types:
+  katena.nodes.wallet:
+    derived_from: tosca.nodes.Root
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: katena.nodes.network
+          relationship: tosca.relationships.HostedOn
+          occurrences: [1, 1] 
+    properties:
+      privateKey:
+        description: privateKey of the address that should perform the deploy
+        type: string
+        required: true
+      owner:
+        description: owner wallet address
+        type: string
+        required: false
+        default: ""
+      network:
+        type: string
+        required: true
+        default: { get_property: [SELF, host, address] } 

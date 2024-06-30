@@ -1,0 +1,52 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+- nodes/contract.yaml
+- nodes/network.yaml
+
+topology_template:
+  node_templates:
+    ganache:
+      type: katena.nodes.network.ganache
+    userWallet: 
+      type: katena.nodes.wallet
+      requirements:
+      - host: ganache
+      properties:
+        privateKey: { get_input: UserKeyGanache }
+    calleeParam:
+      type: katena.nodes.contract
+      requirements:
+      - host: ganache
+      - wallet: userWallet
+      properties:
+        abi: "CalleeLocalParams"
+        parameters:
+          - 1
+          - "HelloWorld"
+          - "0x0000000000000000000000000000000000000000"
+    caller:
+      type: katena.nodes.contract
+      requirements:
+      - host: ganache
+      - wallet: userWallet
+      - calls:
+          node: calleeParam
+          capability: katena.capabilities.Callable
+          relationship: increment
+      properties:
+        abi: "Caller"
+
+  relationship_templates:
+    increment:
+      type: katena.relationships.calls
+      properties:
+        modifier: "setCallee"
+
+  inputs:
+    UserKeyGanache:
+      type: string
+      required: true
+    UserWallet:
+      type: string
+      required: true

@@ -1,0 +1,56 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+- nodes/contract.yaml
+- nodes/network.yaml
+
+topology_template:
+  node_templates:
+    ganache:
+      type: katena.nodes.network.ganache
+    userWallet: 
+      type: katena.nodes.wallet
+      requirements:
+      - host: ganache
+      properties:
+        privateKey: { get_input: UserKeyGanache }
+        owner: { get_input: UserWallet}
+    facet1:
+      type: katena.nodes.diamond.facet
+      requirements:
+      - host: ganache
+      - wallet: userWallet
+      properties:
+        abi: "Callee"
+    diamondCut:
+      type: katena.nodes.contract
+      requirements:
+      - host: ganache
+      - wallet: userWallet
+      properties:
+        abi: "DiamondCutFacet"
+    diamondLoupe:
+      type: katena.nodes.contract
+      requirements:
+      - host: ganache
+      - wallet: userWallet
+      properties:
+        abi: "DiamondLoupeFacet"
+    myDiamond:
+      type: katena.nodes.diamond
+      requirements:
+      - host: ganache
+      - wallet: userWallet
+      - cut: diamondCut
+      - facet: diamondLoupe
+      - facet: facet1
+      properties:
+        abi: "Diamond"
+        
+  inputs:
+    UserKeyGanache:
+      type: string
+      required: true
+    UserWallet:
+      type: string
+      required: true
