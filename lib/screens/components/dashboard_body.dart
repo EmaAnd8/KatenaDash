@@ -22,6 +22,7 @@ class  DashboardBody extends StatefulWidget{
   _DashboardState createState() => _DashboardState();
 
 
+
 }
 
 class _DashboardState extends State<DashboardBody> {
@@ -29,18 +30,19 @@ class _DashboardState extends State<DashboardBody> {
 
 String? uid1=FirebaseAuth.instance.currentUser?.email;
 String ToscatoJSON="";
+late List<Widget> elements=[];
 
 
-void _loadAndConvertYaml() {
+Future<void> _loadAndConvertYaml() async {
   Provider serviceProvider=Provider.instance;
 
-  String result = serviceProvider.Parser('assets/data.yaml');
-  setState(() {
-    ToscatoJSON = result;
-  });
+  //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
+   elements=(await serviceProvider.TopologyPrinter())!;
+
 }
   @override
   Widget build(BuildContext context) {
+   // _loadAndConvertYaml();
     Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
     return Scaffold(
       appBar: AppBar(
@@ -63,6 +65,7 @@ void _loadAndConvertYaml() {
               );
               Provider serviceProvider=Provider.instance;
               serviceProvider.ProfileImage();
+              _loadAndConvertYaml();
             }),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -134,20 +137,24 @@ void _loadAndConvertYaml() {
               height: size.height-132,
               padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
              child:  Column(
+
                 children: <Widget>[
-                  Text("Nodes Topology",
+
+                  const Text("Nodes Topology",
                   style: TextStyle(color: Colors.black,fontSize: 30),
                             textAlign:TextAlign.left),
                 Container(
                   //child: Image.asset("assets/icons/icons8-chains-emoji-96.png"),
-                  child: Text(ToscatoJSON)
+                 child: Column
+                   (children: elements)
+
+                    //child: Text(ToscatoJSON)
                 ),
                 ElevatedButton(
                 onPressed: () {
                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return TopologyManagementScreen();},),);
 
                 },
-                child: Text('Manage Your Topology'),
                 style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue, // Set background color
                 foregroundColor: Colors.white, // Set text and icon color
@@ -156,6 +163,7 @@ void _loadAndConvertYaml() {
                 borderRadius: BorderRadius.circular(20), // More rounded corners
                 ),
                 ),
+                child: const Text('Manage Your Topology'),
                 )
             ],
               ),

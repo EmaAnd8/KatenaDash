@@ -2,8 +2,10 @@
 
 
 import 'dart:io';
+import 'dart:math' as math ;
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:katena_dashboard/screens/components/graphic_components/simple_arrow.dart';
 import 'package:yaml/yaml.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,7 +19,7 @@ import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/settings/settings_screen.dart';
-
+import 'package:katena_dashboard/screens/components/graphic_components/simple_node.dart';
 enum AuthStatus {
   successful,
   wrongPassword,
@@ -309,27 +311,83 @@ class Provider {
   }
 
   //this function parse a TOSCA file in a JSON in order to create then a Topology
-  String Parser(path)
-  {
-
+  Future<String> Parser(path) async {
     try {
-
       // String where to find the yaml file
-      String path="";
+      print(path);
       // Load YAML from assets
-      String yamlString = rootBundle.loadString(path) as String;
-
+      String yamlString = await rootBundle.loadString(path);
+      //print(yamlString);
       // Parse YAML
-      final yamlMap = loadYaml(yamlString);
+      final yamlMap = await loadYaml(yamlString);
+    //  print(yamlMap);
 
       // Convert to JSON
       final jsonString = json.encode(yamlMap);
+      //print(jsonString);
       return jsonString;
-    } catch (e) {
+    } catch (e){
       print("Error converting YAML to JSON: $e");
       return ""; // Or handle the error
     }
   }
 
+  Future<List<Widget>?> TopologyPrinter()
+  async {
 
-}
+    Provider serviceProvider=Provider.instance;
+    String JSONfiles=await serviceProvider.Parser("assets/input/simple-relationship-with-args.yaml");
+    Map<String, dynamic> jsonData = jsonDecode(JSONfiles);
+
+    if(jsonData["topology_template"]["node_templates"].toString()!=null)
+      {
+        print(jsonData["topology_template"]["node_templates"].toString()); // Output
+        if(jsonData["topology_template"]["node_templates"]["caller"].toString()!=null && jsonData["topology_template"]["node_templates"]["callee"].toString()!=null)
+          {
+            print(jsonData["topology_template"]["node_templates"]["caller"].toString());
+            print(jsonData["topology_template"]["node_templates"]["callee"].toString());
+
+                  List<Widget> nodes=[
+                    // In your widget tree:
+                    Padding(
+                      padding:EdgeInsets.only(top: 10),
+
+                      child:CustomPaint(
+
+                        painter: BlueNodePainter(),
+                        size: Size(100, 50),
+
+                      ),
+                    ),
+                    CustomPaint(
+                        painter: ArrowPainter(
+                        color: Colors.blue,
+                          angle: math.pi / 2,
+                        length: 60,
+                    ),
+                      size: const Size(10,50),
+                    ),
+                    Padding(
+                        padding:EdgeInsets.only(bottom: 10),
+
+                    child:CustomPaint(
+
+                      painter: BlueNodePainter(),
+                      size: Size(100, 50),
+
+                    ),
+                    ),
+                  ];
+
+            return nodes;
+
+          }
+      }
+    return null;
+  }
+  //the topology manager is the module in charge to associate a graphic component to the TOSCA
+  Future<void> TopologyManager()
+  async {
+  }
+
+  }
