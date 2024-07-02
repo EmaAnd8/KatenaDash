@@ -56,6 +56,9 @@ class  _TopologyManagementState extends State<TopologyManagementBody > {
           child: Text('Insert a node'),
           onTap: () async {
            simpleTopology= await ServiceProvider.CreateNode();
+           setState(() {
+             simpleTopology;
+           });
           },
         ),
 

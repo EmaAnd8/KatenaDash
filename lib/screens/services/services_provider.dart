@@ -404,13 +404,14 @@ class Provider {
 
   Future<List<Widget>> CreateNode() async
   {
-    createEmptyFile('assets/output/simple-topology.txt');
-    final destinationFile=File('assets/output/simple-topology.yaml');
-    final sourceFile = File("assets/input/simple-node.yaml");
+    createEmptyFile('assets/output/simple-topology.yaml');
+    print('ok');
+    //final destinationFile=File('assets/output/simple-topology.yaml');
+   // final sourceFile = File("assets/input/simple-node.yaml");
 
     // Read the content of the source file
-    String yamlContent = await sourceFile.readAsString();
-    await destinationFile.writeAsString(yamlContent);
+   // String yamlContent = await sourceFile.readAsString();
+    //await destinationFile.writeAsString(yamlContent);
     List<Widget> nodes=[
     // In your widget tree:
     Padding(

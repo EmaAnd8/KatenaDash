@@ -38,13 +38,16 @@ Future<void> _loadAndConvertYaml() async {
 
   //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
    elements=(await serviceProvider.TopologyPrinter())!;
-
+   setState(() {
+     elements;
+   });
 }
   @override
   Widget build(BuildContext context) {
-    _loadAndConvertYaml();
+
     Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
     return Scaffold(
+
       appBar: AppBar(
         title: const Text('KatenaDashboard'),
         backgroundColor: CupertinoColors.white,
@@ -146,6 +149,7 @@ Future<void> _loadAndConvertYaml() async {
                 Container(
                   //child: Image.asset("assets/icons/icons8-chains-emoji-96.png"),
                  child: Column
+
                    (children: elements)
 
                     //child: Text(ToscatoJSON)
@@ -164,7 +168,26 @@ Future<void> _loadAndConvertYaml() async {
                 ),
                 ),
                 child: const Text('Manage Your Topology'),
-                )
+                ),
+
+                  Padding(padding: EdgeInsets.only(top: 20),
+                  child:ElevatedButton(
+                    onPressed: () async {
+                      await _loadAndConvertYaml();
+
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue, // Set background color
+                      foregroundColor: Colors.white, // Set text and icon color
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Add padding
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20), // More rounded corners
+                      ),
+                    ),
+                    child: const Text('View Your Topology'),
+                  )
+                  ),
+
             ],
               ),
     ),
