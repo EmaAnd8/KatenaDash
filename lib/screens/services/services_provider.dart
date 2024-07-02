@@ -359,7 +359,8 @@ class Provider {
 
                       ),
                     ),
-                    CustomPaint(
+                    Padding(padding: EdgeInsets.only(bottom: 40),
+                   child:  CustomPaint(
                         painter: ArrowPainter(
                         color: Colors.blue,
                           angle: math.pi / 2,
@@ -367,6 +368,7 @@ class Provider {
                     ),
                       size: const Size(10,50),
                     ),
+    ),
                     Padding(
                         padding:EdgeInsets.only(bottom: 10),
 
@@ -385,9 +387,46 @@ class Provider {
       }
     return null;
   }
+
+  Future<void> createEmptyFile(String filePath) async {
+    final file = File(filePath);
+
+    // Create the file if it doesn't exist
+    if (!await file.exists()) {
+      await file.create();
+    }
+  }
+
   //the topology manager is the module in charge to associate a graphic component to the TOSCA
   Future<void> TopologyManager()
   async {
+  }
+
+  Future<List<Widget>> CreateNode() async
+  {
+    createEmptyFile('assets/output/simple-topology.txt');
+    final destinationFile=File('assets/output/simple-topology.yaml');
+    final sourceFile = File("assets/input/simple-node.yaml");
+
+    // Read the content of the source file
+    String yamlContent = await sourceFile.readAsString();
+    await destinationFile.writeAsString(yamlContent);
+    List<Widget> nodes=[
+    // In your widget tree:
+    Padding(
+      padding:EdgeInsets.only(top: 10),
+
+      child:CustomPaint(
+
+        painter: BlueNodePainter(),
+        size: Size(100, 50),
+
+      ),
+    ),
+    ];
+    // Example usage:
+
+    return nodes;
   }
 
   }

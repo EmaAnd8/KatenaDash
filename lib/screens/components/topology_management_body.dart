@@ -2,9 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
+import 'package:katena_dashboard/screens/services/services_provider.dart';
 
 
-
+Provider ServiceProvider = Provider.instance;
+List<Widget> simpleTopology=[];
 class TopologyManagementBody extends StatefulWidget{
   const TopologyManagementBody({super.key});
 
@@ -52,8 +54,12 @@ class  _TopologyManagementState extends State<TopologyManagementBody > {
         PopupMenuItem<String>(
           value: '1',
           child: Text('Insert a node'),
-
+          onTap: () async {
+           simpleTopology= await ServiceProvider.CreateNode();
+          },
         ),
+
+
         PopupMenuItem<String>(
           value: '2',
           child: Text('Insert a reation'),
@@ -92,7 +98,9 @@ class  _TopologyManagementState extends State<TopologyManagementBody > {
                   style: TextStyle(color: Colors.black,fontSize: 30),
                   textAlign:TextAlign.left,),
                 ),
-
+              Row(
+                children: simpleTopology,
+              )
 
 
             ]

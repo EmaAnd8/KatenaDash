@@ -42,7 +42,7 @@ Future<void> _loadAndConvertYaml() async {
 }
   @override
   Widget build(BuildContext context) {
-   // _loadAndConvertYaml();
+    _loadAndConvertYaml();
     Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
     return Scaffold(
       appBar: AppBar(
@@ -65,7 +65,7 @@ Future<void> _loadAndConvertYaml() async {
               );
               Provider serviceProvider=Provider.instance;
               serviceProvider.ProfileImage();
-              _loadAndConvertYaml();
+             // _loadAndConvertYaml();
             }),
           IconButton(
             icon: const Icon(Icons.settings),
