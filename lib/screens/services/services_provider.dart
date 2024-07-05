@@ -3,10 +3,12 @@
 
 import 'dart:io';
 import 'dart:js_interop';
+import 'package:file_picker/file_picker.dart';
 import 'dart:math' as math ;
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:katena_dashboard/screens/components/graphiccomponents/simple_arrow.dart';
+import 'package:katena_dashboard/screens/components/topology_management_body.dart';
 import 'package:yaml/yaml.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -426,5 +428,45 @@ class Provider {
 
     return nodes;
   }
+
+
+    //method to import a yaml file
+    Future<YamlMap?> ImportYaml() async{
+
+        FilePickerResult? result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['yaml'],
+        );
+
+        if (result != null) {
+         // print('xxxxx');
+          try {
+            PlatformFile file = result.files.single;
+            final yamlString = utf8.decode(file.bytes!);
+            final yamlMap = loadYaml(yamlString);
+           return yamlMap;
+
+
+            // Access the data in the YAML map
+            print(yamlMap);
+          } catch(e)
+          {
+            print(e);
+          }
+
+        } else {
+           //do nothing
+          print("no file selected");
+        }
+
+    }
+
+    Future<void> TopologyPrinterFromYaml() async
+    {
+
+      var yamlFile=await ServiceProvider.ImportYaml();
+      print(yamlFile);
+
+    }
 
   }

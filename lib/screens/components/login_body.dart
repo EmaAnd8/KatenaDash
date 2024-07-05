@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -116,7 +118,10 @@ class _LoginFormState extends State<LoginBody> {
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: ElevatedButton(
               onPressed: ()async {
-                if (_formKey.currentState!.validate()) {
+                try{
+
+
+    if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
 
                   //Invoke the method for Login
@@ -124,27 +129,27 @@ class _LoginFormState extends State<LoginBody> {
                   await Firebase.initializeApp(
                     options: DefaultFirebaseOptions.currentPlatform,
                   );
-                  Provider serviceProvider=Provider.instance;
-                  serviceProvider.Login(context,email,password);
-                    //if I am logged in I go to the dashboard
+                  Provider serviceProvider = Provider.instance;
+                  serviceProvider.Login(context, email, password);
+                  //if I am logged in I go to the dashboard
 
                   //FirebaseAuth.instance.signOut();
-                  if(FirebaseAuth.instance.currentUser!.emailVerified)
-                    {
+                  if (FirebaseAuth.instance.currentUser!.emailVerified) {
 
 
-
-                    }else
-                      {
-                          const Text(
-                            'you are not logged in',
-                            style: TextStyle(color: Colors.red),
-                          );
-                      }
-
-
+                  } else {
+                    const Text(
+                      'you are not logged in',
+                      style: TextStyle(color: Colors.red),
+                    );
+                  }
 
                 }
+                }catch(e)
+                {
+                  print(e);
+                }
+
 
               },
 

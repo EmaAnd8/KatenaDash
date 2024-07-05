@@ -75,6 +75,17 @@ class  _TopologyViewState extends State<TopologyViewBody > {
                   value: '3',
                   child: Text('Insert a Topology'),
 
+                    onTap: () async {
+                      /*
+                    simpleTopology= await ServiceProvider.CreateNode();
+                    setState(() {
+                      simpleTopology;
+                    });
+
+                     */
+                      ServiceProvider.TopologyPrinterFromYaml();
+                    },
+
                 ),
 
               ];
