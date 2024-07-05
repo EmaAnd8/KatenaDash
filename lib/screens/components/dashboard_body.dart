@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
-import 'package:katena_dashboard/screens/topology/topology_management_screen.dart';
+import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
+import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../firebase_options.dart';
 import '../settings/settings_screen.dart';
@@ -173,7 +174,9 @@ Future<void> _loadAndConvertYaml() async {
                   Padding(padding: EdgeInsets.only(top: 20),
                   child:ElevatedButton(
                     onPressed: () async {
-                      await _loadAndConvertYaml();
+                      //await _loadAndConvertYaml();
+                      Navigator.push(context, MaterialPageRoute(builder: (context){return TopologyViewScreen();},),);
+
 
                     },
                     style: ElevatedButton.styleFrom(

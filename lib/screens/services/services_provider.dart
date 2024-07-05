@@ -2,10 +2,11 @@
 
 
 import 'dart:io';
+import 'dart:js_interop';
 import 'dart:math' as math ;
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'package:katena_dashboard/screens/components/graphic_components/simple_arrow.dart';
+import 'package:katena_dashboard/screens/components/graphiccomponents/simple_arrow.dart';
 import 'package:yaml/yaml.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -19,7 +20,7 @@ import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/settings/settings_screen.dart';
-import 'package:katena_dashboard/screens/components/graphic_components/simple_node.dart';
+import 'package:katena_dashboard/screens/components/graphiccomponents/simple_node.dart';
 enum AuthStatus {
   successful,
   wrongPassword,
@@ -352,12 +353,9 @@ class Provider {
                     Padding(
                       padding:EdgeInsets.only(top: 10),
 
-                      child:CustomPaint(
-
-                        painter: BlueNodePainter(),
-                        size: Size(100, 50),
-
-                      ),
+                      child:Image.asset("assets/icons/wallet_4121117.png",
+                        width: 50,
+                        height: 50,)
                     ),
                     Padding(padding: EdgeInsets.only(bottom: 40),
                    child:  CustomPaint(
@@ -372,12 +370,9 @@ class Provider {
                     Padding(
                         padding:EdgeInsets.only(bottom: 10),
 
-                    child:CustomPaint(
-
-                      painter: BlueNodePainter(),
-                      size: Size(100, 50),
-
-                    ),
+                    child:Image.asset("assets/icons/wallet_4121117.png",
+                    width: 50,
+                    height: 50,)
                     ),
                   ];
 
@@ -388,13 +383,8 @@ class Provider {
     return null;
   }
 
-  Future<void> createEmptyFile(String filePath) async {
-    final file = File(filePath);
+  Future<void> createYamlFile(String filePath) async {
 
-    // Create the file if it doesn't exist
-    if (!await file.exists()) {
-      await file.create();
-    }
   }
 
   //the topology manager is the module in charge to associate a graphic component to the TOSCA
@@ -404,26 +394,33 @@ class Provider {
 
   Future<List<Widget>> CreateNode() async
   {
-    createEmptyFile('assets/output/simple-topology.yaml');
-    print('ok');
-    //final destinationFile=File('assets/output/simple-topology.yaml');
-   // final sourceFile = File("assets/input/simple-node.yaml");
+    //final yamlString = YamlMap.wrap("" as Map).toString();
+    print("oooo");
+    final ByteData data = await rootBundle.load('assets/input/simple-node.yaml');
+    print("00000");
+    final buffer = data.buffer;
+    final yamlContent = String.fromCharCodes(buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+    print(yamlContent);
+
+
+  // final sourceFile = File("assets/input/simple-node.yaml");
+    final destinationFile = File("assets/output/topology.yaml");
 
     // Read the content of the source file
-   // String yamlContent = await sourceFile.readAsString();
-    //await destinationFile.writeAsString(yamlContent);
-    List<Widget> nodes=[
+    try {
+      await destinationFile.writeAsString(yamlContent, mode: FileMode.write);
+    }catch( e){
+      print(e.toString());
+    }
+      List<Widget> nodes=[
     // In your widget tree:
-    Padding(
-      padding:EdgeInsets.only(top: 10),
+      Padding(
+          padding:EdgeInsets.only(bottom: 10),
 
-      child:CustomPaint(
-
-        painter: BlueNodePainter(),
-        size: Size(100, 50),
-
+          child:Image.asset("assets/icons/wallet_4121117.png",
+            width: 50,
+            height: 50,)
       ),
-    ),
     ];
     // Example usage:
 
