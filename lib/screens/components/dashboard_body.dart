@@ -178,7 +178,7 @@ String? uid1=FirebaseAuth.instance.currentUser?.email;
                         borderRadius: BorderRadius.circular(20), // More rounded corners
                       ),
                     ),
-                    icon: Image.asset("assets/icons/icons8-view-80(1).png",
+                    icon: Image.asset("assets/icons/icons8-view-80.png",
                     width: 53,
                     height: 53,),
 
