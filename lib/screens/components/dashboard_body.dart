@@ -30,19 +30,7 @@ class _DashboardState extends State<DashboardBody> {
 
 
 String? uid1=FirebaseAuth.instance.currentUser?.email;
-String ToscatoJSON="";
-late List<Widget> elements=[];
 
-
-Future<void> _loadAndConvertYaml() async {
-  Provider serviceProvider=Provider.instance;
-
-  //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
-   elements=(await serviceProvider.TopologyPrinter())!;
-   setState(() {
-     elements;
-   });
-}
   @override
   Widget build(BuildContext context) {
 
@@ -141,38 +129,41 @@ Future<void> _loadAndConvertYaml() async {
               height: size.height-132,
               padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
              child:  Column(
+               children: <Widget>[
+                 const Padding(padding: EdgeInsets.only(bottom: 40),
+                  child:Text("Nodes Topology Editor",
+                     style: TextStyle(color: Colors.black,fontSize: 30),
+                     textAlign:TextAlign.left),
+                 ),
+             Column(
+
+              mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
 
                 children: <Widget>[
 
-                  const Text("Nodes Topology",
-                  style: TextStyle(color: Colors.black,fontSize: 30),
-                            textAlign:TextAlign.left),
-                Container(
-                  //child: Image.asset("assets/icons/icons8-chains-emoji-96.png"),
-                 child: Column
 
-                   (children: elements)
 
-                    //child: Text(ToscatoJSON)
-                ),
-                ElevatedButton(
+                IconButton(
                 onPressed: () {
                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return TopologyManagementScreen();},),);
 
                 },
                 style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Set background color
-                foregroundColor: Colors.white, // Set text and icon color
+               // backgroundColor: Colors.blue, // Set background color
+                //foregroundColor: Colors.white, // Set text and icon color
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Add padding
                 shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20), // More rounded corners
                 ),
                 ),
-                child: const Text('Manage Your Topology'),
+                icon: Image.asset("assets/icons/icons8-topology-53.png",),
+
                 ),
+                  const Text('Manage Your Topology'),
 
                   Padding(padding: EdgeInsets.only(top: 20),
-                  child:ElevatedButton(
+                  child:IconButton(
                     onPressed: () async {
                       //await _loadAndConvertYaml();
                       Navigator.push(context, MaterialPageRoute(builder: (context){return TopologyViewScreen();},),);
@@ -180,19 +171,26 @@ Future<void> _loadAndConvertYaml() async {
 
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue, // Set background color
-                      foregroundColor: Colors.white, // Set text and icon color
+                      //backgroundColor: Colors.blue, // Set background color
+                      //foregroundColor: Colors.white, // Set text and icon color
                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Add padding
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20), // More rounded corners
                       ),
                     ),
-                    child: const Text('View Your Topology'),
+                    icon: Image.asset("assets/icons/icons8-view-80(1).png",
+                    width: 53,
+                    height: 53,),
+
                   )
+
                   ),
+                   const Text('View Your Topology'),
 
             ],
               ),
+            ],
+             ),
     ),
 
 

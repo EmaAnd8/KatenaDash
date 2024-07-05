@@ -14,6 +14,7 @@ class TopologyViewBody extends StatefulWidget{
   _TopologyViewState createState() =>  _TopologyViewState();
 
 
+
 }
 
 class  _TopologyViewState extends State<TopologyViewBody > {
@@ -21,7 +22,19 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
 
 
+  String ToscatoJSON="";
 
+
+
+  Future<void> _loadAndConvertYaml() async {
+    Provider serviceProvider=Provider.instance;
+
+    //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
+    simpleTopology=(await serviceProvider.TopologyPrinterFromYaml())!;
+    setState(() {
+      simpleTopology;
+    });
+  }
 
 
 
@@ -83,7 +96,8 @@ class  _TopologyViewState extends State<TopologyViewBody > {
                     });
 
                      */
-                      ServiceProvider.TopologyPrinterFromYaml();
+                      //ServiceProvider.TopologyPrinterFromYaml();
+                       await _loadAndConvertYaml();
                     },
 
                 ),
@@ -94,6 +108,7 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
           ),
         ],
+
       ),
 
 

@@ -312,7 +312,7 @@ class Provider {
 
     return _status;
   }
-
+/*
   //this function parse a TOSCA file in a JSON in order to create then a Topology
   Future<String> Parser(path) async {
     try {
@@ -335,6 +335,8 @@ class Provider {
     }
   }
 
+ */
+/*
   Future<List<Widget>?> TopologyPrinter()
   async {
 
@@ -384,6 +386,8 @@ class Provider {
       }
     return null;
   }
+
+ */
 
   Future<void> createYamlFile(String filePath) async {
 
@@ -461,11 +465,63 @@ class Provider {
 
     }
 
-    Future<void> TopologyPrinterFromYaml() async
+    Future<List<Widget>?> TopologyPrinterFromYaml() async
     {
 
       var yamlFile=await ServiceProvider.ImportYaml();
       print(yamlFile);
+      print(yamlFile?["topology_template"]["node_templates"]["userWallet"]);
+      if(yamlFile?["topology_template"]["node_templates"]["ganache"].toString()!=null)
+      {
+
+        if(yamlFile?["topology_template"]["node_templates"]["ganache"].toString()!=null && yamlFile?["topology_template"]["node_templates"]["userWallet"].toString()!=null)
+        {
+
+         // print(yamlFile?["topology_template"]["node_templates"]["callee"].toString());
+
+          List<Widget> nodes=[
+            // In your widget tree:
+            Column(
+
+              children:<Widget>[
+              Padding(padding: EdgeInsets.only(left: 40,right: 40),
+
+                  child:Image.asset("assets/icons/wallet_4121117.png",
+                    width: 50,
+                    height: 50,)
+              ),
+              Text("User wallet"),
+    ],
+            ),
+
+            Padding(padding: EdgeInsets.only(left: 40,right: 40),
+              child:  CustomPaint(
+                painter: ArrowPainter(
+                  color: Colors.blue,
+                  angle: 0,
+                  length: 60,
+                ),
+                size: const Size(10,50),
+              ),
+            ),
+            Padding(padding: EdgeInsets.only(left: 40,right: 40),
+
+                child:Image.asset("assets/icons/Ganache Blockchain.png",
+                  width: 100,
+                  height: 100,)
+            ),
+          ];
+
+          return nodes;
+
+        }else{
+          print("no network defined");
+        }
+      }else{
+        print("empty topology");
+      }
+      return null;
+
 
     }
 
