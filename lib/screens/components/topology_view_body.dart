@@ -27,10 +27,21 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
 
   Future<void> _loadAndConvertYaml() async {
-    Provider serviceProvider=Provider.instance;
+
 
     //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
-    simpleTopology=(await serviceProvider.TopologyPrinterFromYaml())!;
+    simpleTopology=(await ServiceProvider.TopologyPrinterFromYaml())!;
+    setState(() {
+      simpleTopology;
+    });
+  }
+
+
+  Future<void> _loadAndConvertYaml2() async {
+
+
+    //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
+    simpleTopology=(await ServiceProvider.TopologyPrinter())!;
     setState(() {
       simpleTopology;
     });
@@ -38,9 +49,9 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
 
 
-
   @override
   Widget build(BuildContext context) {
+   // _loadAndConvertYaml2();
     String selectedOption = 'Option 1';
     Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
     return Scaffold(

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:katena_dashboard/screens/components/topology_management_body.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
@@ -16,6 +18,7 @@ import 'dart:io';
 
 
 final storageRef = FirebaseStorage.instance.ref();
+String? name="";
 class  DashboardBody extends StatefulWidget{
   const DashboardBody({super.key});
 
@@ -31,9 +34,53 @@ class _DashboardState extends State<DashboardBody> {
 
 String? uid1=FirebaseAuth.instance.currentUser?.email;
 
+
+String? QueryName(email,context)  {
+  Map<String, String> keyValueMap = {};
+  String modifiedString="";
+  String StringParser="";
+  List<String> pairs=[];
+  List<String> parts=[];
+
+  CollectionReference users = FirebaseFirestore.instance.collection('Users');
+  // Update the population of a city
+  final query = users.where("email", isEqualTo: email).get()
+      .then((querySnapshot) {
+    //print("Successfully completed");
+    for (var docSnapshot in querySnapshot.docs) {
+      final usersRef = users.doc(docSnapshot.id);
+      StringParser = docSnapshot.data().toString();
+      modifiedString = StringParser.substring(1,StringParser.length-1);
+      modifiedString = modifiedString.replaceAll(",", "");
+      pairs = modifiedString.split(RegExp(r"\s+(?=\w+: )"));
+      // Extract keys and values
+      for (String pair in pairs) {
+        parts = pair.split(": ");
+        if (parts.length == 2) {
+          keyValueMap[parts[0]] = parts[1];
+
+
+        }
+        //print( keyValueMap["Name"]);
+        name=keyValueMap["Name"];
+        setState(() {
+          simpleTopology;
+        });
+      }
+
+
+
+    }
+      return null;
+  });
+  // print( keyValueMap["Name"]);
+
+}
+
+
   @override
   Widget build(BuildContext context) {
-
+    String? alfa=QueryName(uid1,context);
     Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
     return Scaffold(
 
@@ -93,7 +140,7 @@ String? uid1=FirebaseAuth.instance.currentUser?.email;
            padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
            alignment:Alignment.topLeft,
 
-           child:Text("Hi!\t${uid1!},",
+           child:Text("Hi!\t${name},",
            style: const TextStyle(color: Colors.black,fontSize: 30),
            textAlign:TextAlign.left,
            ),

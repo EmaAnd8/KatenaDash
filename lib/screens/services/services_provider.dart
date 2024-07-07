@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:math' as math ;
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:katena_dashboard/screens/components/change_name_body.dart';
 import 'package:katena_dashboard/screens/components/graphiccomponents/simple_arrow.dart';
 import 'package:katena_dashboard/screens/components/topology_management_body.dart';
 import 'package:yaml/yaml.dart';
@@ -252,6 +253,42 @@ class Provider {
     }
   }
 
+  String? QueryName(email,context)  {
+    Map<String, String> keyValueMap = {};
+    String modifiedString="";
+    String StringParser="";
+    List<String> pairs=[];
+    List<String> parts=[];
+
+    CollectionReference users = FirebaseFirestore.instance.collection('Users');
+    // Update the population of a city
+    final query = users.where("email", isEqualTo: email).get()
+        .then((querySnapshot) {
+      //print("Successfully completed");
+      for (var docSnapshot in querySnapshot.docs) {
+        final usersRef = users.doc(docSnapshot.id);
+        StringParser = docSnapshot.data().toString();
+        modifiedString = StringParser.substring(1,StringParser.length-1);
+        modifiedString = modifiedString.replaceAll(",", "");
+        pairs = modifiedString.split(RegExp(r"\s+(?=\w+: )"));
+        // Extract keys and values
+        for (String pair in pairs) {
+          parts = pair.split(": ");
+          if (parts.length == 2) {
+            keyValueMap[parts[0]] = parts[1];
+          }
+        }
+        //print( keyValueMap["Name"]);
+        return keyValueMap["Name"]!;
+
+
+      }
+
+          });
+   // print( keyValueMap["Name"]);
+
+  }
+
   void Register(user,email,password) async
   {
 
@@ -312,7 +349,7 @@ class Provider {
 
     return _status;
   }
-/*
+
   //this function parse a TOSCA file in a JSON in order to create then a Topology
   Future<String> Parser(path) async {
     try {
@@ -335,8 +372,8 @@ class Provider {
     }
   }
 
- */
-/*
+
+
   Future<List<Widget>?> TopologyPrinter()
   async {
 
@@ -365,7 +402,7 @@ class Provider {
                    child:  CustomPaint(
                         painter: ArrowPainter(
                         color: Colors.blue,
-                          angle: math.pi / 2,
+                          angle: 0,
                         length: 60,
                     ),
                       size: const Size(10,50),
@@ -387,7 +424,7 @@ class Provider {
     return null;
   }
 
- */
+
 
   Future<void> createYamlFile(String filePath) async {
 
@@ -484,16 +521,17 @@ class Provider {
             Column(
 
               children:<Widget>[
-              Padding(padding: EdgeInsets.only(left: 40,right: 40),
+              Padding(padding: EdgeInsets.only(left: 40,right: 40,bottom: 20),
 
                   child:Image.asset("assets/icons/wallet_4121117.png",
                     width: 50,
                     height: 50,)
               ),
-              Text("User wallet"),
+              const Text("User wallet"),
     ],
             ),
-
+            Column(
+            children:<Widget>[
             Padding(padding: EdgeInsets.only(left: 40,right: 40),
               child:  CustomPaint(
                 painter: ArrowPainter(
@@ -503,6 +541,9 @@ class Provider {
                 ),
                 size: const Size(10,50),
               ),
+            ),
+            const Text("Hosted by"),
+            ],
             ),
             Padding(padding: EdgeInsets.only(left: 40,right: 40),
 
