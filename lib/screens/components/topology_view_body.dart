@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
+import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
 
 
 Provider ServiceProvider = Provider.instance;
@@ -92,7 +93,10 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
                 PopupMenuItem<String>(
                   value: '2',
-                  child: Text('Export your Topology'),
+                  child: Text('Edit your Topology'),
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context){return TopologyManagementScreen() ;},),);
+                  },
 
                 ),
                 PopupMenuItem<String>(

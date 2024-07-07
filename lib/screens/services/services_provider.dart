@@ -3,6 +3,7 @@
 
 import 'dart:io';
 import 'dart:js_interop';
+
 import 'package:file_picker/file_picker.dart';
 import 'dart:math' as math ;
 import 'dart:convert';
@@ -415,11 +416,27 @@ class Provider {
                     width: 50,
                     height: 50,)
                     ),
+                    Padding(padding: EdgeInsets.only(bottom: 40),
+                      child:  CustomPaint(
+                        painter: ArrowPainter(
+                          color: Colors.blue,
+                          angle: 0,
+                          length: 60,
+                        ),
+                        size: const Size(10,50),
+                      ),
+                    ),
+
+
+
+
                   ];
+
 
             return nodes;
 
           }
+
       }
     return null;
   }
@@ -519,7 +536,8 @@ class Provider {
           List<Widget> nodes=[
             // In your widget tree:
             Column(
-
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children:<Widget>[
               Padding(padding: EdgeInsets.only(left: 40,right: 40,bottom: 20),
 
@@ -542,7 +560,8 @@ class Provider {
                 size: const Size(10,50),
               ),
             ),
-            const Text("Hosted by"),
+            const Text("Hosted by",
+                textAlign: TextAlign.center,),
             ],
             ),
             Padding(padding: EdgeInsets.only(left: 40,right: 40),
@@ -552,6 +571,153 @@ class Provider {
                   height: 100,)
             ),
           ];
+
+          if(yamlFile?["topology_template"]["node_templates"]["ensRegistry"].toString()!=null) {
+            print(
+                yamlFile?["topology_template"]["node_templates"]["ensRegistry"]
+                    .toString());
+            nodes.addAll([
+              Row(
+                children: <Widget>[
+                  Padding(padding: EdgeInsets.only(left: 40, right: 40),
+                    child: CustomPaint(
+                      painter: ArrowPainter(
+                        color: Colors.blue,
+                        angle: math.pi,
+                        length: 60,
+                      ),
+                      size: const Size(10, 50),
+                    ),
+                  ),
+                  Column(
+                    children: <Widget>[
+                      Padding(
+                          padding: EdgeInsets.only(bottom: 10),
+
+                          child: Image.asset("assets/icons/smart_14210186.png",
+                            width: 50,
+                            height: 50,)
+                      ),
+                      const Text("EnsRegister"),
+                    ],
+                  ),
+                ],
+              ),
+
+            ]);
+          }else
+            {
+              print("No ens Register");
+            }
+
+            if(yamlFile?["topology_template"]["node_templates"]["publicResolver"].toString()!=null)
+            {
+              print(yamlFile?["topology_template"]["node_templates"]["publicResolver"].toString());
+              nodes.addAll([
+                Column(
+                  children: <Widget>[
+                    Padding(padding: EdgeInsets.only(left: 40,right: 40),
+                      child:  CustomPaint(
+                        painter: ArrowPainter(
+                          color: Colors.blue,
+                          angle: math.pi,
+                          length: 60,
+                        ),
+                        size: const Size(10,50),
+                      ),
+                    ),
+                    Column(
+                      children: <Widget>[
+                        Padding(
+                            padding:EdgeInsets.only(bottom: 10),
+
+                            child:Image.asset("assets/icons/smart_14210186.png",
+                              width: 50,
+                              height: 50,)
+                        ),
+                        const Text("PublicResolver"),
+                      ],
+                    ),
+                  ],
+                ),
+
+              ]);
+          }else{
+              print("No public Resolver");
+            }
+
+
+          if(yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"].toString()!=null)
+          {
+            print(yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"].toString());
+            nodes.addAll([
+              Column(
+                children: <Widget>[
+                  Padding(padding: EdgeInsets.only(left: 40,right: 40),
+                    child:  CustomPaint(
+                      painter: ArrowPainter(
+                        color: Colors.blue,
+                        angle: math.pi,
+                        length: 60,
+                      ),
+                      size: const Size(10,50),
+                    ),
+                  ),
+                  Column(
+                    children: <Widget>[
+                      Padding(
+                          padding:EdgeInsets.only(bottom: 10),
+
+                          child:Image.asset("assets/icons/smart_14210186.png",
+                            width: 50,
+                            height: 50,)
+                      ),
+                      const Text(" reverseRegistrar"),
+                    ],
+                  ),
+                ],
+              ),
+
+            ]);
+          }else{
+            print("No reverseRegistrar");
+          }
+
+          if(yamlFile?["topology_template"]["node_templates"]["registrar"].toString()!=null)
+          {
+            print(yamlFile?["topology_template"]["node_templates"]["registrar"].toString());
+            nodes.addAll([
+              Column(
+                children: <Widget>[
+                  Padding(padding: EdgeInsets.only(left: 40,right: 40),
+                    child:  CustomPaint(
+                      painter: ArrowPainter(
+                        color: Colors.blue,
+                        angle: math.pi,
+                        length: 60,
+                      ),
+                      size: const Size(10,50),
+                    ),
+                  ),
+                  Column(
+                    children: <Widget>[
+                      Padding(
+                          padding:EdgeInsets.only(bottom: 10),
+
+                          child:Image.asset("assets/icons/smart_14210186.png",
+                            width: 50,
+                            height: 50,)
+                      ),
+                      const Text("Registrar"),
+                    ],
+                  ),
+                ],
+              ),
+
+            ]);
+          }else{
+            print("No Registrar");
+          }
 
           return nodes;
 
