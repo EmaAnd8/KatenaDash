@@ -141,8 +141,16 @@ class  _TopologyViewState extends State<TopologyViewBody > {
                   style: TextStyle(color: Colors.black,fontSize: 30),
                   textAlign:TextAlign.left,),
               ),
-              Row(
-                children: simpleTopology,
+              Stack(
+                alignment: Alignment.center,
+
+                children: <Widget>
+                [
+                  Row(
+                    children: simpleTopology
+                  ),
+                ],
+
               )
 
 

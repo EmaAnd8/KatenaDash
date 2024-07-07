@@ -111,19 +111,18 @@ class Provider {
 */
 
   void ProfileImage() async {
-
     final imageFile = await ImagePicker().pickImage(
         source: ImageSource.gallery);
     //SharedPreferences prefs = await SharedPreferences.getInstance();
     if (imageFile != null) {
-      final f=File(imageFile.path);
+      final f = File(imageFile.path);
 
 
       final profileImagePath = '${FirebaseAuth.instance
           .currentUser?.uid}/profile_picture.jpg';
       print(f.absolute.path);
       final uploadTask = FirebaseStorage.instance.ref()
-          .child('Profile/'+profileImagePath)
+          .child('Profile/' + profileImagePath)
           .putFile(File(f.absolute.path));
 
       final downloadUrl = await (await uploadTask).ref
@@ -134,40 +133,37 @@ class Provider {
       print(downloadUrl);
 
       late ImageProvider downloadedImage =
-          NetworkImage(downloadUrl);
-
-
+      NetworkImage(downloadUrl);
     } else {
       print("wrong path");
     }
-
-}
-
-
-
-  void ParadoxSignout(context)
-  {
-    Provider serviceProvider=Provider.instance;
-    serviceProvider.Signout();
-    Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
   }
 
 
-  void  ChangeEmail(context,email) async
+  void ParadoxSignout(context) {
+    Provider serviceProvider = Provider.instance;
+    serviceProvider.Signout();
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return LoginScreen();
+    },),);
+  }
+
+
+  void ChangeEmail(context, email) async
   {
-    String previousEmail="";
+    String previousEmail = "";
     if (FirebaseAuth.instance.currentUser?.email != null) {
-      previousEmail =FirebaseAuth.instance.currentUser!.email! ;
+      previousEmail = FirebaseAuth.instance.currentUser!.email!;
     } else {
-      previousEmail ="";
+      previousEmail = "";
     }
-    if (FirebaseAuth.instance.currentUser?.email?.compareTo(email) != 0){
+    if (FirebaseAuth.instance.currentUser?.email?.compareTo(email) != 0) {
       FirebaseAuth.instance.currentUser?.verifyBeforeUpdateEmail(email);
       FirebaseAuth.instance.currentUser?.reload();
       if (FirebaseAuth.instance.currentUser!.emailVerified) {
-
-        User? user= FirebaseAuth.instance.currentUser;
-        CollectionReference users = FirebaseFirestore.instance.collection('Users');
+        User? user = FirebaseAuth.instance.currentUser;
+        CollectionReference users = FirebaseFirestore.instance.collection(
+            'Users');
         //print(user?.email);
 
         // Update the population of a city
@@ -178,38 +174,36 @@ class Provider {
             final usersRef = users.doc(docSnapshot.id);
             usersRef.update({"email": email}).then(
 
-                    (value) =>ParadoxSignout(context),
+                    (value) => ParadoxSignout(context),
                 onError: (e) => print("Error updating document $e"));
-
           }
         },
           onError: (e) => print("Error completing: $e"),
         );
-
       }
-    }else
-    {
-      Navigator.push(context, MaterialPageRoute(builder: (context){return SettingsScreen();},),);
+    } else {
+      Navigator.push(context, MaterialPageRoute(builder: (context) {
+        return SettingsScreen();
+      },),);
     }
   }
-  void CName(context,name) async
+
+  void CName(context, name) async
   {
-
-
-
     //authentication provided from firebase
 
     try {
       // if my email is verified then I signin otherwise error
 
 
-
-      User? user= FirebaseAuth.instance.currentUser;
-      CollectionReference users = FirebaseFirestore.instance.collection('Users');
+      User? user = FirebaseAuth.instance.currentUser;
+      CollectionReference users = FirebaseFirestore.instance.collection(
+          'Users');
       print(user?.email);
       print(name);
       // Update the population of a city
-      final query = users.where("email", isEqualTo: FirebaseAuth.instance.currentUser?.email).get()
+      final query = users.where(
+          "email", isEqualTo: FirebaseAuth.instance.currentUser?.email).get()
           .then((querySnapshot) {
         print("Successfully completed");
         for (var docSnapshot in querySnapshot.docs) {
@@ -217,49 +211,43 @@ class Provider {
           usersRef.update({"Name": name}).then(
                   (value) => print("DocumentSnapshot successfully updated!"),
               onError: (e) => print("Error updating document $e"));
-
         }
       },
         onError: (e) => print("Error completing: $e"),
       );
 
 
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return SettingsScreen();},),);
-    }on  FirebaseAuthException catch(e)
-    {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+        return SettingsScreen();
+      },),);
+    } on FirebaseAuthException catch (e) {
       print(e);
     }
   }
 
-  void Login(context,email,password) async
+  void Login(context, email, password) async
   {
-
-
-
-
-
     try {
       // if my email is verified then I signin otherwise error
       await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email, password: password);
 
-      if(FirebaseAuth.instance.currentUser!.emailVerified) {
-
-        Navigator.push(context, MaterialPageRoute(builder: (context){return HomeScreen();},),);
-
+      if (FirebaseAuth.instance.currentUser!.emailVerified) {
+        Navigator.push(context, MaterialPageRoute(builder: (context) {
+          return HomeScreen();
+        },),);
       }
-    }on  FirebaseAuthException catch(e)
-    {
+    } on FirebaseAuthException catch (e) {
       print(e);
     }
   }
 
-  String? QueryName(email,context)  {
+  String? QueryName(email, context) {
     Map<String, String> keyValueMap = {};
-    String modifiedString="";
-    String StringParser="";
-    List<String> pairs=[];
-    List<String> parts=[];
+    String modifiedString = "";
+    String StringParser = "";
+    List<String> pairs = [];
+    List<String> parts = [];
 
     CollectionReference users = FirebaseFirestore.instance.collection('Users');
     // Update the population of a city
@@ -269,7 +257,7 @@ class Provider {
       for (var docSnapshot in querySnapshot.docs) {
         final usersRef = users.doc(docSnapshot.id);
         StringParser = docSnapshot.data().toString();
-        modifiedString = StringParser.substring(1,StringParser.length-1);
+        modifiedString = StringParser.substring(1, StringParser.length - 1);
         modifiedString = modifiedString.replaceAll(",", "");
         pairs = modifiedString.split(RegExp(r"\s+(?=\w+: )"));
         // Extract keys and values
@@ -281,27 +269,18 @@ class Provider {
         }
         //print( keyValueMap["Name"]);
         return keyValueMap["Name"]!;
-
-
       }
-
-          });
-   // print( keyValueMap["Name"]);
+    });
+    // print( keyValueMap["Name"]);
 
   }
 
-  void Register(user,email,password) async
+  void Register(user, email, password) async
   {
-
-
-
-
-
-
-
     // I create a User
 
-    await  FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email, password: password);
 
 
     // I send and email for saying if the provided email is fine
@@ -309,44 +288,37 @@ class Provider {
     //if the user is verified I can add him to the database
     db.collection("Users").add(user).then((DocumentReference doc) =>
         print('DocumentSnapshot added with ID: ${doc.id}'));
-
   }
 
-   void Signout() async
+  void Signout() async
   {
-
-
-
-
     //authentication provided from firebase
 
     try {
       // if my email is verified then I signin otherwise error
 
 
-
       await FirebaseAuth.instance.signOut();
-
-    }on  FirebaseAuthException catch(e)
-    {
+    } on FirebaseAuthException catch (e) {
       print(e);
     }
   }
 
 
-  Future<AuthStatus>  PasswordReset(email) async
+  Future<AuthStatus> PasswordReset(email) async
   {
     WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    AuthStatus _status=AuthStatus.unknown;
+    AuthStatus _status = AuthStatus.unknown;
 
-    Provider serviceProvider=Provider.instance;
+    Provider serviceProvider = Provider.instance;
 
     //authentication provided from firebase
     await FirebaseAuth.instance.sendPasswordResetEmail(email: email)
-        .then((value) => _status = AuthStatus.successful).catchError((e) => _status = AuthExceptionHandler.handleAuthException(e));
+        .then((value) => _status = AuthStatus.successful).catchError((e) =>
+    _status = AuthExceptionHandler.handleAuthException(e));
 
     return _status;
   }
@@ -361,86 +333,83 @@ class Provider {
       //print(yamlString);
       // Parse YAML
       final yamlMap = await loadYaml(yamlString);
-    //  print(yamlMap);
+      //  print(yamlMap);
 
       // Convert to JSON
       final jsonString = json.encode(yamlMap);
       //print(jsonString);
       return jsonString;
-    } catch (e){
+    } catch (e) {
       print("Error converting YAML to JSON: $e");
       return ""; // Or handle the error
     }
   }
 
 
-
-  Future<List<Widget>?> TopologyPrinter()
-  async {
-
-    Provider serviceProvider=Provider.instance;
-    String JSONfiles=await serviceProvider.Parser("assets/input/simple-relationship-with-args.yaml");
+  Future<List<Widget>?> TopologyPrinter() async {
+    Provider serviceProvider = Provider.instance;
+    String JSONfiles = await serviceProvider.Parser(
+        "assets/input/simple-relationship-with-args.yaml");
     Map<String, dynamic> jsonData = jsonDecode(JSONfiles);
 
-    if(jsonData["topology_template"]["node_templates"].toString()!=null)
-      {
-        print(jsonData["topology_template"]["node_templates"].toString()); // Output
-        if(jsonData["topology_template"]["node_templates"]["caller"].toString()!=null && jsonData["topology_template"]["node_templates"]["callee"].toString()!=null)
-          {
-            print(jsonData["topology_template"]["node_templates"]["caller"].toString());
-            print(jsonData["topology_template"]["node_templates"]["callee"].toString());
+    if (jsonData["topology_template"]["node_templates"].toString() != null) {
+      print(
+          jsonData["topology_template"]["node_templates"].toString()); // Output
+      if (jsonData["topology_template"]["node_templates"]["caller"]
+          .toString() != null &&
+          jsonData["topology_template"]["node_templates"]["callee"]
+              .toString() != null) {
+        print(jsonData["topology_template"]["node_templates"]["caller"]
+            .toString());
+        print(jsonData["topology_template"]["node_templates"]["callee"]
+            .toString());
 
-                  List<Widget> nodes=[
-                    // In your widget tree:
-                    Padding(
-                      padding:EdgeInsets.only(top: 10),
+        List<Widget> nodes = [
+          // In your widget tree:
+          Padding(
+              padding: EdgeInsets.only(top: 10),
 
-                      child:Image.asset("assets/icons/wallet_4121117.png",
-                        width: 50,
-                        height: 50,)
-                    ),
-                    Padding(padding: EdgeInsets.only(bottom: 40),
-                   child:  CustomPaint(
-                        painter: ArrowPainter(
-                        color: Colors.blue,
-                          angle: 0,
-                        length: 60,
-                    ),
-                      size: const Size(10,50),
-                    ),
-    ),
-                    Padding(
-                        padding:EdgeInsets.only(bottom: 10),
+              child: Image.asset("assets/icons/wallet_4121117.png",
+                width: 50,
+                height: 50,)
+          ),
+          Padding(padding: EdgeInsets.only(bottom: 40),
+            child: CustomPaint(
+              painter: ArrowPainter(
+                color: Colors.blue,
+                angle: 0,
+                length: 60,
+              ),
+              size: const Size(10, 50),
+            ),
+          ),
+          Padding(
+              padding: EdgeInsets.only(bottom: 10),
 
-                    child:Image.asset("assets/icons/wallet_4121117.png",
-                    width: 50,
-                    height: 50,)
-                    ),
-                    Padding(padding: EdgeInsets.only(bottom: 40),
-                      child:  CustomPaint(
-                        painter: ArrowPainter(
-                          color: Colors.blue,
-                          angle: 0,
-                          length: 60,
-                        ),
-                        size: const Size(10,50),
-                      ),
-                    ),
-
-
+              child: Image.asset("assets/icons/wallet_4121117.png",
+                width: 50,
+                height: 50,)
+          ),
+          Padding(padding: EdgeInsets.only(bottom: 40),
+            child: CustomPaint(
+              painter: ArrowPainter(
+                color: Colors.blue,
+                angle: 0,
+                length: 60,
+              ),
+              size: const Size(10, 50),
+            ),
+          ),
 
 
-                  ];
+        ];
 
 
-            return nodes;
-
-          }
-
+        return nodes;
       }
+    }
     return null;
   }
-
 
 
   Future<void> createYamlFile(String filePath) async {
@@ -448,36 +417,37 @@ class Provider {
   }
 
   //the topology manager is the module in charge to associate a graphic component to the TOSCA
-  Future<void> TopologyManager()
-  async {
+  Future<void> TopologyManager() async {
   }
 
   Future<List<Widget>> CreateNode() async
   {
     //final yamlString = YamlMap.wrap("" as Map).toString();
     print("oooo");
-    final ByteData data = await rootBundle.load('assets/input/simple-node.yaml');
+    final ByteData data = await rootBundle.load(
+        'assets/input/simple-node.yaml');
     print("00000");
     final buffer = data.buffer;
-    final yamlContent = String.fromCharCodes(buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+    final yamlContent = String.fromCharCodes(
+        buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
     print(yamlContent);
 
 
-  // final sourceFile = File("assets/input/simple-node.yaml");
+    // final sourceFile = File("assets/input/simple-node.yaml");
     final destinationFile = File("assets/output/topology.yaml");
 
     // Read the content of the source file
     try {
       await destinationFile.writeAsString(yamlContent, mode: FileMode.write);
-    }catch( e){
+    } catch (e) {
       print(e.toString());
     }
-      List<Widget> nodes=[
-    // In your widget tree:
+    List<Widget> nodes = [
+      // In your widget tree:
       Padding(
-          padding:EdgeInsets.only(bottom: 10),
+          padding: EdgeInsets.only(bottom: 10),
 
-          child:Image.asset("assets/icons/wallet_4121117.png",
+          child: Image.asset("assets/icons/wallet_4121117.png",
             width: 50,
             height: 50,)
       ),
@@ -488,37 +458,34 @@ class Provider {
   }
 
 
-    //method to import a yaml file
-    Future<YamlMap?> ImportYaml() async{
+  //method to import a yaml file
+  Future<YamlMap?> ImportYaml() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['yaml'],
+    );
 
-        FilePickerResult? result = await FilePicker.platform.pickFiles(
-          type: FileType.custom,
-          allowedExtensions: ['yaml'],
-        );
-
-        if (result != null) {
-         // print('xxxxx');
-          try {
-            PlatformFile file = result.files.single;
-            final yamlString = utf8.decode(file.bytes!);
-            final yamlMap = loadYaml(yamlString);
-           return yamlMap;
+    if (result != null) {
+      // print('xxxxx');
+      try {
+        PlatformFile file = result.files.single;
+        final yamlString = utf8.decode(file.bytes!);
+        final yamlMap = loadYaml(yamlString);
+        return yamlMap;
 
 
-            // Access the data in the YAML map
-            print(yamlMap);
-          } catch(e)
-          {
-            print(e);
-          }
-
-        } else {
-           //do nothing
-          print("no file selected");
-        }
-
+        // Access the data in the YAML map
+        print(yamlMap);
+      } catch (e) {
+        print(e);
+      }
+    } else {
+      //do nothing
+      print("no file selected");
     }
+  }
 
+/*
     Future<List<Widget>?> TopologyPrinterFromYaml() async
     {
 
@@ -731,5 +698,244 @@ class Provider {
 
 
     }
+*/
 
+  Future<List<Widget>?> TopologyPrinterFromYaml() async {
+    var yamlFile = await ServiceProvider.ImportYaml();
+    print(yamlFile);
+    print(yamlFile?["topology_template"]["node_templates"]["userWallet"]);
+    if (yamlFile?["topology_template"]["node_templates"]["ganache"].toString() != null) {
+      if (yamlFile?["topology_template"]["node_templates"]["ganache"].toString() != null &&
+          yamlFile?["topology_template"]["node_templates"]["userWallet"].toString() != null) {
+
+        List<Widget> nodes = [
+          // User Wallet Node
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.only(left: 40, right: 40, bottom: 20),
+                child: Image.asset(
+                  "assets/icons/wallet_4121117.png",
+                  width: 50,
+                  height: 50,
+                ),
+              ),
+              const Text("User wallet"),
+            ],
+          ),
+          // Arrow to Ganache
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 30),
+            child: CustomPaint(
+              painter: ArrowPainter(
+                color: Colors.blue,
+                angle: 0,
+                length: 120,
+              ),
+              size: const Size(10, 50),
+            ),
+          ),
+          Padding(
+          padding: EdgeInsets.only(right: 75),
+                child: const Text("Hosted on", textAlign: TextAlign.center),
+          ),
+          // Ganache Node
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+            child: Image.asset(
+              "assets/icons/Ganache Blockchain.png",
+              width: 100,
+              height: 100,
+            ),
+          ),
+        ];
+
+        // EnsRegistry Node
+        if (yamlFile?["topology_template"]["node_templates"]["ensRegistry"].toString() != null) {
+          print(yamlFile?["topology_template"]["node_templates"]["ensRegistry"].toString());
+          nodes.addAll([
+            // Arrow to EnsRegistry
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: CustomPaint(
+                painter: ArrowPainter(
+                  color: Colors.blue,
+                  angle: (3/4)*math.pi,
+                  length: 60,
+                ),
+                size: const Size(10, 50),
+              ),
+            ),
+          Padding(padding: const EdgeInsets.only(bottom: 200,left: 100),
+            child:Column(
+
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: Image.asset(
+                    "assets/icons/smart_14210186.png",
+                    width: 50,
+                    height: 50,
+                  ),
+                ),
+                const Padding(  padding: EdgeInsets.only(bottom: 5),
+                child:   Text("EnsRegister"),
+                ),
+                const Text("abi: ENSRegistry")
+              ],
+
+            ),
+          ),
+          ]);
+
+        } else {
+          print("No ens Register");
+        }
+
+        // PublicResolver Node
+        if (yamlFile?["topology_template"]["node_templates"]["publicResolver"].toString() != null) {
+          print(yamlFile?["topology_template"]["node_templates"]["publicResolver"].toString());
+          nodes.addAll([
+            // Arrow to PublicResolver
+            Stack(
+              fit: StackFit.loose,
+              children: <Widget>
+            [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 70,vertical: 30),
+              child: CustomPaint(
+                painter: ArrowPainter(
+                  color: Colors.blue,
+                  angle: (-2*math.pi)+(math.pi/2)+(-math.pi/3),
+                  length: 70,
+                ),
+                size: const Size(10, 50),
+              ),
+            ),
+
+    const Padding(padding: EdgeInsets.only(right: 25,top: 35),
+     child:Text("Connected to"),
+    ),
+
+            
+    ],
+            ),
+            Column(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: Image.asset(
+                    "assets/icons/smart_14210186.png",
+                    width: 50,
+                    height: 50,
+                  ),
+                ),
+                const Padding(  padding: EdgeInsets.only(bottom: 5),
+                  child:   Text("publicResolver"),
+                ),
+                const Text("abi: PublicResolver"),
+              ],
+            ),
+          ]);
+        } else {
+          print("No public Resolver");
+        }
+
+        // ReverseRegistrar Node
+        if (yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"].toString() != null) {
+          print(yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"].toString());
+
+          nodes.addAll([
+            // Arrow to ReverseRegistrar
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: CustomPaint(
+                painter: ArrowPainter(
+                  color: Colors.blue,
+                  angle: -math.pi,
+                  length: 60,
+                ),
+                size: const Size(10, 50),
+              ),
+            ),
+
+
+            Column(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: Image.asset(
+                    "assets/icons/smart_14210186.png",
+                    width: 50,
+                    height: 50,
+                  ),
+                ),
+
+                const Padding(padding: EdgeInsets.only(bottom: 5),
+                child:Text("ReverseRegistrar"),
+    ),
+                Text("abi: ReverseRegistrar")
+
+
+              ],
+
+            ),
+
+          ]);
+        } else {
+          print("No reverseRegistrar");
+        }
+
+        // Registrar Node
+        if (yamlFile?["topology_template"]["node_templates"]["registrar"].toString() != null) {
+          print(yamlFile?["topology_template"]["node_templates"]["registrar"].toString());
+          nodes.addAll([
+            // Arrow to Registrar
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: CustomPaint(
+                painter: ArrowPainter(
+                  color: Colors.blue,
+                  angle: -math.pi,
+                  length: 60,
+                ),
+                size: const Size(10, 50),
+              ),
+            ),
+            Column(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: Image.asset(
+                    "assets/icons/smart_14210186.png",
+                    width: 50,
+                    height: 50,
+                  ),
+                ),
+
+                const Padding(  padding: EdgeInsets.only(bottom: 5),
+                  child:  Text("Registrar"),
+
+                ),
+                const Text("abi: Registrar")
+
+              ],
+            ),
+          ]);
+        } else {
+          print("No Registrar");
+        }
+
+        return nodes;
+      } else {
+        print("no network defined");
+      }
+    } else {
+      print("empty topology");
+    }
+    return null;
   }
+
+}
