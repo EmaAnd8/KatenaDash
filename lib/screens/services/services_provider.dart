@@ -3,14 +3,19 @@
 
 import 'dart:io';
 import 'dart:js_interop';
+import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'dart:math' as math ;
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:graphview/GraphView.dart';
 import 'package:katena_dashboard/screens/components/change_name_body.dart';
 import 'package:katena_dashboard/screens/components/graphiccomponents/simple_arrow.dart';
+import 'package:katena_dashboard/screens/components/graphiccomponents/simple_rectangle.dart';
 import 'package:katena_dashboard/screens/components/topology_management_body.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:yaml/yaml.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -702,6 +707,7 @@ class Provider {
 
   Future<List<Widget>?> TopologyPrinterFromYaml() async {
     var yamlFile = await ServiceProvider.ImportYaml();
+
     print(yamlFile);
     print(yamlFile?["topology_template"]["node_templates"]["userWallet"]);
     if (yamlFile?["topology_template"]["node_templates"]["ganache"].toString() != null) {
@@ -938,4 +944,173 @@ class Provider {
     return null;
   }
 
+
+  Future<YamlMap?> loadYamlFromAssets(String assetPath) async {
+    try {
+      final contents = await rootBundle.loadString(assetPath);
+      return loadYaml(contents);
+    } catch (e) {
+      // Handle error
+      print('Could not load YAML from assets: $e');
+      return null;
+    }
+  }
+
+
+/*
+  Future<Graph?> TopologyGraphFromYaml() async {
+    var yamlFile = await ServiceProvider.ImportYaml();
+    //print(yamlFile);
+    var node_properties = yamlFile?['topology_template']['node_templates'];
+    var node_topology_key = node_properties.keys.toList();
+    List<String> imports = [];
+    Graph graph = Graph()..isTree = false;
+    Graph copygraph = Graph()..isTree = false;
+
+    for (int i = 0; i < node_topology_key.length; i++) {
+      var key1 = node_topology_key[i];
+      var value2 = node_properties[key1];
+
+     // print('Node Type ($i): $key1');
+     // print('Node Type ($i): $value2');
+      //print(value2["type"]);
+    }
+    YamlMap? yamlMap;
+    if (yamlFile!["imports"]
+        .toString()
+        .isEmpty) {
+      print("you cannot print a toplogy");
+    } else {
+     // print(yamlFile!["imports"].toString());
+
+      if (yamlFile["topology_template"]
+          .toString()
+          .isEmpty) {
+        print("Topology is empty");
+      } else {
+        if (yamlFile["node_templates"]
+            .toString()
+            .isEmpty) {
+          print("no node present in the topology");
+        } else {
+          // for each element in the topology I have to verify if the type is one of the known one
+          for (int j = 0; j < yamlFile["imports"].length; j++) {
+
+            yamlMap =
+            await loadYamlFromAssets("katena-main/" + yamlFile["imports"][j]);
+            // I have to Itereate the type of the import and the type of the node
+            //print(yamlFile["imports"][j]);
+
+            for (int h = 0; h < yamlMap?["node_types"].length; h++) {
+            /*
+              for (int i = 0; i < yamlFile["node_templates"].length; i++) {
+                if (yamlMap?["node_types"][h] ==
+                    yamlFile["node_templates"][i]) {
+                  print("1");
+                }
+              }
+             */
+            // print(yamlMap?["node_types"]["katena.nodes.wallet"]);
+              var nodeTypes = yamlMap?['node_types'];
+              var nodeTypeKeys = nodeTypes.keys.toList();
+              for (int i = 0; i < nodeTypeKeys.length; i++) {
+                String importItem = nodeTypeKeys[i]; // No explicit casting needed
+                imports.add(importItem);
+                //print("Import item at index $i: $importItem");
+              }
+
+
+
+
+
+            }
+          }
+        }
+
+
+        for(int y=0;y<node_topology_key.length;y++) {
+
+
+
+          //print(node_properties[node_topology_key[y]]["type"]);
+
+          for (int x = 0; x < imports.length; x++) {
+
+
+
+            if (node_properties[node_topology_key[y]]["type"] ==
+                imports[x]) {
+
+             // Node node1 = Node.Id(node_properties[node_topology_key[y]]["type"]);
+           //   Node node2 = Node.Id(node_properties[node_topology_key[y+1]]["type"]);
+            Node node1=Node.Id(node_topology_key[y]);
+            Node node2=Node.Id(node_topology_key[y+1]);
+              graph.addEdge(node1, node2);
+              copygraph=graph;
+              //print(copygraph.nodes);
+              //print(copygraph.nodes);
+
+
+            }
+
+
+
+          }
+        }
+
+
+      }
+      return copygraph;
+    }
+
+  }
+
+ */
+  Future<Graph?> TopologyGraphFromYaml() async {
+    var yamlFile = await ServiceProvider.ImportYaml();
+    var nodeProperties = yamlFile?['topology_template']['node_templates'];
+
+    if (nodeProperties == null) {
+      print("No node templates found in YAML.");
+      return null;
+    }
+
+    var nodeTopologyKeys = nodeProperties.keys.toList();
+    List<String> imports = [];
+    Graph graph = Graph()..isTree = false;
+
+    if (yamlFile?["imports"] != null && yamlFile!["imports"].isNotEmpty) {
+      for (var importPath in yamlFile["imports"]) {
+        try {
+          YamlMap? yamlMap = await loadYamlFromAssets("katena-main/$importPath");
+          var nodeTypes = yamlMap?['node_types'];
+          if (nodeTypes != null) {
+            imports.addAll(nodeTypes.keys.cast<String>());
+          }
+        } catch (e) {
+          print("Error loading import: $importPath - $e");
+        }
+      }
+    } else {
+      print("No imports found in YAML.");
+    }
+
+    print("Imports: $imports"); // Print the list of imports
+
+    for (int y = 0; y < nodeTopologyKeys.length - 1; y++) {
+      for (var importItem in imports) {
+        if (nodeProperties[nodeTopologyKeys[y]]["type"] == importItem) {
+          Node node1 = Node.Id(nodeTopologyKeys[y]);
+          Node node2 = Node.Id(nodeTopologyKeys[y + 1]);
+          graph.addEdge(node1, node2);
+          print("Added edge between ${node1.key?.value} and ${node2.key?.value}"); // Print added edges
+          // Removed the break statement here
+        }
+      }
+    }
+
+    print("Graph nodes: ${graph.nodes}"); // Print the nodes in the graph
+
+    return graph;
+  }
 }

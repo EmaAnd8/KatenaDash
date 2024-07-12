@@ -8,7 +8,7 @@ This repo contains all the files needed to setup and run the experiments used in
 The prototype has been tested on Ubuntu 20.04.
 
 **NOTE**: to reproduce the experiments reported in the paper refer to [Experiments Reproducibility](#experiments-reproducibility) section. For each experiment, we provided the required step to run it.
-If you want further information on how to use KATENA to deploy your applications refer to [Development](DEVELOPMENT.md) file. For extra information on Number of Tokens computation see [here](./NUMBER_OF_TOKENS.md).
+If you want further information on how to use KATENA to deploy your applications refer to [Development](DEVELOPMENT.md) file. For extra information on Number of Tokens computation see [here](NUMBER_OF_TOKENS.md).
 
 ## Install and run KATENA
 
@@ -82,7 +82,7 @@ dydx deployed successfully
   JS: 923
   ```
 
-More information regarding the analysis can be found [here](./NUMBER_OF_TOKENS.md).
+More information regarding the analysis can be found [here](NUMBER_OF_TOKENS.md).
 
 ## Error logs
 

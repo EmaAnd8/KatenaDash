@@ -1,13 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:graphview/GraphView.dart';
+import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
+import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
+import 'package:katena_dashboard/screens/components/graphiccomponents/simple_rectangle.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
 
 
 Provider ServiceProvider = Provider.instance;
-List<Widget> simpleTopology=[];
+Widget simpleTopology=Container();
 class TopologyViewBody extends StatefulWidget{
   const TopologyViewBody({super.key});
 
@@ -27,26 +31,37 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
 
 
+
+
   Future<void> _loadAndConvertYaml() async {
-
-
     //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
-    simpleTopology=(await ServiceProvider.TopologyPrinterFromYaml())!;
+    //simpleTopology=(await ServiceProvider.TopologyGraphFromYaml())!;
+    simpleTopology= SimpleGraph();
     setState(() {
       simpleTopology;
     });
   }
 
 
+
+
+
+
+/*
   Future<void> _loadAndConvertYaml2() async {
 
 
     //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
     simpleTopology=(await ServiceProvider.TopologyPrinter())!;
     setState(() {
-      simpleTopology;
+
     });
+
   }
+
+ */
+
+
 
 
 
@@ -146,9 +161,17 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
                 children: <Widget>
                 [
+                  /*
                   Row(
                     children: simpleTopology
+
                   ),
+
+                   */
+                  Center(
+                    child: simpleTopology,
+                  ),
+
                 ],
 
               )
@@ -160,4 +183,5 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
     );
   }
+
 }

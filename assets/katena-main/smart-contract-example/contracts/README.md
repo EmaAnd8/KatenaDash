@@ -27,13 +27,13 @@ The various smart contracts are organized into a few different places.
 
 1. Facets are stored in the [`facets/`](./facets/) directory and contain the game logic.
 2. Libraries are stored in the [`libraries/`](./libraries/) directory and contain functionality that can't fit in a facet or must be [shared by multiple facets](#sharing-between-facets). Additionally, `libraries/LibStorage.sol` contains Dark Forest's [Diamond Storage](#diamond-storage).
-3. Vendored contracts are stored in the [`vendor/`](./vendor/) directory, which has a mirrored structure of `vendor/facets/`, `vendor/interfaces/`, and `vendor/libraries/`. The [vendor README](./vendor/README.md) provides more information about the vendoring process.
-4. The [`DFInitialize.sol`](./DFInitialize.sol) contract is provided at the root because it is only used by the `diamondCut` process.
-5. The [`DFTypes.sol`](./DFTypes.sol) file is also provided at the root because it only provides enum and struct types for the rest of the contracts—it is not a contract itself.
+3. Vendored contracts are stored in the [`vendor/`](./vendor/) directory, which has a mirrored structure of `vendor/facets/`, `vendor/interfaces/`, and `vendor/libraries/`. The [vendor README](vendor/README.md) provides more information about the vendoring process.
+4. The [`DFInitialize.sol`](DFInitialize.sol) contract is provided at the root because it is only used by the `diamondCut` process.
+5. The [`DFTypes.sol`](DFTypes.sol) file is also provided at the root because it only provides enum and struct types for the rest of the contracts—it is not a contract itself.
 
 ## Diamond Storage
 
-Contract state is shared with a pattern called [Diamond Storage](https://dev.to/mudgen/how-diamond-storage-works-90e) and is documented in detail in [`libraries/LibStorage.sol`](./libraries/LibStorage.sol).
+Contract state is shared with a pattern called [Diamond Storage](https://dev.to/mudgen/how-diamond-storage-works-90e) and is documented in detail in [`libraries/LibStorage.sol`](libraries/LibStorage.sol).
 
 ## Sharing between facets
 
