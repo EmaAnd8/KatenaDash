@@ -38,7 +38,7 @@ class SimpleGraph extends StatelessWidget {
     children: <Widget>[
     CustomPaint(
     painter: BlueNodePainter(),
-    size: Size(30, 30),
+    size: const Size(30, 30),
     ),
     Text(
     nodeId,

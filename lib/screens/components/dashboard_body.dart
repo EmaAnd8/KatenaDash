@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:katena_dashboard/screens/components/topology_management_body.dart';
+import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
@@ -130,6 +131,7 @@ String? QueryName(email,context)  {
             },
           ),
 
+
         ],
       ),
       body: SingleChildScrollView(
@@ -233,6 +235,33 @@ String? QueryName(email,context)  {
 
                   ),
                    const Text('View Your Topology'),
+                  IconButton(
+                    icon: Image.asset("assets/icons/5203923.png",
+                      width: 53,
+                      height: 53,),
+    style: ElevatedButton.styleFrom(
+    // backgroundColor: Colors.blue, // Set background color
+    //foregroundColor: Colors.white, // Set text and icon color
+    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+    shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(20),
+    ),
+    ),// More rounded corners
+                    onPressed: () async {
+                      /*
+              WidgetsFlutterBinding.ensureInitialized();
+              await Firebase.initializeApp(
+                options: DefaultFirebaseOptions.currentPlatform,
+              );
+
+               */
+                      Provider serviceProvider=Provider.instance;
+                      serviceProvider.Signout();
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return DeployScreen();},),);
+
+                    },
+                  ),
+                  const Text('Deploy your Topology!'),
 
             ],
               ),

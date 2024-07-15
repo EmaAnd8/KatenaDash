@@ -6,45 +6,31 @@ import 'package:katena_dashboard/screens/components/graphiccomponents/simple_gra
 import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
 import 'package:katena_dashboard/screens/components/graphiccomponents/simple_rectangle.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
-import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
 
 
 Provider ServiceProvider = Provider.instance;
 Widget simpleTopology=Container();
-class TopologyViewBody extends StatefulWidget{
-  const TopologyViewBody({super.key});
+class DeployBody extends StatefulWidget{
+  const DeployBody({super.key});
 
   @override
-  _TopologyViewState createState() =>  _TopologyViewState();
+  _DeployState createState() =>  _DeployState();
 
 
 
 }
 
-class  _TopologyViewState extends State<TopologyViewBody > {
+class  _DeployState extends State<DeployBody > {
   final _formKey = GlobalKey<FormState>();
 
 
 
-  String ToscatoJSON="";
 
 
 
 
-
-  Future<void> _loadAndConvertYaml() async {
-    //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
-    //simpleTopology=(await ServiceProvider.TopologyGraphFromYaml())!;
-    setState(() {
-      simpleTopology=Container();
-    });
-    simpleTopology= SimpleGraph();
-    setState(() {
-      simpleTopology;
-    });
-  }
 
 
 
@@ -71,13 +57,13 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
   @override
   Widget build(BuildContext context) {
-   // _loadAndConvertYaml2();
+    // _loadAndConvertYaml2();
     String selectedOption = 'Option 1';
     Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
     return Scaffold(
 
       appBar: AppBar(
-        title: const Text('Topology Viewer'),
+        title: const Text('Deploy Viewer'),
         backgroundColor: CupertinoColors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -106,7 +92,6 @@ class  _TopologyViewState extends State<TopologyViewBody > {
                     });
 
                      */
-                    Navigator.push(context, MaterialPageRoute(builder: (context){return DeployScreen() ;},),);
                   },
                 ),
 
@@ -121,19 +106,19 @@ class  _TopologyViewState extends State<TopologyViewBody > {
                 ),
                 PopupMenuItem<String>(
                   value: '3',
-                  child: Text('Insert a Topology'),
+                  child: Text('View a Topology'),
 
-                    onTap: () async {
-                      /*
+                  onTap: () async {
+                    /*
                     simpleTopology= await ServiceProvider.CreateNode();
                     setState(() {
                       simpleTopology;
                     });
 
                      */
-                      //ServiceProvider.TopologyPrinterFromYaml();
-                       await _loadAndConvertYaml();
-                    },
+                    //ServiceProvider.TopologyPrinterFromYaml();
+                   // await _loadAndConvertYaml();
+                  },
 
                 ),
 
@@ -157,7 +142,7 @@ class  _TopologyViewState extends State<TopologyViewBody > {
                 padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
                 alignment:Alignment.topLeft,
 
-                child:const Text("Here you can view your Topology! ",
+                child:const Text("Here you can Deploy! ",
                   style: TextStyle(color: Colors.black,fontSize: 30),
                   textAlign:TextAlign.left,),
               ),

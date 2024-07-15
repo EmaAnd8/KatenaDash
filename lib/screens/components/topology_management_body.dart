@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
+import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 
 
@@ -76,8 +77,11 @@ class  _TopologyManagementState extends State<TopologyManagementBody > {
         PopupMenuItem<String>(
           value: '3',
           child: Text('Deploy and export your topology'),
+          onTap: ()  {
+            Navigator.push(context, MaterialPageRoute(builder: (context){return DeployScreen() ;},),);
 
-        ),
+          },
+            ),
       ];
     },
       icon: Icon(Icons.menu), //
