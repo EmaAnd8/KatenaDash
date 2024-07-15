@@ -29,16 +29,16 @@ class SimpleGraph extends StatelessWidget {
               ..style = PaintingStyle.stroke,
     builder: (Node node) {
     String nodeId = node.key?.value ?? '';
-    return Container(
-    width: 100,
-    height: 100,
+    return SizedBox(
+    width: 60,
+    height: 60,
     child: Center( // Center the content
     child: Column(
     mainAxisSize: MainAxisSize.min,
     children: <Widget>[
     CustomPaint(
     painter: BlueNodePainter(),
-    size: const Size(30, 30),
+    size: const Size(20, 20),
     ),
     Text(
     nodeId,
