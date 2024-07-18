@@ -1066,15 +1066,17 @@ class Provider {
   }
 
  */
+
   Future<Graph?> TopologyGraphFromYaml() async {
     var yamlFile = await ServiceProvider.ImportYaml();
     var nodeProperties = yamlFile?['topology_template']['node_templates'];
-
+    Node node1=Node.Id("");
+    List<String>? bElements;
     if (nodeProperties == null) {
       print("No node templates found in YAML.");
       return null;
     }
-
+    String? requirementsList1;
     var nodeTopologyKeys = nodeProperties.keys.toList();
     List<String> imports = [];
     Graph graph = Graph()..isTree = false;
@@ -1095,22 +1097,82 @@ class Provider {
       print("No imports found in YAML.");
     }
 
-    print("Imports: $imports"); // Print the list of imports
+   // print("Imports: $imports"); // Print the list of imports
 
-    for (int y = 0; y < nodeTopologyKeys.length - 1; y++) {
+
+    for (int y = 0; y < nodeTopologyKeys.length; y++) {
       for (var importItem in imports) {
         if (nodeProperties[nodeTopologyKeys[y]]["type"] == importItem) {
-          Node node1 = Node.Id(nodeTopologyKeys[y]);
-          Node node2 = Node.Id(nodeTopologyKeys[y + 1]);
-          graph.addEdge(node1, node2);
-          print("Added edge between ${node1.key?.value} and ${node2.key?.value}"); // Print added edges
-          //TODO create the relationhips with nodes
-        }
+          node1 = Node.Id(nodeTopologyKeys[y]);
+          //node2 = Node.Id(nodeTopologyKeys[y+1]);
+          graph.addNode(node1);
+         // graph.addNode(node2);
+
+
       }
+    }
+    /*
+    for(Node ele in graph.nodes)
+      {
+        print(ele.key);
+*/
+      Node node=Node.Id("");
+
+        for(Node ele in graph.nodes)
+        {
+          if(ele.key?.value==nodeTopologyKeys[y]) {
+            node = ele;
+          //  print(ele.key?.value);
+          }
+        }
+       // print(yamlFile?['topology_template']['node_templates'][nodeTopologyKeys[y]]["requirements"]
+           // .toString());
+         requirementsList1 = yamlFile?['topology_template']['node_templates'][nodeTopologyKeys[y]]["requirements"]
+            .toString();
+        //print(requirementsList1);
+         bElements = requirementsList1?.split(',').map((item) {
+          var parts = item.trim().split(':');
+          return parts.length > 1 ? parts[1] : ''; // Extract 'b' if it exists
+        }).toList();
+        for (int l = 0; l < bElements!.length; l++) {
+          bElements[l] = bElements[l].replaceFirst("}", "");
+          bElements[l] = bElements[l].replaceFirst(" ", "");
+        }
+        bElements.last = bElements.last.replaceFirst("]", "");
+
+        // print(requirementsList);
+
+        // Check if requirements is a List
+        // Check if next node is in requirements and create edge if it is
+        for (var ul in bElements) {
+
+          // Assuming you have a way to create a Node from an I
+          for(Node elem in graph.nodes) {
+            print(elem.key?.value);
+            print(ul+'ee');
+
+
+            if(ul.compareTo(elem.key?.value)==0) {
+
+              graph.addEdge(node,elem);
+            }
+          }
+          //print("Added edge between ${node1.id} and ${node2.id}"); // Assuming Node has an 'id' property
+        }
+
+
+
     }
 
     print("Graph nodes: ${graph.nodes}"); // Print the nodes in the graph
 
     return graph;
+  }
+
+  Future<Graph?> TopologyCreator() async {
+    //TODO method for creating a new Topology
+    return null;
+
+
   }
 }

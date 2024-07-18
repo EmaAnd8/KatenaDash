@@ -13,13 +13,28 @@ class SimpleGraph extends StatelessWidget {
     return graph;
   }
 
+  String _getIconPathForNode(String nodeId) {
+
+    //final nodeType = nodeId.split(".") ;
+
+    //print(nodeId);
+    if(nodeId.contains("network")) {
+      return 'assets/icons/worldwide_10969702.png'; // Replace with the actual asset path
+    }else if(nodeId.contains("network")) // Assuming you meant '2' here
+        {
+      return 'assets/icons/wallet_4121117.png'; // Replace with the actual asset path
+    } else if(nodeId.contains('contract')){
+      return 'assets/icons/smart_14210186.png'; // Replace with the actual asset path
+    }
+    return 'assets/icons/icons8-topology-53.png'; //
+  }
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Graph?>(
       future: _getGraph(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return  Center(child: CircularProgressIndicator());
+          return  const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError || snapshot.data == null || snapshot.data!.nodes.isEmpty) {
           return Center(child: Text("Error loading graph: ${snapshot.error ?? 'No data'}"));
         } else {
@@ -29,7 +44,6 @@ class SimpleGraph extends StatelessWidget {
               algorithm: FruchtermanReingoldAlgorithm(),
               graph: snapshot.data!,
               paint: Paint()
-                ..color = Colors.green
                 ..strokeWidth = 2
                 ..style = PaintingStyle.stroke,
               builder: (Node node) {
@@ -41,9 +55,11 @@ class SimpleGraph extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        CustomPaint(
-                          painter: BlueNodePainter(),
-                          size: const Size(18, 18),
+                        Image.asset(
+                          _getIconPathForNode(nodeId), // Load icon from assets
+                          width: 20,
+                          height: 20,
+                          //color: Colors.blue, // Optional: apply color to the icon
                         ),
                         Text(
                           nodeId,
