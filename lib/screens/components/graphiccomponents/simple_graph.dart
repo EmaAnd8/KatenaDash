@@ -2,82 +2,159 @@ import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:katena_dashboard/screens/components/deploy_body.dart';
 import 'package:katena_dashboard/screens/components/graphiccomponents/simple_node.dart';
-// ... (Your other imports)
 
-class SimpleGraph extends StatelessWidget {
+class SimpleGraph extends StatefulWidget {
   const SimpleGraph({super.key});
 
+  @override
+  State<SimpleGraph> createState() => _SimpleGraphState();
+}
+
+class _SimpleGraphState extends State<SimpleGraph> {
+  Graph? graph;
+  String selectedNodeId = '';
+
   Future<Graph?> _getGraph() async {
-    Graph? graph = Graph()..isTree = false;
+    Graph? graph = Graph()
+      ..isTree = false;
     graph = await ServiceProvider.TopologyGraphFromYaml();
     return graph;
   }
 
   String _getIconPathForNode(String nodeId) {
-
     //final nodeType = nodeId.split(".") ;
 
-    //print(nodeId);
+
+//print(nodeId);
+
     if(nodeId.contains("network")) {
-      return 'assets/icons/worldwide_10969702.png'; // Replace with the actual asset path
+
+    return 'assets/icons/worldwide_10969702.png'; // Replace with the actual asset path
+
     }else if(nodeId.contains("network")) // Assuming you meant '2' here
+
         {
-      return 'assets/icons/wallet_4121117.png'; // Replace with the actual asset path
+
+    return 'assets/icons/wallet_4121117.png'; // Replace with the actual asset path
+
     } else if(nodeId.contains('contract')){
-      return 'assets/icons/smart_14210186.png'; // Replace with the actual asset path
+
+    return 'assets/icons/smart_14210186.png'; // Replace with the actual asset path
+
     }
-    return 'assets/icons/icons8-topology-53.png'; //
+
+    return 'assets/icons/icons8-topology-53.png';
   }
+
+  void _onNodeSelected(String nodeId) {
+    setState(() {
+      selectedNodeId = nodeId;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    Size size=MediaQuery.of(context).size;
     return FutureBuilder<Graph?>(
       future: _getGraph(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return  const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError || snapshot.data == null || snapshot.data!.nodes.isEmpty) {
-          return Center(child: Text("Error loading graph: ${snapshot.error ?? 'No data'}"));
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError || snapshot.data == null ||
+            snapshot.data!.nodes.isEmpty) {
+          return Center(child: Text(
+              "Error loading graph: ${snapshot.error ?? 'No data'}"));
         } else {
-          return InteractiveViewer( // Allow zooming and panning for large graphs
-            //constrained: false,
-            child: GraphView(
-              algorithm: FruchtermanReingoldAlgorithm(),
-              graph: snapshot.data!,
-              paint: Paint()
-                ..strokeWidth = 2
-                ..style = PaintingStyle.stroke,
-              builder: (Node node) {
-                String nodeId = node.key?.value ?? '';
-                return SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Image.asset(
-                          _getIconPathForNode(nodeId), // Load icon from assets
-                          width: 20,
-                          height: 20,
-                          //color: Colors.blue, // Optional: apply color to the icon
-                        ),
-                        Text(
-                          nodeId,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
+          graph = snapshot.data!;
+          return Row(
+
+            children: [
+              Expanded(
+                child: InteractiveViewer(
+                  // Allow zooming and panning for large graphs
+                  child: GraphView(
+                    algorithm: FruchtermanReingoldAlgorithm(),
+                    graph: graph!,
+                    paint: Paint()
+                      ..strokeWidth = 2
+                      ..style = PaintingStyle.stroke,
+                    builder: (Node node) {
+                      String nodeId = node.key?.value ?? '';
+                      return GestureDetector(
+                        onTap: () => _onNodeSelected(nodeId),
+                        child: SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Image.asset(
+                                  _getIconPathForNode(nodeId),
+                                  width: 20,
+                                  height: 20,
+                                ),
+                                Text(
+                                  nodeId,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              Visibility(
+                visible: selectedNodeId.isNotEmpty,
+                child: Container(
+                  width: 200,
+                  height: size.height,// Adjust width as needed
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(16.0),
+                  child: _buildSidebarContent(selectedNodeId),
+                ),
+              ),
+            ],
           );
         }
       },
     );
+  }
+
+  Widget _buildSidebarContent(String nodeId) {
+    // Fetch additional node data (e.g., from a service)
+    final nodeData = getNodeData(
+        nodeId); // Replace with your data fetching logic
+
+    if (nodeData == null) {
+      return const Text('Loading node data...');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Node Details: $nodeId',
+          style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+        ),
+        const Divider(),
+        // Display relevant node information from `nodeData`
+        Text('Type: ${nodeData['type'] ?? 'Unknown'}'),
+        Text('Status: ${nodeData['status'] ?? 'N/A'}'),
+        // ... (Add other relevant details)
+      ],
+    );
+  }
+
+  // Replace with your actual logic to fetch node data from a service
+  Map<String, dynamic>? getNodeData(String nodeId) {
+    // Implement
   }
 }
