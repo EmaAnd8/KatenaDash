@@ -150,10 +150,14 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
 
       body: SingleChildScrollView(
+
         child:Column(
 
             children: <Widget>[
+              /*
+
               Container(
+
                 padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
                 alignment:Alignment.topLeft,
 
@@ -161,7 +165,12 @@ class  _TopologyViewState extends State<TopologyViewBody > {
                   style: TextStyle(color: Colors.black,fontSize: 30),
                   textAlign:TextAlign.left,),
               ),
-              Stack(
+
+               */
+              Container(
+                height: size.height,
+              child:Stack(
+
                 alignment: Alignment.center,
 
                 children: <Widget>
@@ -181,7 +190,7 @@ class  _TopologyViewState extends State<TopologyViewBody > {
 
               )
 
-
+              ),
             ]
         ),
       ),

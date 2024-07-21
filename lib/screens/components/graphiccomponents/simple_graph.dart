@@ -12,7 +12,8 @@ class SimpleGraph extends StatefulWidget {
 
 class _SimpleGraphState extends State<SimpleGraph> {
   Graph? graph;
-  String selectedNodeId = '';
+  String hoveredNodeId = ''; // Track hovered node
+  bool showSidebar = false; // Control sidebar visibility
 
   Future<Graph?> _getGraph() async {
     Graph? graph = Graph()
@@ -22,39 +23,19 @@ class _SimpleGraphState extends State<SimpleGraph> {
   }
 
   String _getIconPathForNode(String nodeId) {
-    //final nodeType = nodeId.split(".") ;
-
-
-//print(nodeId);
-
-    if(nodeId.contains("network")) {
-
-    return 'assets/icons/worldwide_10969702.png'; // Replace with the actual asset path
-
-    }else if(nodeId.contains("network")) // Assuming you meant '2' here
-
-        {
-
-    return 'assets/icons/wallet_4121117.png'; // Replace with the actual asset path
-
-    } else if(nodeId.contains('contract')){
-
-    return 'assets/icons/smart_14210186.png'; // Replace with the actual asset path
-
+    if (nodeId.contains("network")) {
+      return 'assets/icons/worldwide_10969702.png';
+    } else if (nodeId.contains("network")) {
+      return 'assets/icons/wallet_4121117.png';
+    } else if (nodeId.contains('contract')) {
+      return 'assets/icons/smart_14210186.png';
     }
-
     return 'assets/icons/icons8-topology-53.png';
-  }
-
-  void _onNodeSelected(String nodeId) {
-    setState(() {
-      selectedNodeId = nodeId;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    Size size=MediaQuery.of(context).size;
+    Size size = MediaQuery.of(context).size;
     return FutureBuilder<Graph?>(
       future: _getGraph(),
       builder: (context, snapshot) {
@@ -62,71 +43,82 @@ class _SimpleGraphState extends State<SimpleGraph> {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError || snapshot.data == null ||
             snapshot.data!.nodes.isEmpty) {
-          return Center(child: Text(
-              "Error loading graph: ${snapshot.error ?? 'No data'}"));
+          return Center(
+              child: Text(
+                  "Error loading graph: ${snapshot.error ?? 'No data'}"));
         } else {
           graph = snapshot.data!;
-          return Row(
-
+          return Stack( // Use Stack to overlay sidebar
             children: [
-              Expanded(
-                child: InteractiveViewer(
-                  // Allow zooming and panning for large graphs
-                  child: GraphView(
-                    algorithm: FruchtermanReingoldAlgorithm(),
-                    graph: graph!,
-                    paint: Paint()
-                      ..strokeWidth = 2
-                      ..style = PaintingStyle.stroke,
-                    builder: (Node node) {
-                      String nodeId = node.key?.value ?? '';
-                      return GestureDetector(
-                        onTap: () => _onNodeSelected(nodeId),
-                        child: SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Image.asset(
-                                  _getIconPathForNode(nodeId),
-                                  width: 20,
-                                  height: 20,
+              InteractiveViewer(
+                child: GraphView(
+                  algorithm: FruchtermanReingoldAlgorithm(),
+                  graph: graph!,
+                  paint: Paint()
+                    ..strokeWidth = 2
+                    ..style = PaintingStyle.stroke,
+                  builder: (Node node) {
+                    String nodeId = node.key?.value ?? '';
+                    return MouseRegion(
+                      onEnter: (_) =>
+                          setState(() {
+                            hoveredNodeId = nodeId;
+                            showSidebar = true; // Show sidebar on hover
+                          }),
+                      onExit: (_) =>
+                          setState(() {
+                            hoveredNodeId = '';
+                            showSidebar = false; // Hide on exit
+                          }),
+                      child: SizedBox(
+                        width: 76,
+                        height: 76,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Image.asset(
+                                _getIconPathForNode(nodeId),
+                                width: 20,
+                                height: 20,
+                              ),
+                              Text(
+                                nodeId,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
                                 ),
-                                Text(
-                                  nodeId,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              if (showSidebar) // Conditionally render sidebar
+                Positioned(
+                  right: 0, // Position at the right
+                  top: 0,
+                  child: Container(
+                    width: 200,
+                    height: size.height,
+                    color: Colors.white,
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildSidebarContent(hoveredNodeId),
                   ),
                 ),
-              ),
-              Visibility(
-                visible: selectedNodeId.isNotEmpty,
-                child: Container(
-                  width: 200,
-                  height: size.height,// Adjust width as needed
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(16.0),
-                  child: _buildSidebarContent(selectedNodeId),
-                ),
-              ),
             ],
           );
         }
       },
     );
   }
+
+
+}
 
   Widget _buildSidebarContent(String nodeId) {
     // Fetch additional node data (e.g., from a service)
@@ -157,4 +149,3 @@ class _SimpleGraphState extends State<SimpleGraph> {
   Map<String, dynamic>? getNodeData(String nodeId) {
     // Implement
   }
-}

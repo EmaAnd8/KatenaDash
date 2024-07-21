@@ -1103,10 +1103,11 @@ class Provider {
     for (int y = 0; y < nodeTopologyKeys.length; y++) {
       for (var importItem in imports) {
         if (nodeProperties[nodeTopologyKeys[y]]["type"] == importItem) {
-          node1 = Node.Id(nodeTopologyKeys[y]);
+          node1 = Node.Id("name:"+nodeTopologyKeys[y]+"\n"+"type:"+nodeProperties[nodeTopologyKeys[y]]["type"]);
           //node2 = Node.Id(nodeTopologyKeys[y+1]);
           graph.addNode(node1);
          // graph.addNode(node2);
+         // print(graph.nodes);
 
 
       }
@@ -1120,8 +1121,21 @@ class Provider {
 
         for(Node ele in graph.nodes)
         {
-          if(ele.key?.value==nodeTopologyKeys[y]) {
+          //print(ele);
+          List<String> lines = ele.key?.value.split('\n');
+          Map<String, String> typeMap = {};
+          for (var line in lines) {
+            List<String> parts = line.split(':');
+            if (parts.length == 2) {
+              String key = parts[0].trim();
+              String value = parts[1].trim();
+              typeMap[key] = value;
+            }
+          }
+
+          if(typeMap['name']==nodeTopologyKeys[y]) {
             node = ele;
+            //print(node);
           //  print(ele.key?.value);
           }
         }
@@ -1148,11 +1162,23 @@ class Provider {
 
           // Assuming you have a way to create a Node from an I
           for(Node elem in graph.nodes) {
-            print(elem.key?.value);
-            print(ul+'ee');
+            //print(elem.key?.value);
+            //print(ul+'ee');
+            //print(ele);
+            List<String> lines = elem.key?.value.split('\n');
+            Map<String, String> typeMap = {};
+            for (var line in lines) {
+              List<String> parts = line.split(':');
+              if (parts.length == 2) {
+                String key = parts[0].trim();
+                String value = parts[1].trim();
+                typeMap[key] = value;
+              }
+            }
 
 
-            if(ul.compareTo(elem.key?.value)==0) {
+
+            if(ul.compareTo(typeMap['name']!)==0) {
 
               graph.addEdge(node,elem);
             }
@@ -1168,6 +1194,9 @@ class Provider {
 
     return graph;
   }
+
+
+
 
   Future<Graph?> TopologyCreator() async {
     //TODO method for creating a new Topology
