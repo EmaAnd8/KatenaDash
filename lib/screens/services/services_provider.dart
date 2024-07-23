@@ -14,6 +14,7 @@ import 'package:katena_dashboard/screens/components/change_name_body.dart';
 import 'package:katena_dashboard/screens/components/graphiccomponents/simple_arrow.dart';
 import 'package:katena_dashboard/screens/components/graphiccomponents/simple_rectangle.dart';
 import 'package:katena_dashboard/screens/components/topology_management_body.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yaml/yaml.dart';
@@ -1195,8 +1196,40 @@ class Provider {
     return graph;
   }
 
+  Future<void> NodesDefinition() async {
+    /*
+    try {
+      // Get the directory containing the YAML files
 
+      final directory = await getApplicationDocumentsDirectory();
 
+      final nodesDirectory = Directory(path.join(directory.path, 'katena/nodes'));
+
+      // List all YAML files in the directory
+      List<FileSystemEntity> yamlFiles = nodesDirectory
+          .listSync()
+          .where((file) => file.path.endsWith('.yaml'))
+          .toList();
+
+      for (var file in yamlFiles) {
+        YamlMap? yamlMap = await loadYamlFromAssets(file.path);
+        var nodeTypes = yamlMap?['node_types'];
+        if (nodeTypes != null) {
+          print(nodeTypes);
+        }
+      }
+    } catch (e) {
+      print("Error loading import: nodes");
+    }
+
+     */
+  }
+
+  Future<String?> GetDescriptionByType(String type) async
+  {
+    //TODO Description of the node to put in the Sidebar
+
+  }
 
   Future<Graph?> TopologyCreator() async {
     //TODO method for creating a new Topology

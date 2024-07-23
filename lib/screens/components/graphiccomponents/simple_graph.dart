@@ -15,17 +15,24 @@ class _SimpleGraphState extends State<SimpleGraph> {
   String hoveredNodeId = ''; // Track hovered node
   bool showSidebar = false; // Control sidebar visibility
 
-  Future<Graph?> _getGraph() async {
-    Graph? graph = Graph()
-      ..isTree = false;
-    graph = await ServiceProvider.TopologyGraphFromYaml();
-    return graph;
+  @override
+  void initState() {
+    super.initState();
+    _getGraph();
+  }
+
+  Future<void> _getGraph() async {
+    Graph? fetchedGraph = Graph()..isTree = false;
+    fetchedGraph = await ServiceProvider.TopologyGraphFromYaml();
+    setState(() {
+      graph = fetchedGraph;
+    });
   }
 
   String _getIconPathForNode(String nodeId) {
     if (nodeId.contains("network")) {
       return 'assets/icons/worldwide_10969702.png';
-    } else if (nodeId.contains("network")) {
+    } else if (nodeId.contains("wallet")) {
       return 'assets/icons/wallet_4121117.png';
     } else if (nodeId.contains('contract')) {
       return 'assets/icons/smart_14210186.png';
@@ -36,94 +43,77 @@ class _SimpleGraphState extends State<SimpleGraph> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    return FutureBuilder<Graph?>(
-      future: _getGraph(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError || snapshot.data == null ||
-            snapshot.data!.nodes.isEmpty) {
-          return Center(
-              child: Text(
-                  "Error loading graph: ${snapshot.error ?? 'No data'}"));
-        } else {
-          graph = snapshot.data!;
-          return Stack( // Use Stack to overlay sidebar
-            children: [
-              InteractiveViewer(
-                child: GraphView(
-                  algorithm: FruchtermanReingoldAlgorithm(),
-                  graph: graph!,
-                  paint: Paint()
-                    ..strokeWidth = 2
-                    ..style = PaintingStyle.stroke,
-                  builder: (Node node) {
-                    String nodeId = node.key?.value ?? '';
-                    return MouseRegion(
-                      onEnter: (_) =>
-                          setState(() {
-                            hoveredNodeId = nodeId;
-                            showSidebar = true; // Show sidebar on hover
-                          }),
-                      onExit: (_) =>
-                          setState(() {
-                            hoveredNodeId = '';
-                            showSidebar = false; // Hide on exit
-                          }),
-                      child: SizedBox(
-                        width: 76,
-                        height: 76,
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Image.asset(
-                                _getIconPathForNode(nodeId),
-                                width: 20,
-                                height: 20,
-                              ),
-                              Text(
-                                nodeId,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
+    return Scaffold(
+      body: graph == null
+          ? const Center(child: CircularProgressIndicator())
+          : Stack( // Use Stack to overlay sidebar
+        children: [
+          InteractiveViewer(
+            child: GraphView(
+              algorithm: FruchtermanReingoldAlgorithm(),
+              graph: graph!,
+              paint: Paint()
+                ..strokeWidth = 2
+                ..style = PaintingStyle.stroke,
+              builder: (Node node) {
+                String nodeId = node.key?.value ?? '';
+                return MouseRegion(
+                  onEnter: (_) => setState(() {
+                    hoveredNodeId = nodeId;
+                    showSidebar = true; // Show sidebar on hover
+                  }),
+                  onExit: (_) => setState(() {
+                    hoveredNodeId = '';
+                    showSidebar = false; // Hide on exit
+                  }),
+                  child: SizedBox(
+                    width: 76,
+                    height: 76,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Image.asset(
+                            _getIconPathForNode(nodeId),
+                            width: 20,
+                            height: 20,
                           ),
-                        ),
+                          Text(
+                            nodeId,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
-              ),
-              if (showSidebar) // Conditionally render sidebar
-                Positioned(
-                  right: 0, // Position at the right
-                  top: 0,
-                  child: Container(
-                    width: 200,
-                    height: size.height,
-                    color: Colors.white,
-                    padding: const EdgeInsets.all(16.0),
-                    child: _buildSidebarContent(hoveredNodeId),
+                    ),
                   ),
-                ),
-            ],
-          );
-        }
-      },
+                );
+              },
+            ),
+          ),
+          if (showSidebar) // Conditionally render sidebar
+            Positioned(
+              right: 0, // Position at the right
+              top: 0,
+              child: Container(
+                width: 200,
+                height: size.height,
+                color: Colors.white,
+                padding: const EdgeInsets.all(16.0),
+                child: _buildSidebarContent(hoveredNodeId),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
-
-}
-
   Widget _buildSidebarContent(String nodeId) {
     // Fetch additional node data (e.g., from a service)
-    final nodeData = getNodeData(
-        nodeId); // Replace with your data fetching logic
+    final nodeData = getNodeData(nodeId); // Replace with your data fetching logic
 
     if (nodeData == null) {
       return const Text('Loading node data...');
@@ -148,4 +138,10 @@ class _SimpleGraphState extends State<SimpleGraph> {
   // Replace with your actual logic to fetch node data from a service
   Map<String, dynamic>? getNodeData(String nodeId) {
     // Implement
+    return {
+      'type': 'ExampleType',
+      'status': 'Active',
+      // Add other relevant details
+    };
   }
+}
