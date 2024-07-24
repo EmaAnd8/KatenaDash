@@ -15,8 +15,7 @@ import 'package:katena_dashboard/screens/components/graphiccomponents/simple_arr
 import 'package:katena_dashboard/screens/components/graphiccomponents/simple_rectangle.dart';
 import 'package:katena_dashboard/screens/components/topology_management_body.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import 'package:yaml/yaml.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,9 +27,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:katena_dashboard/firebase_options.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
-import 'package:katena_dashboard/screens/services/services_provider.dart';
+
 import 'package:katena_dashboard/screens/settings/settings_screen.dart';
-import 'package:katena_dashboard/screens/components/graphiccomponents/simple_node.dart';
+
 enum AuthStatus {
   successful,
   wrongPassword,
@@ -711,10 +710,12 @@ class Provider {
 
     print(yamlFile);
     print(yamlFile?["topology_template"]["node_templates"]["userWallet"]);
-    if (yamlFile?["topology_template"]["node_templates"]["ganache"].toString() != null) {
-      if (yamlFile?["topology_template"]["node_templates"]["ganache"].toString() != null &&
-          yamlFile?["topology_template"]["node_templates"]["userWallet"].toString() != null) {
-
+    if (yamlFile?["topology_template"]["node_templates"]["ganache"]
+        .toString() != null) {
+      if (yamlFile?["topology_template"]["node_templates"]["ganache"]
+          .toString() != null &&
+          yamlFile?["topology_template"]["node_templates"]["userWallet"]
+              .toString() != null) {
         List<Widget> nodes = [
           // User Wallet Node
           Column(
@@ -745,8 +746,8 @@ class Provider {
             ),
           ),
           Padding(
-          padding: EdgeInsets.only(right: 75),
-                child: const Text("Hosted on", textAlign: TextAlign.center),
+            padding: EdgeInsets.only(right: 75),
+            child: const Text("Hosted on", textAlign: TextAlign.center),
           ),
           // Ganache Node
           Padding(
@@ -760,8 +761,10 @@ class Provider {
         ];
 
         // EnsRegistry Node
-        if (yamlFile?["topology_template"]["node_templates"]["ensRegistry"].toString() != null) {
-          print(yamlFile?["topology_template"]["node_templates"]["ensRegistry"].toString());
+        if (yamlFile?["topology_template"]["node_templates"]["ensRegistry"]
+            .toString() != null) {
+          print(yamlFile?["topology_template"]["node_templates"]["ensRegistry"]
+              .toString());
           nodes.addAll([
             // Arrow to EnsRegistry
             Padding(
@@ -769,65 +772,67 @@ class Provider {
               child: CustomPaint(
                 painter: ArrowPainter(
                   color: Colors.blue,
-                  angle: (3/4)*math.pi,
+                  angle: (3 / 4) * math.pi,
                   length: 60,
                 ),
                 size: const Size(10, 50),
               ),
             ),
-          Padding(padding: const EdgeInsets.only(bottom: 200,left: 100),
-            child:Column(
+            Padding(padding: const EdgeInsets.only(bottom: 200, left: 100),
+              child: Column(
 
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: Image.asset(
-                    "assets/icons/smart_14210186.png",
-                    width: 50,
-                    height: 50,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 10),
+                    child: Image.asset(
+                      "assets/icons/smart_14210186.png",
+                      width: 50,
+                      height: 50,
+                    ),
                   ),
-                ),
-                const Padding(  padding: EdgeInsets.only(bottom: 5),
-                child:   Text("EnsRegister"),
-                ),
-                const Text("abi: ENSRegistry")
-              ],
+                  const Padding(padding: EdgeInsets.only(bottom: 5),
+                    child: Text("EnsRegister"),
+                  ),
+                  const Text("abi: ENSRegistry")
+                ],
 
+              ),
             ),
-          ),
           ]);
-
         } else {
           print("No ens Register");
         }
 
         // PublicResolver Node
-        if (yamlFile?["topology_template"]["node_templates"]["publicResolver"].toString() != null) {
-          print(yamlFile?["topology_template"]["node_templates"]["publicResolver"].toString());
+        if (yamlFile?["topology_template"]["node_templates"]["publicResolver"]
+            .toString() != null) {
+          print(
+              yamlFile?["topology_template"]["node_templates"]["publicResolver"]
+                  .toString());
           nodes.addAll([
             // Arrow to PublicResolver
             Stack(
               fit: StackFit.loose,
               children: <Widget>
-            [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 70,vertical: 30),
-              child: CustomPaint(
-                painter: ArrowPainter(
-                  color: Colors.blue,
-                  angle: (-2*math.pi)+(math.pi/2)+(-math.pi/3),
-                  length: 70,
+              [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 70, vertical: 30),
+                  child: CustomPaint(
+                    painter: ArrowPainter(
+                      color: Colors.blue,
+                      angle: (-2 * math.pi) + (math.pi / 2) + (-math.pi / 3),
+                      length: 70,
+                    ),
+                    size: const Size(10, 50),
+                  ),
                 ),
-                size: const Size(10, 50),
-              ),
-            ),
 
-    const Padding(padding: EdgeInsets.only(right: 25,top: 35),
-     child:Text("Connected to"),
-    ),
+                const Padding(padding: EdgeInsets.only(right: 25, top: 35),
+                  child: Text("Connected to"),
+                ),
 
-            
-    ],
+
+              ],
             ),
             Column(
               children: <Widget>[
@@ -839,8 +844,8 @@ class Provider {
                     height: 50,
                   ),
                 ),
-                const Padding(  padding: EdgeInsets.only(bottom: 5),
-                  child:   Text("publicResolver"),
+                const Padding(padding: EdgeInsets.only(bottom: 5),
+                  child: Text("publicResolver"),
                 ),
                 const Text("abi: PublicResolver"),
               ],
@@ -851,8 +856,11 @@ class Provider {
         }
 
         // ReverseRegistrar Node
-        if (yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"].toString() != null) {
-          print(yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"].toString());
+        if (yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"]
+            .toString() != null) {
+          print(
+              yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"]
+                  .toString());
 
           nodes.addAll([
             // Arrow to ReverseRegistrar
@@ -881,8 +889,8 @@ class Provider {
                 ),
 
                 const Padding(padding: EdgeInsets.only(bottom: 5),
-                child:Text("ReverseRegistrar"),
-    ),
+                  child: Text("ReverseRegistrar"),
+                ),
                 Text("abi: ReverseRegistrar")
 
 
@@ -896,8 +904,10 @@ class Provider {
         }
 
         // Registrar Node
-        if (yamlFile?["topology_template"]["node_templates"]["registrar"].toString() != null) {
-          print(yamlFile?["topology_template"]["node_templates"]["registrar"].toString());
+        if (yamlFile?["topology_template"]["node_templates"]["registrar"]
+            .toString() != null) {
+          print(yamlFile?["topology_template"]["node_templates"]["registrar"]
+              .toString());
           nodes.addAll([
             // Arrow to Registrar
             Padding(
@@ -922,8 +932,8 @@ class Provider {
                   ),
                 ),
 
-                const Padding(  padding: EdgeInsets.only(bottom: 5),
-                  child:  Text("Registrar"),
+                const Padding(padding: EdgeInsets.only(bottom: 5),
+                  child: Text("Registrar"),
 
                 ),
                 const Text("abi: Registrar")
@@ -1071,7 +1081,7 @@ class Provider {
   Future<Graph?> TopologyGraphFromYaml() async {
     var yamlFile = await ServiceProvider.ImportYaml();
     var nodeProperties = yamlFile?['topology_template']['node_templates'];
-    Node node1=Node.Id("");
+    Node node1 = Node.Id("");
     List<String>? bElements;
     if (nodeProperties == null) {
       print("No node templates found in YAML.");
@@ -1080,12 +1090,14 @@ class Provider {
     String? requirementsList1;
     var nodeTopologyKeys = nodeProperties.keys.toList();
     List<String> imports = [];
-    Graph graph = Graph()..isTree = false;
+    Graph graph = Graph()
+      ..isTree = false;
 
     if (yamlFile?["imports"] != null && yamlFile!["imports"].isNotEmpty) {
       for (var importPath in yamlFile["imports"]) {
         try {
-          YamlMap? yamlMap = await loadYamlFromAssets("katena-main/$importPath");
+          YamlMap? yamlMap = await loadYamlFromAssets(
+              "katena-main/$importPath");
           var nodeTypes = yamlMap?['node_types'];
           if (nodeTypes != null) {
             imports.addAll(nodeTypes.keys.cast<String>());
@@ -1098,32 +1110,75 @@ class Provider {
       print("No imports found in YAML.");
     }
 
-   // print("Imports: $imports"); // Print the list of imports
+    // print("Imports: $imports"); // Print the list of imports
 
 
     for (int y = 0; y < nodeTopologyKeys.length; y++) {
       for (var importItem in imports) {
         if (nodeProperties[nodeTopologyKeys[y]]["type"] == importItem) {
-          node1 = Node.Id("name:"+nodeTopologyKeys[y]+"\n"+"type:"+nodeProperties[nodeTopologyKeys[y]]["type"]);
+          node1 = Node.Id("name:" + nodeTopologyKeys[y] + "\n" + "type:" +
+              nodeProperties[nodeTopologyKeys[y]]["type"]);
           //node2 = Node.Id(nodeTopologyKeys[y+1]);
           graph.addNode(node1);
-         // graph.addNode(node2);
-         // print(graph.nodes);
+          // graph.addNode(node2);
+          // print(graph.nodes);
 
 
+        }
       }
-    }
-    /*
+      /*
     for(Node ele in graph.nodes)
       {
         print(ele.key);
 */
-      Node node=Node.Id("");
+      Node node = Node.Id("");
 
-        for(Node ele in graph.nodes)
-        {
+      for (Node ele in graph.nodes) {
+        //print(ele);
+        List<String> lines = ele.key?.value.split('\n');
+        Map<String, String> typeMap = {};
+        for (var line in lines) {
+          List<String> parts = line.split(':');
+          if (parts.length == 2) {
+            String key = parts[0].trim();
+            String value = parts[1].trim();
+            typeMap[key] = value;
+          }
+        }
+
+        if (typeMap['name'] == nodeTopologyKeys[y]) {
+          node = ele;
+          //print(node);
+          //  print(ele.key?.value);
+        }
+      }
+      // print(yamlFile?['topology_template']['node_templates'][nodeTopologyKeys[y]]["requirements"]
+      // .toString());
+      requirementsList1 =
+          yamlFile?['topology_template']['node_templates'][nodeTopologyKeys[y]]["requirements"]
+              .toString();
+      //print(requirementsList1);
+      bElements = requirementsList1?.split(',').map((item) {
+        var parts = item.trim().split(':');
+        return parts.length > 1 ? parts[1] : ''; // Extract 'b' if it exists
+      }).toList();
+      for (int l = 0; l < bElements!.length; l++) {
+        bElements[l] = bElements[l].replaceFirst("}", "");
+        bElements[l] = bElements[l].replaceFirst(" ", "");
+      }
+      bElements.last = bElements.last.replaceFirst("]", "");
+
+      // print(requirementsList);
+
+      // Check if requirements is a List
+      // Check if next node is in requirements and create edge if it is
+      for (var ul in bElements) {
+        // Assuming you have a way to create a Node from an I
+        for (Node elem in graph.nodes) {
+          //print(elem.key?.value);
+          //print(ul+'ee');
           //print(ele);
-          List<String> lines = ele.key?.value.split('\n');
+          List<String> lines = elem.key?.value.split('\n');
           Map<String, String> typeMap = {};
           for (var line in lines) {
             List<String> parts = line.split(':');
@@ -1134,61 +1189,14 @@ class Provider {
             }
           }
 
-          if(typeMap['name']==nodeTopologyKeys[y]) {
-            node = ele;
-            //print(node);
-          //  print(ele.key?.value);
+
+
+          if (ul.compareTo(typeMap['name']!) == 0) {
+            graph.addEdge(node, elem);
           }
         }
-       // print(yamlFile?['topology_template']['node_templates'][nodeTopologyKeys[y]]["requirements"]
-           // .toString());
-         requirementsList1 = yamlFile?['topology_template']['node_templates'][nodeTopologyKeys[y]]["requirements"]
-            .toString();
-        //print(requirementsList1);
-         bElements = requirementsList1?.split(',').map((item) {
-          var parts = item.trim().split(':');
-          return parts.length > 1 ? parts[1] : ''; // Extract 'b' if it exists
-        }).toList();
-        for (int l = 0; l < bElements!.length; l++) {
-          bElements[l] = bElements[l].replaceFirst("}", "");
-          bElements[l] = bElements[l].replaceFirst(" ", "");
-        }
-        bElements.last = bElements.last.replaceFirst("]", "");
-
-        // print(requirementsList);
-
-        // Check if requirements is a List
-        // Check if next node is in requirements and create edge if it is
-        for (var ul in bElements) {
-
-          // Assuming you have a way to create a Node from an I
-          for(Node elem in graph.nodes) {
-            //print(elem.key?.value);
-            //print(ul+'ee');
-            //print(ele);
-            List<String> lines = elem.key?.value.split('\n');
-            Map<String, String> typeMap = {};
-            for (var line in lines) {
-              List<String> parts = line.split(':');
-              if (parts.length == 2) {
-                String key = parts[0].trim();
-                String value = parts[1].trim();
-                typeMap[key] = value;
-              }
-            }
-
-
-
-            if(ul.compareTo(typeMap['name']!)==0) {
-
-              graph.addEdge(node,elem);
-            }
-          }
-          //print("Added edge between ${node1.id} and ${node2.id}"); // Assuming Node has an 'id' property
-        }
-
-
-
+        //print("Added edge between ${node1.id} and ${node2.id}"); // Assuming Node has an 'id' property
+      }
     }
 
     print("Graph nodes: ${graph.nodes}"); // Print the nodes in the graph
@@ -1225,16 +1233,50 @@ class Provider {
      */
   }
 
-  Future<String?> GetDescriptionByType(String type) async
-  {
-    //TODO Description of the node to put in the Sidebar
+  Future<YamlMap?> GetDescriptionByType(String type) async {
 
+    try {
+      // Load the AssetManifest.json which contains a list of all assets
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      // Filter the list to get only the YAML files in the katena-main/nodes directory
+      final yamlFiles = manifestMap.keys
+          .where((String key) =>
+      key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
+          .toList();
+
+      for (var file in yamlFiles) {
+        // Read the YAML file
+        final yamlContent = await rootBundle.loadString(file);
+        final yamlMap = loadYaml(yamlContent) as YamlMap;
+        var nodeTypes = yamlMap["node_types"];
+       // print(yamlMap);
+
+        // print(nodeTypes);
+        if(nodeTypes!=null)
+          {
+            for (var entry in nodeTypes.entries) {
+              if(entry.key==type) {
+                print('Key: ${entry.key}, Value: ${entry.value}');
+                return entry.value;
+              }
+            }
+        }
+
+
+
+
+      }
+    } catch(e) {
+      print('Error loading descriptions: $e');
+    }
+    return null;
   }
+
 
   Future<Graph?> TopologyCreator() async {
     //TODO method for creating a new Topology
     return null;
-
-
   }
 }
