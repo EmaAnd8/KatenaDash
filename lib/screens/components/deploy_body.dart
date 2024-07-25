@@ -134,7 +134,12 @@ class  _DeployState extends State<DeployBody > {
 
 
 
-      body: SingleChildScrollView(
+      body:Container(
+        width: size.width,
+        height: size.height,
+        color: Colors.white,
+      child:SingleChildScrollView(
+
         child:Column(
 
             children: <Widget>[
@@ -170,7 +175,7 @@ class  _DeployState extends State<DeployBody > {
             ]
         ),
       ),
-
+      ),
     );
   }
 
