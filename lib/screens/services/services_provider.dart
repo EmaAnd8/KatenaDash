@@ -1204,33 +1204,48 @@ class Provider {
     return graph;
   }
 
-  Future<void> NodesDefinition() async {
-    /*
+  Future<List<String>?> NodesDefinition() async {
     try {
-      // Get the directory containing the YAML files
+      List<String> TypesToPrint= [];
+      // Load the AssetManifest.json which contains a list of all assets
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
 
-      final directory = await getApplicationDocumentsDirectory();
-
-      final nodesDirectory = Directory(path.join(directory.path, 'katena/nodes'));
-
-      // List all YAML files in the directory
-      List<FileSystemEntity> yamlFiles = nodesDirectory
-          .listSync()
-          .where((file) => file.path.endsWith('.yaml'))
+      // Filter the list to get only the YAML files in the katena-main/nodes directory
+      final yamlFiles = manifestMap.keys
+          .where((String key) =>
+      key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
           .toList();
 
       for (var file in yamlFiles) {
-        YamlMap? yamlMap = await loadYamlFromAssets(file.path);
-        var nodeTypes = yamlMap?['node_types'];
-        if (nodeTypes != null) {
-          print(nodeTypes);
+        // Read the YAML file
+        final yamlContent = await rootBundle.loadString(file);
+        final yamlMap = loadYaml(yamlContent) as YamlMap;
+        var nodeTypes = yamlMap["node_types"];
+        //print(yamlMap);
+        if(nodeTypes!=null) {
+          for (var entry in nodeTypes.entries) {
+            print('Key: ${entry.key}, Value: ${entry.value}');
+            TypesToPrint.add(entry.key);
+          }
+           print(TypesToPrint);
+
+
         }
+
+
+
+
       }
-    } catch (e) {
-      print("Error loading import: nodes");
+      return TypesToPrint;
+      }catch(e){
+      print('Error loading descriptions: $e');
     }
 
-     */
+
+
+    return null;
+
   }
 
   Future<YamlMap?> GetDescriptionByType(String type) async {
