@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
+import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
 
 Provider ServiceProvider = Provider.instance;
 List<Widget> simpleTopology = [];
@@ -53,17 +54,25 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                 PopupMenuItem<String>(
                   value: '1',
                   child: Text('Make the Deploy'),
-                  onTap: () async {
-                    ServiceProvider.NodesDefinition();
-                  },
+                    onTap: () async {
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                        return DeployScreen();
+                      }));
+                    }
                 ),
-                const PopupMenuItem<String>(
+                 const PopupMenuItem<String>(
                   value: '2',
                   child: Text('Export your Topology'),
+
                 ),
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: '3',
                   child: Text('View your Topology'),
+                    onTap: () async {
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                        return TopologyViewScreen();
+                      }));
+                    }
                 ),
               ];
             },
@@ -71,7 +80,11 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
           ),
         ],
       ),
-      body: MouseRegion(
+      body:Container(
+        color: Colors.white,
+        width: size.width,
+        height: size.height,
+      child:MouseRegion(
         onEnter: (_) {
           setState(() {
             _isDrawerOpen = true;
@@ -90,11 +103,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
                     alignment: Alignment.topLeft,
-                    child: const Text(
-                      "Here you can manage your Topology ",
-                      style: TextStyle(color: Colors.black, fontSize: 30),
-                      textAlign: TextAlign.left,
-                    ),
+
                   ),
                   Row(),
                 ],
@@ -145,6 +154,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

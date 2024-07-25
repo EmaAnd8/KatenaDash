@@ -87,7 +87,11 @@ class _TopologyViewState extends State<TopologyViewBody> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Container(
+    color: Colors.white,
+      width: size.width,
+      height: size.height,
+      child:SingleChildScrollView(
         child: Column(
           children: <Widget>[
             Container(
@@ -104,6 +108,7 @@ class _TopologyViewState extends State<TopologyViewBody> {
           ],
         ),
       ),
+    ),
     );
   }
 }
