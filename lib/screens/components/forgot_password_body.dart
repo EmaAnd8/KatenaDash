@@ -5,8 +5,7 @@ import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import '../../firebase_options.dart';
 
-//constants
-
+// Constants
 String email = "";
 enum AuthStatus {
   successful,
@@ -17,132 +16,129 @@ enum AuthStatus {
   unknown,
 }
 
-String  pattern = r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$';
-RegExp regExp = new RegExp(pattern);
-class ResetPasswordBody extends StatefulWidget{
+String pattern = r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$';
+RegExp regExp = RegExp(pattern);
+
+class ResetPasswordBody extends StatefulWidget {
   const ResetPasswordBody({super.key});
 
   @override
-  _ForgotPasswordFormState createState() =>  _ForgotPasswordFormState();
-
-
+  _ForgotPasswordFormState createState() => _ForgotPasswordFormState();
 }
 
-class  _ForgotPasswordFormState extends State<ResetPasswordBody> {
+class _ForgotPasswordFormState extends State<ResetPasswordBody> {
   final _formKey = GlobalKey<FormState>();
-
-
-
-
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
-    Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
-    return Container(
-      width: size.width,
-
-
-      child:Form(
-        key: _formKey,
-        child:Container(
-          width: size.width,
-
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image.asset("assets/icons/icons8-chains-emoji-96.png"),
-            const Text("Reset The password"),
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-              child: SizedBox(
-                width: 400,
-
-
-                child:TextFormField(
-                  decoration:  InputDecoration(
-                    fillColor: Colors.black,
-                    labelText: "Email",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-
-                    hintText: "",
+    Size size = MediaQuery.of(context).size;
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: size.height * 0.1),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Image.asset("assets/icons/icons8-chains-emoji-96.png"),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Reset The Password",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return "Please enter your email";
-                    }
-                    // Add email validation logic here (e.g., check for @ and .)
-                    if(!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!))
-                    {
-                      return "enter a valid Email address.";
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: 400,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                        labelText: "Email",
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                          borderSide: BorderSide(color: Colors.blue),
+                        ),
+                        prefixIcon: Icon(Icons.email, color: Colors.blue),
+                        filled: true,
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Please enter your email";
+                        }
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          return "Enter a valid Email address.";
+                        }
+                        return null;
+                      },
+                      onSaved: (value) {
+                        email = value!;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: 400,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          _formKey.currentState!.save();
 
-                    }
-                    return null;
-                  },
-                  onSaved: (value) {
-                    email = value!;
-                  },
-                ),
+                          // Invoke the method for the reset of the password
+                          Provider serviceProvider = Provider.instance;
+                          AuthStatus auth = (await serviceProvider.PasswordReset(email)) as AuthStatus;
+                          print(auth);
+                          if (auth == AuthStatus.successful) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) {
+                                return LoginScreen();
+                              }),
+                            );
+                          } else {
+                            const snackBar = SnackBar(
+                              content: Text('Your password cannot be restored'),
+                              backgroundColor: Colors.red,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                      ),
+                      child: const Text(
+                        'Reset Password',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
+                    },
+                    child: const Text(
+                      'Go back',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: ElevatedButton(
-                onPressed: ()async {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-
-                    //Invoke the method for the reset of the password
-                    Provider serviceProvider=Provider.instance;
-                    AuthStatus auth = serviceProvider.PasswordReset(email) as AuthStatus;
-                    print(auth);
-                    if (auth == AuthStatus.successful) {
-                      Navigator.push(
-                        context, MaterialPageRoute(builder: (context) {
-                        return LoginScreen();
-                      },),);
-                    }else
-                    {
-                      const Text(
-                        'your password cannot be restored',
-                        style: TextStyle(color: Colors.red),
-                      );
-                    }
-                  }
-                },
-
-
-                child:const Text('Reset Password'),
-
-
-              ),
-
-            ),
-
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
-              },
-              child:const Text(
-                'Go back',
-                style: TextStyle(color: Colors.black),
-              ),
-            ),
-
-
-
-
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
 }
+

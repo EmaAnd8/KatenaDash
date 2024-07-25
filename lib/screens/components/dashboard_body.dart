@@ -17,77 +17,59 @@ import '../settings/settings_screen.dart';
 import '../services/services_provider.dart';
 import 'dart:io';
 
-
 final storageRef = FirebaseStorage.instance.ref();
-String? name="";
-class  DashboardBody extends StatefulWidget{
+String? name = "";
+
+class DashboardBody extends StatefulWidget {
   const DashboardBody({super.key});
 
   @override
   _DashboardState createState() => _DashboardState();
-
-
-
 }
 
 class _DashboardState extends State<DashboardBody> {
+  String? uid1 = FirebaseAuth.instance.currentUser?.email;
 
+  String? QueryName(email, context) {
+    Map<String, String> keyValueMap = {};
+    String modifiedString = "";
+    String StringParser = "";
+    List<String> pairs = [];
+    List<String> parts = [];
 
-String? uid1=FirebaseAuth.instance.currentUser?.email;
-
-
-String? QueryName(email,context)  {
-  Map<String, String> keyValueMap = {};
-  String modifiedString="";
-  String StringParser="";
-  List<String> pairs=[];
-  List<String> parts=[];
-
-  CollectionReference users = FirebaseFirestore.instance.collection('Users');
-  // Update the population of a city
-  final query = users.where("email", isEqualTo: email).get()
-      .then((querySnapshot) {
-    //print("Successfully completed");
-    for (var docSnapshot in querySnapshot.docs) {
-      final usersRef = users.doc(docSnapshot.id);
-      StringParser = docSnapshot.data().toString();
-      modifiedString = StringParser.substring(1,StringParser.length-1);
-      modifiedString = modifiedString.replaceAll(",", "");
-      pairs = modifiedString.split(RegExp(r"\s+(?=\w+: )"));
-      // Extract keys and values
-      for (String pair in pairs) {
-        parts = pair.split(": ");
-        if (parts.length == 2) {
-          keyValueMap[parts[0]] = parts[1];
-
-
+    CollectionReference users = FirebaseFirestore.instance.collection('Users');
+    // Update the population of a city
+    final query = users.where("email", isEqualTo: email).get().then((querySnapshot) {
+      for (var docSnapshot in querySnapshot.docs) {
+        final usersRef = users.doc(docSnapshot.id);
+        StringParser = docSnapshot.data().toString();
+        modifiedString = StringParser.substring(1, StringParser.length - 1);
+        modifiedString = modifiedString.replaceAll(",", "");
+        pairs = modifiedString.split(RegExp(r"\s+(?=\w+: )"));
+        // Extract keys and values
+        for (String pair in pairs) {
+          parts = pair.split(": ");
+          if (parts.length == 2) {
+            keyValueMap[parts[0]] = parts[1];
+          }
+          name = keyValueMap["Name"];
+          setState(() {});
         }
-        //print( keyValueMap["Name"]);
-        name=keyValueMap["Name"];
-        setState(() {
-          simpleTopology;
-        });
       }
-
-
-
-    }
       return null;
-  });
-  // print( keyValueMap["Name"]);
-
-}
-
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    String? alfa=QueryName(uid1,context);
-    Size size=MediaQuery.of(context).size; //with this query I get (w,h) of the screen
-    return Scaffold(
+    String? alfa = QueryName(uid1, context);
+    Size size = MediaQuery.of(context).size; // With this query I get (w,h) of the screen
 
+    return Scaffold(
       appBar: AppBar(
-        title: const Text('KatenaDashboard'),
-        backgroundColor: CupertinoColors.white,
+        title: const Text('Katena Dashboard', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        iconTheme: IconThemeData(color: Colors.black),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -97,192 +79,203 @@ String? QueryName(email,context)  {
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle),
-            color: Colors.black,
             onPressed: () async {
               WidgetsFlutterBinding.ensureInitialized();
               await Firebase.initializeApp(
                 options: DefaultFirebaseOptions.currentPlatform,
               );
-              Provider serviceProvider=Provider.instance;
+              Provider serviceProvider = Provider.instance;
               serviceProvider.ProfileImage();
-             // _loadAndConvertYaml();
-            }),
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context){return SettingsScreen();},),);
+              Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return SettingsScreen();
+              }));
             },
           ),
           IconButton(
-            icon: const Icon(Icons.login),
-            color: Colors.black,
+            icon: const Icon(Icons.logout),
             onPressed: () async {
-              /*
-              WidgetsFlutterBinding.ensureInitialized();
-              await Firebase.initializeApp(
-                options: DefaultFirebaseOptions.currentPlatform,
-              );
-
-               */
-               Provider serviceProvider=Provider.instance;
-               serviceProvider.Signout();
-               Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return LoginScreen();},),);
-
+              Provider serviceProvider = Provider.instance;
+              serviceProvider.Signout();
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                return LoginScreen();
+              }));
             },
           ),
-
-
         ],
       ),
       body: SingleChildScrollView(
-      child:Column(
-
-      children: <Widget>[
-        Container(
-           padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
-           alignment:Alignment.topLeft,
-
-           child:Text("Hi!\t${name},",
-           style: const TextStyle(color: Colors.black,fontSize: 30),
-           textAlign:TextAlign.left,
-           ),
-        ),
-        Row(
-          children: <Widget>[
-           Container(
-              padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
-              width: size.width/2,
-              height: size.height-132,
-              child: SfCartesianChart(
-                // Initialize category axis
-                  primaryXAxis: CategoryAxis(),
-                  series: <CartesianSeries>[
-                    // Initialize line series
-                    LineSeries<ChartData, String>(
-                        dataSource: [
-                          // Bind data source
-                          ChartData('Jan', 35),
-                          ChartData('Feb', 28),
-                          ChartData('Mar', 34),
-                          ChartData('Apr', 32),
-                          ChartData('May', 40)
-                        ],
-                        xValueMapper: (ChartData data, _) => data.x,
-                        yValueMapper: (ChartData data, _) => data.y
-                    )
-                  ]
-              )
-          ),
-            Container(
-              width: size.width/2,
-              height: size.height-132,
-              padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
-             child:  Column(
-               children: <Widget>[
-                 const Padding(padding: EdgeInsets.only(bottom: 40),
-                  child:Text("Nodes Topology Editor",
-                     style: TextStyle(color: Colors.black,fontSize: 30),
-                     textAlign:TextAlign.left),
-                 ),
-             Column(
-
-              mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: <Widget>[
+              Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  "Hi, ${name}!",
+                  style: const TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
                 children: <Widget>[
-
-
-
-                IconButton(
-                onPressed: () {
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return TopologyManagementScreen();},),);
-
-                },
-                style: ElevatedButton.styleFrom(
-               // backgroundColor: Colors.blue, // Set background color
-                //foregroundColor: Colors.white, // Set text and icon color
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Add padding
-                shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20), // More rounded corners
-                ),
-                ),
-                icon: Image.asset("assets/icons/icons8-topology-53.png",),
-
-                ),
-                  const Text('Manage Your Topology'),
-
-                  Padding(padding: EdgeInsets.only(top: 20),
-                  child:IconButton(
-                    onPressed: () async {
-                      //await _loadAndConvertYaml();
-                      Navigator.push(context, MaterialPageRoute(builder: (context){return TopologyViewScreen();},),);
-
-
-                    },
-                    style: ElevatedButton.styleFrom(
-                      //backgroundColor: Colors.blue, // Set background color
-                      //foregroundColor: Colors.white, // Set text and icon color
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Add padding
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20), // More rounded corners
+                  Expanded(
+                    child: Container(
+                      height: size.height * 0.6,
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: SfCartesianChart(
+                        primaryXAxis: CategoryAxis(),
+                        series: <CartesianSeries>[
+                          LineSeries<ChartData, String>(
+                            dataSource: [
+                              ChartData('Jan', 35),
+                              ChartData('Feb', 28),
+                              ChartData('Mar', 34),
+                              ChartData('Apr', 32),
+                              ChartData('May', 40),
+                            ],
+                            xValueMapper: (ChartData data, _) => data.x,
+                            yValueMapper: (ChartData data, _) => data.y,
+                          ),
+                        ],
                       ),
                     ),
-                    icon: Image.asset("assets/icons/icons8-view-80.png",
-                    width: 53,
-                    height: 53,),
-
-                  )
-
                   ),
-                   const Text('View Your Topology'),
-                  IconButton(
-                    icon: Image.asset("assets/icons/5203923.png",
-                      width: 53,
-                      height: 53,),
-    style: ElevatedButton.styleFrom(
-    // backgroundColor: Colors.blue, // Set background color
-    //foregroundColor: Colors.white, // Set text and icon color
-    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
-    shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(20),
-    ),
-    ),// More rounded corners
-                    onPressed: () async {
-                      /*
-              WidgetsFlutterBinding.ensureInitialized();
-              await Firebase.initializeApp(
-                options: DefaultFirebaseOptions.currentPlatform,
-              );
-
-               */
-                      Provider serviceProvider=Provider.instance;
-                      serviceProvider.Signout();
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context){return DeployScreen();},),);
-
-                    },
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Container(
+                      height: size.height * 0.6,
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: <Widget>[
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 40),
+                            child: Text(
+                              "Nodes Topology Editor",
+                              style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                                    return TopologyManagementScreen();
+                                  }));
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.white, backgroundColor: Colors.blue, // Set text and icon color
+                                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20), // More rounded corners
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Image.asset(
+                                      "assets/icons/icons8-topology-53.png",
+                                      width: 50,
+                                      height: 50,
+                                    ),
+                                    const Text('Manage Your Topology'),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                                    return TopologyViewScreen();
+                                  }));
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.white, backgroundColor: Colors.blue, // Set text and icon color
+                                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20), // More rounded corners
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Image.asset(
+                                      "assets/icons/icons8-view-80.png",
+                                      width: 50,
+                                      height: 50,
+                                    ),
+                                    const Text('View Your Topology'),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                                    return DeployScreen();
+                                  }));
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.white, backgroundColor: Colors.blue, // Set text and icon color
+                                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20), // More rounded corners
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Image.asset(
+                                      "assets/icons/5203923.png",
+                                      width: 50,
+                                      height: 50,
+                                    ),
+                                    const Text('Deploy Your Topology!'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const Text('Deploy your Topology!'),
-
-            ],
+                ],
               ),
             ],
-             ),
-    ),
-
-
-
-            ],// Your list of grid items
+          ),
         ),
-
-          ]
-    ),
       ),
-        );
-
+    );
   }
 }
-
-
 
 class ChartData {
   ChartData(this.x, this.y);

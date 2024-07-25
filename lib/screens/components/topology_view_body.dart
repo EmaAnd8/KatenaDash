@@ -41,7 +41,8 @@ class _TopologyViewState extends State<TopologyViewBody> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+            selectedOption="";
               return HomeScreen();
             }));
           },

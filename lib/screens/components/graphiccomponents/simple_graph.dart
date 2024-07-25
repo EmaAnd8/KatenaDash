@@ -16,7 +16,7 @@ class _SimpleGraphState extends State<SimpleGraph> {
   Graph? graph;
   String hoveredNodeId = ''; // Track hovered node
   bool showSidebar = false; // Control sidebar visibility
-  TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController = TransformationController();
   String nodeDescription = "";
 
   @override
@@ -26,12 +26,15 @@ class _SimpleGraphState extends State<SimpleGraph> {
   }
 
   Future<void> _getGraph() async {
-    Graph? fetchedGraph = Graph()
-      ..isTree = false;
-    fetchedGraph = await serviceProvider.TopologyGraphFromYaml();
-    setState(() {
-      graph = fetchedGraph;
-    });
+    try {
+      Graph? fetchedGraph = Graph()..isTree = false;
+      fetchedGraph = await serviceProvider.TopologyGraphFromYaml();
+      setState(() {
+        graph = fetchedGraph;
+      });
+    } catch (e) {
+      print('Error fetching graph: $e');
+    }
   }
 
   String _getIconPathForNode(String nodeId) {
@@ -46,37 +49,32 @@ class _SimpleGraphState extends State<SimpleGraph> {
   }
 
   Future<void> _fetchNodeDescription(String nodeId) async {
-    List<String> lines = nodeId.split('\n');
-    Map<String, String> typeMap = {};
-    for (var line in lines) {
-      List<String> parts = line.split(':');
-      if (parts.length == 2) {
-        String key = parts[0].trim();
-        String value = parts[1].trim();
-        typeMap[key] = value;
-        print(typeMap["type"]);
+    try {
+      List<String> lines = nodeId.split('\n');
+      Map<String, String> typeMap = {};
+      for (var line in lines) {
+        List<String> parts = line.split(':');
+        if (parts.length == 2) {
+          String key = parts[0].trim();
+          String value = parts[1].trim();
+          typeMap[key] = value;
+        }
       }
-    }
-    var yamlDescription = await serviceProvider.GetDescriptionByType(typeMap["type"]!.toString());
+      var yamlDescription = await serviceProvider.GetDescriptionByType(typeMap["type"]!.toString());
 
-    // Extract the description string (assuming the key is 'Value')
-    YamlMap? descriptionMap = yamlDescription;
-    if(descriptionMap!=null)
-    {
-      print("Mi piace Claudia");
-    }
-    String description = "";
-    if (descriptionMap != null) {
-      // Iterate over the key-value pairs in the YamlMap
-      descriptionMap.forEach((key, value) {
-        description += "$key: $value\n"; // Format the key-value pairs
+      YamlMap? descriptionMap = yamlDescription;
+      String description = "";
+      if (descriptionMap != null) {
+        descriptionMap.forEach((key, value) {
+          description += "$key: $value\n";
+        });
+      }
+      setState(() {
+        nodeDescription = description;
       });
+    } catch (e) {
+      print('Error fetching node description: $e');
     }
-    //print(description+"m");
-    setState(() {
-      nodeDescription=description;
-    });
-    print(nodeDescription);
   }
 
   @override
@@ -89,10 +87,11 @@ class _SimpleGraphState extends State<SimpleGraph> {
         children: [
           InteractiveViewer(
             transformationController: _transformationController,
-            boundaryMargin: EdgeInsets.all(100),
-            minScale: 0.1,
-            maxScale: 5.0,
-            child: Container(
+            boundaryMargin: const EdgeInsets.all(200),
+            //minScale: 0.01,
+            //maxScale: 10.0,
+            constrained: true,
+            child: SizedBox(
               width: size.width,
               height: size.height,
               child: GraphView(
@@ -178,13 +177,5 @@ class _SimpleGraphState extends State<SimpleGraph> {
         ),
       ],
     );
-  }
-
-  Map<String, dynamic>? getNodeData(String nodeId) {
-    // Mock data for demonstration; replace with actual data fetching logic
-    return {
-      'type': 'ExampleType',
-      'status': 'Active',
-    };
   }
 }
