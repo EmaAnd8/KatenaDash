@@ -45,7 +45,7 @@ class _LoginFormState extends State<LoginBody> {
                   const SizedBox(height: 20),
                   const Text(
                     "Welcome to BlockVerse",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold,color:Colors.blue),
                   ),
                   const SizedBox(height: 30),
                   SizedBox(

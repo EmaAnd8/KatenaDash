@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:katena_dashboard/screens/welcome_screen.dart';
+import 'package:katena_dashboard/screens/welcome/welcome_screen.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'BlockVerse',
       theme: ThemeData(),
-      home: WelcomeScreen(),
+      home: const WelcomeScreen(),
     );
   }
 }

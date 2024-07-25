@@ -114,35 +114,55 @@ class Provider {
 
 
 */
-
-  void ProfileImage() async {
-    final imageFile = await ImagePicker().pickImage(
-        source: ImageSource.gallery);
-    //SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (imageFile != null) {
-      final f = File(imageFile.path);
+//method to add a new profile image
 
 
-      final profileImagePath = '${FirebaseAuth.instance
-          .currentUser?.uid}/profile_picture.jpg';
-      print(f.absolute.path);
-      final uploadTask = FirebaseStorage.instance.ref()
-          .child('Profile/' + profileImagePath)
-          .putFile(File(f.absolute.path));
 
-      final downloadUrl = await (await uploadTask).ref
-          .getDownloadURL();
+  Future<String> ProfileImage() async {
+    try {
+      // Pick an image from the gallery
+      final imageFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (imageFile == null) {
+        print("No image selected.");
+        return "";
+      }
 
+      // Get the current user's UID
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        print("No user logged in.");
+        return "";
+      }
 
-      // Create a NetworkImage object from the URL
-      print(downloadUrl);
+      final uid = user.uid;
+      final profileImagePath = '$uid/profile_picture.jpg';
 
-      late ImageProvider downloadedImage =
-      NetworkImage(downloadUrl);
-    } else {
-      print("wrong path");
+      // For web platform, read image as bytes
+      final bytes = await imageFile.readAsBytes();
+
+      // Print debug information
+      print('Profile image path: $profileImagePath');
+
+      // Upload the file to Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref().child('Profile/$profileImagePath');
+      final uploadTask = storageRef.putData(bytes);
+
+      // Wait for the upload to complete and get the download URL
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+
+      // Print the download URL
+      print('Download URL: $downloadUrl');
+
+      // Create a NetworkImage object from the URL (if needed)
+      late ImageProvider downloadedImage = NetworkImage(downloadUrl);
+      return downloadUrl;
+    } catch (e) {
+      print('Error: $e');
     }
+    return "";
   }
+
 
 
   void ParadoxSignout(context) {

@@ -88,7 +88,7 @@ class _TopologyViewState extends State<TopologyViewBody> {
         ],
       ),
       body: Container(
-    color: Colors.white,
+      color: Colors.white,
       width: size.width,
       height: size.height,
       child:SingleChildScrollView(

@@ -108,169 +108,202 @@ class _DashboardState extends State<DashboardBody> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: <Widget>[
-              Align(
-                alignment: Alignment.topLeft,
-                child: Text(
-                  "Hi, ${name}!",
-                  style: const TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Container(
-                      height: size.height * 0.6,
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 5,
-                            blurRadius: 7,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
+      body: Container(
+        color: Colors.white,
+        width: size.width,
+        height: size.height,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: <Widget>[
+                      Align(
+                        alignment: Alignment.topLeft,
+                        child: Text(
+                          "Hi, ${name}!",
+                          style: const TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      child: SfCartesianChart(
-                        primaryXAxis: CategoryAxis(),
-                        series: <CartesianSeries>[
-                          LineSeries<ChartData, String>(
-                            dataSource: [
-                              ChartData('Jan', 35),
-                              ChartData('Feb', 28),
-                              ChartData('Mar', 34),
-                              ChartData('Apr', 32),
-                              ChartData('May', 40),
-                            ],
-                            xValueMapper: (ChartData data, _) => data.x,
-                            yValueMapper: (ChartData data, _) => data.y,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Container(
-                      height: size.height * 0.6,
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 5,
-                            blurRadius: 7,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
+                      const SizedBox(height: 20),
+                      Row(
                         children: <Widget>[
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 40),
-                            child: Text(
-                              "Nodes Topology Editor",
-                              style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+                          Expanded(
+                            child: Container(
+                              height: size.height * 0.6,
+                              padding: const EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.5),
+                                    spreadRadius: 5,
+                                    blurRadius: 7,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: SfCartesianChart(
+                                primaryXAxis: CategoryAxis(),
+                                series: <CartesianSeries>[
+                                  LineSeries<ChartData, String>(
+                                    dataSource: [
+                                      ChartData('Jan', 35),
+                                      ChartData('Feb', 28),
+                                      ChartData('Mar', 34),
+                                      ChartData('Apr', 32),
+                                      ChartData('May', 40),
+                                    ],
+                                    xValueMapper: (ChartData data, _) => data.x,
+                                    yValueMapper: (ChartData data, _) => data.y,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: <Widget>[
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                                    return TopologyManagementScreen();
-                                  }));
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.white, backgroundColor: Colors.blue, // Set text and icon color
-                                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20), // More rounded corners
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: Container(
+                              height: size.height * 0.6,
+                              padding: const EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.5),
+                                    spreadRadius: 5,
+                                    blurRadius: 7,
+                                    offset: Offset(0, 3),
                                   ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Image.asset(
-                                      "assets/icons/icons8-topology-53.png",
-                                      width: 50,
-                                      height: 50,
-                                    ),
-                                    const Text('Manage Your Topology'),
-                                  ],
-                                ),
+                                ],
                               ),
-                              const SizedBox(height: 20),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                                    return TopologyViewScreen();
-                                  }));
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.white, backgroundColor: Colors.blue, // Set text and icon color
-                                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20), // More rounded corners
+                              child: Column(
+                                children: <Widget>[
+                                  const Padding(
+                                    padding: EdgeInsets.only(bottom: 40),
+                                    child: Text(
+                                      "Nodes Topology Editor",
+                                      style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+                                    ),
                                   ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Image.asset(
-                                      "assets/icons/icons8-view-80.png",
-                                      width: 50,
-                                      height: 50,
-                                    ),
-                                    const Text('View Your Topology'),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                                    return DeployScreen();
-                                  }));
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.white, backgroundColor: Colors.blue, // Set text and icon color
-                                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20), // More rounded corners
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: <Widget>[
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                                            return TopologyManagementScreen();
+                                          }));
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          foregroundColor: Colors.white,
+                                          backgroundColor: Colors.blue, // Set text and icon color
+                                          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20), // More rounded corners
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Image.asset(
+                                              "assets/icons/icons8-topology-53.png",
+                                              width: 50,
+                                              height: 50,
+                                            ),
+                                            const Text('Manage Your Topology'),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                                            return TopologyViewScreen();
+                                          }));
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          foregroundColor: Colors.white,
+                                          backgroundColor: Colors.blue, // Set text and icon color
+                                          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20), // More rounded corners
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Image.asset(
+                                              "assets/icons/icons8-view-80.png",
+                                              width: 50,
+                                              height: 50,
+                                            ),
+                                            const Text('View Your Topology'),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                                            return DeployScreen();
+                                          }));
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          foregroundColor: Colors.white,
+                                          backgroundColor: Colors.blue, // Set text and icon color
+                                          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20), // More rounded corners
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Image.asset(
+                                              "assets/icons/5203923.png",
+                                              width: 50,
+                                              height: 50,
+                                            ),
+                                            const Text('Deploy Your Topology!'),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Image.asset(
-                                      "assets/icons/5203923.png",
-                                      width: 50,
-                                      height: 50,
-                                    ),
-                                    const Text('Deploy Your Topology!'),
-                                  ],
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ],
-          ),
+            ),
+            Footer(), // Add footer here
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class Footer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      color: Colors.white,
+      child: Center(
+        child: Text(
+          '© 2024 Katena Dashboard. All rights reserved.',
+          style: TextStyle(color: Colors.black, fontSize: 14),
         ),
       ),
     );

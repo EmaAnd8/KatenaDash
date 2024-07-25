@@ -39,6 +39,8 @@ class _SignUpFormState extends State<SignupBody> {
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: size.height * 0.1),
           child: Container(
+            width: size.width,
+            height: size.height,
             decoration: const BoxDecoration(
               color: Colors.white, // Set the background color to white
             ),
