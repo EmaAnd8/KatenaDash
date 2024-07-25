@@ -65,9 +65,7 @@ class _SimpleGraphState extends State<SimpleGraph> {
       YamlMap? descriptionMap = yamlDescription;
       String description = "";
       if (descriptionMap != null) {
-        descriptionMap.forEach((key, value) {
-          description += "$key: $value\n";
-        });
+        description = _formatYamlMap(descriptionMap, 0);
       }
       setState(() {
         nodeDescription = description;
@@ -75,6 +73,20 @@ class _SimpleGraphState extends State<SimpleGraph> {
     } catch (e) {
       print('Error fetching node description: $e');
     }
+  }
+
+  String _formatYamlMap(YamlMap map, int indentLevel) {
+    final buffer = StringBuffer();
+    map.forEach((key, value) {
+      buffer.write('${' ' * indentLevel * 2}$key:');
+      if (value is YamlMap) {
+        buffer.write('\n');
+        buffer.write(_formatYamlMap(value, indentLevel + 1));
+      } else {
+        buffer.write(' $value\n');
+      }
+    });
+    return buffer.toString();
   }
 
   @override
@@ -88,8 +100,6 @@ class _SimpleGraphState extends State<SimpleGraph> {
           InteractiveViewer(
             transformationController: _transformationController,
             boundaryMargin: const EdgeInsets.all(200),
-            //minScale: 0.01,
-            //maxScale: 10.0,
             constrained: true,
             child: SizedBox(
               width: size.width,
