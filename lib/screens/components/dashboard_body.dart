@@ -1,11 +1,13 @@
+//import 'dart:nativewrappers/_internal/vm/lib/core_patch.dart';
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:katena_dashboard/screens/components/topology_management_body.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
@@ -15,13 +17,9 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../firebase_options.dart';
 import '../settings/settings_screen.dart';
 import '../services/services_provider.dart';
-import 'dart:io';
-
-final storageRef = FirebaseStorage.instance.ref();
-String? name = "";
 
 class DashboardBody extends StatefulWidget {
-  const DashboardBody({super.key});
+  const DashboardBody({Key? key}) : super(key: key);
 
   @override
   _DashboardState createState() => _DashboardState();
@@ -29,47 +27,65 @@ class DashboardBody extends StatefulWidget {
 
 class _DashboardState extends State<DashboardBody> {
   String? uid1 = FirebaseAuth.instance.currentUser?.email;
+  String? name = "";
 
-  String? QueryName(email, context) {
-    Map<String, String> keyValueMap = {};
-    String modifiedString = "";
-    String StringParser = "";
-    List<String> pairs = [];
-    List<String> parts = [];
+
+
+  @override
+  void initState() {
+    super.initState();
+    initializeFirebase();
+    QueryName(uid1);
+  }
+
+  Future<void> initializeFirebase() async {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
+
+  Future<void> QueryName(String? email) async {
+    if (email == null) return;
 
     CollectionReference users = FirebaseFirestore.instance.collection('Users');
-    // Update the population of a city
-    final query = users.where("email", isEqualTo: email).get().then((querySnapshot) {
-      for (var docSnapshot in querySnapshot.docs) {
-        final usersRef = users.doc(docSnapshot.id);
-        StringParser = docSnapshot.data().toString();
-        modifiedString = StringParser.substring(1, StringParser.length - 1);
-        modifiedString = modifiedString.replaceAll(",", "");
-        pairs = modifiedString.split(RegExp(r"\s+(?=\w+: )"));
-        // Extract keys and values
-        for (String pair in pairs) {
-          parts = pair.split(": ");
-          if (parts.length == 2) {
-            keyValueMap[parts[0]] = parts[1];
-          }
-          name = keyValueMap["Name"];
-          setState(() {});
+    final query = await users.where("email", isEqualTo: email).get();
+
+    for (var docSnapshot in query.docs) {
+      Map<String, dynamic> data = docSnapshot.data() as Map<String, dynamic>;
+      setState(() {
+        name = data["Name"];
+      });
+    }
+  }
+
+  Widget newIcon = SvgPicture.asset('assets/icons/person-circle.svg',width:20,height: 20,);
+  Future<void> loadProfileImage() async {
+    Provider serviceProvider = Provider.instance;
+    String url = await serviceProvider.ProfileImage();
+    print(url);
+    print("url...");
+    try {
+      setState(() {
+        if (url.isNotEmpty) {
+          newIcon = Image.network(url, width: 20, height: 20,);
+        } else {
+          newIcon = SvgPicture.asset('assets/icons/person-circle.svg', width: 20, height: 20,);
         }
-      }
-      return null;
-    });
+      });
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    String? alfa = QueryName(uid1, context);
-    Size size = MediaQuery.of(context).size; // With this query I get (w,h) of the screen
+    Size size = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Katena Dashboard', style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
-        iconTheme: IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: Colors.black),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -77,22 +93,17 @@ class _DashboardState extends State<DashboardBody> {
           },
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.account_circle),
-            onPressed: () async {
-              WidgetsFlutterBinding.ensureInitialized();
-              await Firebase.initializeApp(
-                options: DefaultFirebaseOptions.currentPlatform,
-              );
-              Provider serviceProvider = Provider.instance;
-              serviceProvider.ProfileImage();
-            },
+          TextButton(
+            onPressed: loadProfileImage,
+            child: Container(
+                child: newIcon,
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return SettingsScreen();
+                return  SettingsScreen();
               }));
             },
           ),
@@ -124,7 +135,7 @@ class _DashboardState extends State<DashboardBody> {
                       Align(
                         alignment: Alignment.topLeft,
                         child: Text(
-                          "Hi, ${name}!",
+                          "Hi, $name!",
                           style: const TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -143,7 +154,7 @@ class _DashboardState extends State<DashboardBody> {
                                     color: Colors.grey.withOpacity(0.5),
                                     spreadRadius: 5,
                                     blurRadius: 7,
-                                    offset: Offset(0, 3),
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
@@ -178,7 +189,7 @@ class _DashboardState extends State<DashboardBody> {
                                     color: Colors.grey.withOpacity(0.5),
                                     spreadRadius: 5,
                                     blurRadius: 7,
-                                    offset: Offset(0, 3),
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
@@ -198,15 +209,15 @@ class _DashboardState extends State<DashboardBody> {
                                       ElevatedButton(
                                         onPressed: () {
                                           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                                            return TopologyManagementScreen();
+                                            return  TopologyManagementScreen();
                                           }));
                                         },
                                         style: ElevatedButton.styleFrom(
                                           foregroundColor: Colors.white,
-                                          backgroundColor: Colors.blue, // Set text and icon color
-                                          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+                                          backgroundColor: Colors.blue,
+                                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(20), // More rounded corners
+                                            borderRadius: BorderRadius.circular(20),
                                           ),
                                         ),
                                         child: Column(
@@ -224,15 +235,15 @@ class _DashboardState extends State<DashboardBody> {
                                       ElevatedButton(
                                         onPressed: () {
                                           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                                            return TopologyViewScreen();
+                                            return  TopologyViewScreen();
                                           }));
                                         },
                                         style: ElevatedButton.styleFrom(
                                           foregroundColor: Colors.white,
-                                          backgroundColor: Colors.blue, // Set text and icon color
-                                          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+                                          backgroundColor: Colors.blue,
+                                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(20), // More rounded corners
+                                            borderRadius: BorderRadius.circular(20),
                                           ),
                                         ),
                                         child: Column(
@@ -255,10 +266,10 @@ class _DashboardState extends State<DashboardBody> {
                                         },
                                         style: ElevatedButton.styleFrom(
                                           foregroundColor: Colors.white,
-                                          backgroundColor: Colors.blue, // Set text and icon color
-                                          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Add padding
+                                          backgroundColor: Colors.blue,
+                                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(20), // More rounded corners
+                                            borderRadius: BorderRadius.circular(20),
                                           ),
                                         ),
                                         child: Column(
@@ -300,7 +311,7 @@ class Footer extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       color: Colors.white,
-      child: Center(
+      child: const Center(
         child: Text(
           '© 2024 Katena Dashboard. All rights reserved.',
           style: TextStyle(color: Colors.black, fontSize: 14),

@@ -50,7 +50,7 @@ class _ForgotPasswordFormState extends State<ResetPasswordBody> {
                   const SizedBox(height: 20),
                   const Text(
                     "Reset The Password",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold,color:Colors.blue),
                   ),
                   const SizedBox(height: 30),
                   SizedBox(

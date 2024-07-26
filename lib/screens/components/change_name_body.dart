@@ -39,7 +39,7 @@ class _ChangeNameState extends State<ChangeNameBody> {
                   const SizedBox(height: 20),
                   const Text(
                     "Change the Name",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold,color: Colors.blue),
                   ),
                   const SizedBox(height: 30),
                   SizedBox(

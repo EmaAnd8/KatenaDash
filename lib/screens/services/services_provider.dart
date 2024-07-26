@@ -135,7 +135,7 @@ class Provider {
       }
 
       final uid = user.uid;
-      final profileImagePath = '$uid/profile_picture.jpg';
+      final profileImagePath = '$uid/profile_picture.png';
 
       // For web platform, read image as bytes
       final bytes = await imageFile.readAsBytes();
