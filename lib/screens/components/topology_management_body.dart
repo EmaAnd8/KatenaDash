@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:graphview/GraphView.dart';
 import 'package:katena_dashboard/constants.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
@@ -10,7 +10,9 @@ import 'package:katena_dashboard/screens/topology/topologyview/topology_view_scr
 Provider ServiceProvider = Provider.instance;
 
 List<Map<String, dynamic>> sidebarItems = [];
-
+Graph graph = Graph()..isTree = false;
+final BuchheimWalkerConfiguration builder = BuchheimWalkerConfiguration();
+Node? rootNode;
 class TopologyManagementBody extends StatefulWidget {
   const TopologyManagementBody({super.key});
 
@@ -22,25 +24,52 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
   final _formKey = GlobalKey<FormState>();
   bool _isDrawerOpen = false;
 
+
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the graph with a default node
+    rootNode = Node.Id('Root Node');
+    graph.addNode(rootNode!);
+  }
+
+  Widget fetchNodeIcon(String nodeId) {
+    if (nodeId.contains("network")) {
+      return Image.asset('assets/icons/worldwide_10969702.png', width: 24, height: 24);
+    } else if (nodeId.contains("wallet")) {
+      return Image.asset('assets/icons/wallet_4121117.png', width: 24, height: 24);
+    } else if (nodeId.contains('contract')) {
+      return Image.asset('assets/icons/smart_14210186.png', width: 24, height: 24);
+    }
+    return Image.asset('assets/icons/icons8-topology-53.png', width: 24, height: 24);
+  }
+
   Future<void> _loadNodeDefinitions() async {
     setState(() {
       sidebarItems = [];
     });
 
-    List<String> keyTypes = await ServiceProvider.NodesDefinition() as List<String>;
+    try {
+      List<String> keyTypes = await ServiceProvider.NodesDefinition() as List<String>;
 
-    for (var key in keyTypes) {
-      print(key);
-      sidebarItems.add({
-        'title': key,
-        'onTap': () {
-          // Define the action when this item is tapped
-          print('$key tapped');
-        },
-      });
+      for (var key in keyTypes) {
+        print(key);
+        sidebarItems.add({
+          'title': key,
+          'onTap': () {
+            setState(() {
+              graph = ServiceProvider.TopologyCreator(key, graph,rootNode) as Graph;
+              print('$key tapped');
+            });
+          },
+        });
+      }
+
+      setState(() {});
+    } catch (e) {
+      print('Error loading node definitions: $e');
     }
-
-    setState(() {});
   }
 
   @override
@@ -120,7 +149,24 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                       padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
                       alignment: Alignment.topLeft,
                     ),
-                    Row(),
+                    Container(
+                      height: size.height,
+                      width: size.width - 250, // Adjust the width based on drawer
+                      child: InteractiveViewer(
+                        constrained: false,
+                        boundaryMargin: EdgeInsets.all(100),
+                        minScale: 0.01,
+                        maxScale: 5.6,
+                        child: GraphView(
+                          graph: graph,
+                          algorithm: BuchheimWalkerAlgorithm(builder, TreeEdgeRenderer(builder)),
+                          builder: (Node node) {
+                            var nodeId = node.key?.value as String?;
+                            return nodeId != null ? nodeWidget(nodeId) : Container();
+                          },
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -176,6 +222,22 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget nodeWidget(String nodeId) {
+    return GestureDetector(
+      onTap: () {
+        print('Node $nodeId tapped');
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          fetchNodeIcon(nodeId),
+          SizedBox(width: 8),
+          Text(nodeId),
+        ],
       ),
     );
   }

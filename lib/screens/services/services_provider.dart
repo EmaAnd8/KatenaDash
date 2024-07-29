@@ -4,7 +4,8 @@
 import 'dart:io';
 import 'dart:js_interop';
 import 'dart:math';
-
+import 'dart:html' as html;
+import 'dart:convert'; // For utf8.encode
 import 'package:file_picker/file_picker.dart';
 import 'dart:math' as math ;
 import 'dart:convert';
@@ -437,13 +438,6 @@ class Provider {
   }
 
 
-  Future<void> createYamlFile(String filePath) async {
-
-  }
-
-  //the topology manager is the module in charge to associate a graphic component to the TOSCA
-  Future<void> TopologyManager() async {
-  }
 
   Future<List<Widget>> CreateNode() async
   {
@@ -509,221 +503,6 @@ class Provider {
       print("no file selected");
     }
   }
-
-/*
-    Future<List<Widget>?> TopologyPrinterFromYaml() async
-    {
-
-      var yamlFile=await ServiceProvider.ImportYaml();
-      print(yamlFile);
-      print(yamlFile?["topology_template"]["node_templates"]["userWallet"]);
-      if(yamlFile?["topology_template"]["node_templates"]["ganache"].toString()!=null)
-      {
-
-        if(yamlFile?["topology_template"]["node_templates"]["ganache"].toString()!=null && yamlFile?["topology_template"]["node_templates"]["userWallet"].toString()!=null)
-        {
-
-         // print(yamlFile?["topology_template"]["node_templates"]["callee"].toString());
-
-          List<Widget> nodes=[
-            // In your widget tree:
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children:<Widget>[
-              Padding(padding: EdgeInsets.only(left: 40,right: 40,bottom: 20),
-
-                  child:Image.asset("assets/icons/wallet_4121117.png",
-                    width: 50,
-                    height: 50,)
-              ),
-              const Text("User wallet"),
-    ],
-            ),
-            Column(
-            children:<Widget>[
-            Padding(padding: EdgeInsets.only(left: 40,right: 40),
-              child:  CustomPaint(
-                painter: ArrowPainter(
-                  color: Colors.blue,
-                  angle: 0,
-                  length: 60,
-                ),
-                size: const Size(10,50),
-              ),
-            ),
-            const Text("Hosted by",
-                textAlign: TextAlign.center,),
-            ],
-            ),
-            Padding(padding: EdgeInsets.only(left: 40,right: 40),
-
-                child:Image.asset("assets/icons/Ganache Blockchain.png",
-                  width: 100,
-                  height: 100,)
-            ),
-          ];
-
-          if(yamlFile?["topology_template"]["node_templates"]["ensRegistry"].toString()!=null) {
-            print(
-                yamlFile?["topology_template"]["node_templates"]["ensRegistry"]
-                    .toString());
-            nodes.addAll([
-              Row(
-                children: <Widget>[
-                  Padding(padding: EdgeInsets.only(left: 40, right: 40),
-                    child: CustomPaint(
-                      painter: ArrowPainter(
-                        color: Colors.blue,
-                        angle: math.pi,
-                        length: 60,
-                      ),
-                      size: const Size(10, 50),
-                    ),
-                  ),
-                  Column(
-                    children: <Widget>[
-                      Padding(
-                          padding: EdgeInsets.only(bottom: 10),
-
-                          child: Image.asset("assets/icons/smart_14210186.png",
-                            width: 50,
-                            height: 50,)
-                      ),
-                      const Text("EnsRegister"),
-                    ],
-                  ),
-                ],
-              ),
-
-            ]);
-          }else
-            {
-              print("No ens Register");
-            }
-
-            if(yamlFile?["topology_template"]["node_templates"]["publicResolver"].toString()!=null)
-            {
-              print(yamlFile?["topology_template"]["node_templates"]["publicResolver"].toString());
-              nodes.addAll([
-                Column(
-                  children: <Widget>[
-                    Padding(padding: EdgeInsets.only(left: 40,right: 40),
-                      child:  CustomPaint(
-                        painter: ArrowPainter(
-                          color: Colors.blue,
-                          angle: math.pi,
-                          length: 60,
-                        ),
-                        size: const Size(10,50),
-                      ),
-                    ),
-                    Column(
-                      children: <Widget>[
-                        Padding(
-                            padding:EdgeInsets.only(bottom: 10),
-
-                            child:Image.asset("assets/icons/smart_14210186.png",
-                              width: 50,
-                              height: 50,)
-                        ),
-                        const Text("PublicResolver"),
-                      ],
-                    ),
-                  ],
-                ),
-
-              ]);
-          }else{
-              print("No public Resolver");
-            }
-
-
-          if(yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"].toString()!=null)
-          {
-            print(yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"].toString());
-            nodes.addAll([
-              Column(
-                children: <Widget>[
-                  Padding(padding: EdgeInsets.only(left: 40,right: 40),
-                    child:  CustomPaint(
-                      painter: ArrowPainter(
-                        color: Colors.blue,
-                        angle: math.pi,
-                        length: 60,
-                      ),
-                      size: const Size(10,50),
-                    ),
-                  ),
-                  Column(
-                    children: <Widget>[
-                      Padding(
-                          padding:EdgeInsets.only(bottom: 10),
-
-                          child:Image.asset("assets/icons/smart_14210186.png",
-                            width: 50,
-                            height: 50,)
-                      ),
-                      const Text(" reverseRegistrar"),
-                    ],
-                  ),
-                ],
-              ),
-
-            ]);
-          }else{
-            print("No reverseRegistrar");
-          }
-
-          if(yamlFile?["topology_template"]["node_templates"]["registrar"].toString()!=null)
-          {
-            print(yamlFile?["topology_template"]["node_templates"]["registrar"].toString());
-            nodes.addAll([
-              Column(
-                children: <Widget>[
-                  Padding(padding: EdgeInsets.only(left: 40,right: 40),
-                    child:  CustomPaint(
-                      painter: ArrowPainter(
-                        color: Colors.blue,
-                        angle: math.pi,
-                        length: 60,
-                      ),
-                      size: const Size(10,50),
-                    ),
-                  ),
-                  Column(
-                    children: <Widget>[
-                      Padding(
-                          padding:EdgeInsets.only(bottom: 10),
-
-                          child:Image.asset("assets/icons/smart_14210186.png",
-                            width: 50,
-                            height: 50,)
-                      ),
-                      const Text("Registrar"),
-                    ],
-                  ),
-                ],
-              ),
-
-            ]);
-          }else{
-            print("No Registrar");
-          }
-
-          return nodes;
-
-        }else{
-          print("no network defined");
-        }
-      }else{
-        print("empty topology");
-      }
-      return null;
-
-
-    }
-*/
 
   Future<List<Widget>?> TopologyPrinterFromYaml() async {
     var yamlFile = await ServiceProvider.ImportYaml();
@@ -988,115 +767,6 @@ class Provider {
   }
 
 
-/*
-  Future<Graph?> TopologyGraphFromYaml() async {
-    var yamlFile = await ServiceProvider.ImportYaml();
-    //print(yamlFile);
-    var node_properties = yamlFile?['topology_template']['node_templates'];
-    var node_topology_key = node_properties.keys.toList();
-    List<String> imports = [];
-    Graph graph = Graph()..isTree = false;
-    Graph copygraph = Graph()..isTree = false;
-
-    for (int i = 0; i < node_topology_key.length; i++) {
-      var key1 = node_topology_key[i];
-      var value2 = node_properties[key1];
-
-     // print('Node Type ($i): $key1');
-     // print('Node Type ($i): $value2');
-      //print(value2["type"]);
-    }
-    YamlMap? yamlMap;
-    if (yamlFile!["imports"]
-        .toString()
-        .isEmpty) {
-      print("you cannot print a toplogy");
-    } else {
-     // print(yamlFile!["imports"].toString());
-
-      if (yamlFile["topology_template"]
-          .toString()
-          .isEmpty) {
-        print("Topology is empty");
-      } else {
-        if (yamlFile["node_templates"]
-            .toString()
-            .isEmpty) {
-          print("no node present in the topology");
-        } else {
-          // for each element in the topology I have to verify if the type is one of the known one
-          for (int j = 0; j < yamlFile["imports"].length; j++) {
-
-            yamlMap =
-            await loadYamlFromAssets("katena-main/" + yamlFile["imports"][j]);
-            // I have to Itereate the type of the import and the type of the node
-            //print(yamlFile["imports"][j]);
-
-            for (int h = 0; h < yamlMap?["node_types"].length; h++) {
-            /*
-              for (int i = 0; i < yamlFile["node_templates"].length; i++) {
-                if (yamlMap?["node_types"][h] ==
-                    yamlFile["node_templates"][i]) {
-                  print("1");
-                }
-              }
-             */
-            // print(yamlMap?["node_types"]["katena.nodes.wallet"]);
-              var nodeTypes = yamlMap?['node_types'];
-              var nodeTypeKeys = nodeTypes.keys.toList();
-              for (int i = 0; i < nodeTypeKeys.length; i++) {
-                String importItem = nodeTypeKeys[i]; // No explicit casting needed
-                imports.add(importItem);
-                //print("Import item at index $i: $importItem");
-              }
-
-
-
-
-
-            }
-          }
-        }
-
-
-        for(int y=0;y<node_topology_key.length;y++) {
-
-
-
-          //print(node_properties[node_topology_key[y]]["type"]);
-
-          for (int x = 0; x < imports.length; x++) {
-
-
-
-            if (node_properties[node_topology_key[y]]["type"] ==
-                imports[x]) {
-
-             // Node node1 = Node.Id(node_properties[node_topology_key[y]]["type"]);
-           //   Node node2 = Node.Id(node_properties[node_topology_key[y+1]]["type"]);
-            Node node1=Node.Id(node_topology_key[y]);
-            Node node2=Node.Id(node_topology_key[y+1]);
-              graph.addEdge(node1, node2);
-              copygraph=graph;
-              //print(copygraph.nodes);
-              //print(copygraph.nodes);
-
-
-            }
-
-
-
-          }
-        }
-
-
-      }
-      return copygraph;
-    }
-
-  }
-
- */
 
   Future<Graph?> TopologyGraphFromYaml() async {
     var yamlFile = await ServiceProvider.ImportYaml();
@@ -1267,6 +937,36 @@ class Provider {
     return null;
 
   }
+  Future<String> _getFilePath() async {
+    final directory = await getApplicationDocumentsDirectory();
+    return '${directory.path}/topology.yaml';
+  }
+
+  Future<void> _saveFile1() async {
+    final filePath = await _getFilePath();
+    final file = File(filePath);
+
+    // Write some data to the file
+    await file.writeAsString('Hello, this is a saved file!');
+  }
+
+  void _saveFile(String data) {
+    // Define the file content
+    final text = data;
+
+    // Convert the text to bytes and create a Blob
+    final bytes = utf8.encode(text);
+    final blob = html.Blob([bytes]);
+
+    // Create a URL for the Blob and an anchor element
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', 'topology.yaml')
+      ..click();
+
+    // Revoke the object URL to free memory
+    html.Url.revokeObjectUrl(url);
+  }
 
   Future<YamlMap?> GetDescriptionByType(String type) async {
 
@@ -1293,7 +993,7 @@ class Provider {
           {
             for (var entry in nodeTypes.entries) {
               if(entry.key==type) {
-                print('Key: ${entry.key}, Value: ${entry.value}');
+               // print('Key: ${entry.key}, Value: ${entry.value}');
                 return entry.value;
               }
             }
@@ -1310,8 +1010,40 @@ class Provider {
   }
 
 
-  Future<Graph?> TopologyCreator() async {
-    //TODO method for creating a new Topology
+
+  Future<Graph?> TopologyCreator(String type,Graph graph,Node? root) async {
+    Provider serviceProvider=Provider.instance;
+    if(graph.hasNodes())
+      {
+        print("graph is not empty");
+        graph.removeNode(root);
+      }else{
+          print("graph is empty a new one is created");
+          graph = Graph()
+            ..isTree = false;
+    }
+    Node node;
+    final yamlMap = await serviceProvider.GetDescriptionByType(type)  as YamlMap;
+
+    if(yamlMap!=null) {
+      node = Node.Id(type);
+      print(node);
+      graph.addNode(node);
+      try {
+        serviceProvider._saveFile(yamlMap.nodes.values.toString());
+      }catch(e)
+    {
+      print(e);
+    }
+    }
+
+
+
+
+
+    print(yamlMap);
     return null;
+
+
   }
 }
