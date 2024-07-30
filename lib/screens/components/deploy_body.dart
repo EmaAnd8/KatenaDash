@@ -8,6 +8,7 @@ import 'package:katena_dashboard/screens/components/graphiccomponents/simple_rec
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
+import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
 
 
 Provider ServiceProvider = Provider.instance;
@@ -109,17 +110,10 @@ class  _DeployState extends State<DeployBody > {
                   child: Text('View a Topology'),
 
                   onTap: () async {
-                    /*
-                    simpleTopology= await ServiceProvider.CreateNode();
-                    setState(() {
-                      simpleTopology;
-                    });
-
-                     */
-                    //ServiceProvider.TopologyPrinterFromYaml();
-                   // await _loadAndConvertYaml();
-                  },
-
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                      return TopologyViewScreen();
+                    }));
+                  }
                 ),
 
               ];

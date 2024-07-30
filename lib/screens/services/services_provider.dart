@@ -767,27 +767,22 @@ class Provider {
   }
 
 
-
   Future<Graph?> TopologyGraphFromYaml() async {
     var yamlFile = await ServiceProvider.ImportYaml();
     var nodeProperties = yamlFile?['topology_template']['node_templates'];
-    Node node1 = Node.Id("");
-    List<String>? bElements;
     if (nodeProperties == null) {
       print("No node templates found in YAML.");
       return null;
     }
-    String? requirementsList1;
-    var nodeTopologyKeys = nodeProperties.keys.toList();
-    List<String> imports = [];
-    Graph graph = Graph()
-      ..isTree = false;
 
+    Graph graph = Graph()..isTree = false;
+    List<String> imports = [];
+
+    // Load imports
     if (yamlFile?["imports"] != null && yamlFile!["imports"].isNotEmpty) {
       for (var importPath in yamlFile["imports"]) {
         try {
-          YamlMap? yamlMap = await loadYamlFromAssets(
-              "katena-main/$importPath");
+          YamlMap? yamlMap = await loadYamlFromAssets("katena-main/$importPath");
           var nodeTypes = yamlMap?['node_types'];
           if (nodeTypes != null) {
             imports.addAll(nodeTypes.keys.cast<String>());
@@ -800,97 +795,52 @@ class Provider {
       print("No imports found in YAML.");
     }
 
-    // print("Imports: $imports"); // Print the list of imports
-
-
-    for (int y = 0; y < nodeTopologyKeys.length; y++) {
-      for (var importItem in imports) {
-        if (nodeProperties[nodeTopologyKeys[y]]["type"] == importItem) {
-          node1 = Node.Id("name:" + nodeTopologyKeys[y] + "\n" + "type:" +
-              nodeProperties[nodeTopologyKeys[y]]["type"]);
-          //node2 = Node.Id(nodeTopologyKeys[y+1]);
-          graph.addNode(node1);
-          // graph.addNode(node2);
-          // print(graph.nodes);
-
-
-        }
-      }
-      /*
-    for(Node ele in graph.nodes)
-      {
-        print(ele.key);
-*/
-      Node node = Node.Id("");
-
-      for (Node ele in graph.nodes) {
-        //print(ele);
-        List<String> lines = ele.key?.value.split('\n');
-        Map<String, String> typeMap = {};
-        for (var line in lines) {
-          List<String> parts = line.split(':');
-          if (parts.length == 2) {
-            String key = parts[0].trim();
-            String value = parts[1].trim();
-            typeMap[key] = value;
-          }
-        }
-
-        if (typeMap['name'] == nodeTopologyKeys[y]) {
-          node = ele;
-          //print(node);
-          //  print(ele.key?.value);
-        }
-      }
-      // print(yamlFile?['topology_template']['node_templates'][nodeTopologyKeys[y]]["requirements"]
-      // .toString());
-      requirementsList1 =
-          yamlFile?['topology_template']['node_templates'][nodeTopologyKeys[y]]["requirements"]
-              .toString();
-      //print(requirementsList1);
-      bElements = requirementsList1?.split(',').map((item) {
-        var parts = item.trim().split(':');
-        return parts.length > 1 ? parts[1] : ''; // Extract 'b' if it exists
-      }).toList();
-      for (int l = 0; l < bElements!.length; l++) {
-        bElements[l] = bElements[l].replaceFirst("}", "");
-        bElements[l] = bElements[l].replaceFirst(" ", "");
-      }
-      bElements.last = bElements.last.replaceFirst("]", "");
-
-      // print(requirementsList);
-
-      // Check if requirements is a List
-      // Check if next node is in requirements and create edge if it is
-      for (var ul in bElements) {
-        // Assuming you have a way to create a Node from an I
-        for (Node elem in graph.nodes) {
-          //print(elem.key?.value);
-          //print(ul+'ee');
-          //print(ele);
-          List<String> lines = elem.key?.value.split('\n');
-          Map<String, String> typeMap = {};
-          for (var line in lines) {
-            List<String> parts = line.split(':');
-            if (parts.length == 2) {
-              String key = parts[0].trim();
-              String value = parts[1].trim();
-              typeMap[key] = value;
-            }
-          }
-
-
-
-          if (ul.compareTo(typeMap['name']!) == 0) {
-            graph.addEdge(node, elem);
-          }
-        }
-        //print("Added edge between ${node1.id} and ${node2.id}"); // Assuming Node has an 'id' property
+    // Create nodes and add to graph
+    Map<String, Node> nodes = {};
+    for (var key in nodeProperties.keys) {
+      if (imports.contains(nodeProperties[key]["type"])) {
+        Node node = Node.Id("name:$key\ntype:${nodeProperties[key]["type"]}");
+        graph.addNode(node);
+        nodes[key] = node;
       }
     }
 
-    print("Graph nodes: ${graph.nodes}"); // Print the nodes in the graph
+    // Add edges based on requirements
+    for (var key in nodeProperties.keys) {
+      var requirements = nodeProperties[key]["requirements"];
+      if (requirements != null) {
+        Node? node = nodes[key];
+        if (node != null) {
+          for (var requirement in requirements) {
+            var targetNodeName = requirement.values.first;
+            //print("${"node"+key}requires:"+targetNodeName);
+            Node? targetNode;
+            if(targetNodeName is YamlMap)
+              {
 
+                print(targetNodeName.values.first);
+
+                targetNode = nodes[targetNodeName.values.first.toString()];
+
+
+
+              }else if(targetNodeName is! YamlMap) 
+                {
+                   targetNode = nodes[targetNodeName];
+                }
+
+
+
+            if (targetNode != null) {
+              graph.addEdge(node, targetNode);
+            }
+          }
+        }
+      }
+    }
+
+    print("Graph nodes: ${graph.nodes},${graph.edges}"); // Print the nodes in the graph
+    print("graph correctly created");
     return graph;
   }
 
@@ -950,12 +900,12 @@ class Provider {
     await file.writeAsString('Hello, this is a saved file!');
   }
 
-  void _saveFile(String data) {
+  void saveFile(String data) {
     // Define the file content
     final text = data;
 
     // Convert the text to bytes and create a Blob
-    final bytes = utf8.encode(text);
+    final bytes = utf8.encode("tosca_definitions_version: tosca_simple_yaml_1_3\n$text");
     final blob = html.Blob([bytes]);
 
     // Create a URL for the Blob and an anchor element
@@ -1013,6 +963,7 @@ class Provider {
 
   Future<Graph?> TopologyCreator(String type,Graph graph,Node? root) async {
     Provider serviceProvider=Provider.instance;
+
     if(graph.hasNodes())
       {
         print("graph is not empty");
@@ -1029,12 +980,7 @@ class Provider {
       node = Node.Id(type);
       print(node);
       graph.addNode(node);
-      try {
-        serviceProvider._saveFile(yamlMap.nodes.values.toString());
-      }catch(e)
-    {
-      print(e);
-    }
+
     }
 
 

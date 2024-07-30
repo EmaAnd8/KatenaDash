@@ -2,13 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:katena_dashboard/constants.dart';
+import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
 
 Provider ServiceProvider = Provider.instance;
-
+String topologyYaml="";
 List<Map<String, dynamic>> sidebarItems = [];
 Graph graph = Graph()..isTree = false;
 final BuchheimWalkerConfiguration builder = BuchheimWalkerConfiguration();
@@ -106,9 +107,12 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                     }));
                   },
                 ),
-                const PopupMenuItem<String>(
+                 PopupMenuItem<String>(
                   value: '2',
                   child: Text('Export your Topology'),
+                  onTap: () async{
+                     serviceProvider.saveFile(topologyYaml);
+                  },
                 ),
                 PopupMenuItem<String>(
                   value: '3',
@@ -121,7 +125,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                 ),
               ];
             },
-            icon: Icon(Icons.menu),
+            icon: const Icon(Icons.menu),
           ),
         ],
       ),
@@ -149,12 +153,12 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                       padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
                       alignment: Alignment.topLeft,
                     ),
-                    Container(
+                    SizedBox(
                       height: size.height,
                       width: size.width - 250, // Adjust the width based on drawer
                       child: InteractiveViewer(
                         constrained: false,
-                        boundaryMargin: EdgeInsets.all(100),
+                        boundaryMargin: const EdgeInsets.all(100),
                         minScale: 0.01,
                         maxScale: 5.6,
                         child: GraphView(
@@ -171,7 +175,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                 ),
               ),
               AnimatedPositioned(
-                duration: Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 300),
                 left: _isDrawerOpen ? 0 : -250, // Width of the drawer
                 top: 0,
                 bottom: 0,
