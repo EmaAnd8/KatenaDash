@@ -765,8 +765,6 @@ class Provider {
       return null;
     }
   }
-
-
   Future<Graph?> TopologyGraphFromYaml() async {
     var yamlFile = await ServiceProvider.ImportYaml();
     var nodeProperties = yamlFile?['topology_template']['node_templates'];
@@ -802,6 +800,9 @@ class Provider {
         Node node = Node.Id("name:$key\ntype:${nodeProperties[key]["type"]}");
         graph.addNode(node);
         nodes[key] = node;
+        print("Node added: ${node.key?.value}"); // Debug print
+      } else {
+        print("Node type not in imports: ${nodeProperties[key]["type"]}"); // Debug print
       }
     }
 
@@ -813,36 +814,31 @@ class Provider {
         if (node != null) {
           for (var requirement in requirements) {
             var targetNodeName = requirement.values.first;
-            //print("${"node"+key}requires:"+targetNodeName);
+            print("Node $key requires: $targetNodeName"); // Debug print
             Node? targetNode;
-            if(targetNodeName is YamlMap)
-              {
-
-                print(targetNodeName.values.first);
-
-                targetNode = nodes[targetNodeName.values.first.toString()];
-
-
-
-              }else if(targetNodeName is! YamlMap) 
-                {
-                   targetNode = nodes[targetNodeName];
-                }
-
-
+            if (targetNodeName is YamlMap) {
+              print("Target node name (YamlMap): ${targetNodeName.values.first}");
+              targetNode = nodes[targetNodeName.values.first.toString()];
+            } else {
+              print("Target node name: $targetNodeName");
+              targetNode = nodes[targetNodeName];
+            }
 
             if (targetNode != null) {
               graph.addEdge(node, targetNode);
+              print("Edge added from ${node.key?.value} to ${targetNode.key?.value}"); // Debug print
+            } else {
+              print("Target node not found: $targetNodeName"); // Debug print
             }
           }
         }
       }
     }
 
-    print("Graph nodes: ${graph.nodes},${graph.edges}"); // Print the nodes in the graph
-    print("graph correctly created");
+    print("Graph nodes: ${graph.nodes.length}, ${graph.edges.length} edges created."); // Debug print
     return graph;
   }
+
 
   Future<List<String>?> NodesDefinition() async {
     try {

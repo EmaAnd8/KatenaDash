@@ -17,7 +17,6 @@ class TopologyViewBody extends StatefulWidget {
 }
 
 class _TopologyViewState extends State<TopologyViewBody> {
-  final _formKey = GlobalKey<FormState>();
   String selectedOption = 'Option 1';
   Widget simpleTopology = Container(); // Initialize here
 
@@ -89,8 +88,8 @@ class _TopologyViewState extends State<TopologyViewBody> {
       ),
       body: Container(
         color: Colors.white,
-        width: size.width*3,
-        height: size.height*3,
+        width: size.width * 100,
+        height: size.height * 100,
         child: SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: SingleChildScrollView(
@@ -117,6 +116,7 @@ class _TopologyViewState extends State<TopologyViewBody> {
     );
   }
 }
+
 
 class SimpleGraph extends StatefulWidget {
   const SimpleGraph({super.key});
@@ -194,12 +194,9 @@ class _SimpleGraphState extends State<SimpleGraph> {
     }
   }
 
-
   String _formatYamlMap(YamlMap map, int indentLevel) {
     final buffer = StringBuffer();
-    print(map);
     map.forEach((key, value) {
-
       buffer.write('${' ' * indentLevel * 2}$key:');
       if (value is YamlMap) {
         buffer.write('\n');

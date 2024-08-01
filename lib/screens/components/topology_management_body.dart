@@ -1,19 +1,21 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
-import 'package:katena_dashboard/constants.dart';
-import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
+import 'package:yaml/yaml.dart';
 
 Provider ServiceProvider = Provider.instance;
-String topologyYaml="";
+String topologyYaml = "";
 List<Map<String, dynamic>> sidebarItems = [];
 Graph graph = Graph()..isTree = false;
+String nodeDescription = "";
 final BuchheimWalkerConfiguration builder = BuchheimWalkerConfiguration();
 Node? rootNode;
+Map<String, String> nodeDescriptions = {};
+
 class TopologyManagementBody extends StatefulWidget {
   const TopologyManagementBody({super.key});
 
@@ -22,17 +24,45 @@ class TopologyManagementBody extends StatefulWidget {
 }
 
 class _TopologyManagementState extends State<TopologyManagementBody> {
-  final _formKey = GlobalKey<FormState>();
   bool _isDrawerOpen = false;
-
-
 
   @override
   void initState() {
     super.initState();
-    // Initialize the graph with a default node
+    // I need a root node otherwise it will be shown an error that the graph is empty at first
     rootNode = Node.Id('Root Node');
     graph.addNode(rootNode!);
+    _loadNodeDescriptions();
+  }
+
+  Future<void> _loadNodeDescriptions() async {
+    try {
+      List<String> keyTypes = await ServiceProvider.NodesDefinition() as List<String>;
+      for (var type in keyTypes) {
+        var yamlDescription = await ServiceProvider.GetDescriptionByType(type);
+        YamlMap? descriptionMap = yamlDescription;
+        if (descriptionMap != null) {
+          nodeDescriptions[type] = _formatYamlMap(descriptionMap, 0);
+        }
+      }
+      setState(() {});
+    } catch (e) {
+      print('Error loading node descriptions: $e');
+    }
+  }
+
+  String _formatYamlMap(YamlMap map, int indentLevel) {
+    final buffer = StringBuffer();
+    map.forEach((key, value) {
+      buffer.write('${' ' * indentLevel * 2}$key:');
+      if (value is YamlMap) {
+        buffer.write('\n');
+        buffer.write(_formatYamlMap(value, indentLevel + 1));
+      } else {
+        buffer.write(' $value\n');
+      }
+    });
+    return buffer.toString();
   }
 
   Widget fetchNodeIcon(String nodeId) {
@@ -44,6 +74,24 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       return Image.asset('assets/icons/smart_14210186.png', width: 24, height: 24);
     }
     return Image.asset('assets/icons/icons8-topology-53.png', width: 24, height: 24);
+  }
+
+  Future<void> _fetchNodeDescriptionForManagement(String type) async {
+    try {
+      if (type.isNotEmpty) {
+        var yamlDescription = await ServiceProvider.GetDescriptionByType(type);
+        YamlMap? descriptionMap = yamlDescription;
+        if (descriptionMap != null) {
+          setState(() {
+            nodeDescriptions[type] = _formatYamlMap(descriptionMap, 0);
+          });
+        }
+      } else {
+        print('Type key not found in nodeId: $type');
+      }
+    } catch (e) {
+      print('Error fetching node description: $e');
+    }
   }
 
   Future<void> _loadNodeDefinitions() async {
@@ -60,7 +108,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
           'title': key,
           'onTap': () {
             setState(() {
-              graph = ServiceProvider.TopologyCreator(key, graph,rootNode) as Graph;
+              graph = ServiceProvider.TopologyCreator(key, graph, rootNode) as Graph;
               print('$key tapped');
             });
           },
@@ -100,23 +148,23 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
               return [
                 PopupMenuItem<String>(
                   value: '1',
-                  child: Text('Make the Deploy'),
+                  child: const Text('Make the Deploy'),
                   onTap: () async {
                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
                       return DeployScreen();
                     }));
                   },
                 ),
-                 PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: '2',
-                  child: Text('Export your Topology'),
-                  onTap: () async{
-                     serviceProvider.saveFile(topologyYaml);
+                  child: const Text('Export your Topology'),
+                  onTap: () async {
+                    ServiceProvider.saveFile(topologyYaml);
                   },
                 ),
                 PopupMenuItem<String>(
                   value: '3',
-                  child: Text('View your Topology'),
+                  child: const Text('View your Topology'),
                   onTap: () async {
                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
                       return TopologyViewScreen();
@@ -231,17 +279,21 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
   }
 
   Widget nodeWidget(String nodeId) {
-    return GestureDetector(
-      onTap: () {
-        print('Node $nodeId tapped');
-      },
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          fetchNodeIcon(nodeId),
-          SizedBox(width: 8),
-          Text(nodeId),
-        ],
+    String description = nodeDescriptions[nodeId] ?? 'No description available';
+    return Tooltip(
+      message: description,
+      child: GestureDetector(
+        onTap: () {
+          print('Node $nodeId tapped');
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            fetchNodeIcon(nodeId),
+            const SizedBox(width: 8),
+            Text(nodeId),
+          ],
+        ),
       ),
     );
   }
