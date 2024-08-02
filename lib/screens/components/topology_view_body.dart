@@ -59,18 +59,20 @@ class _TopologyViewState extends State<TopologyViewBody> {
                   value: '1',
                   child: const Text('Make the Deploy'),
                   onTap: () async {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) {
-                      return DeployScreen();
-                    }));
+
+                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
+                    return DeployScreen();
+                    }), (route) => false);
                   },
                 ),
                 PopupMenuItem<String>(
                   value: '2',
                   child: const Text('Edit your Topology'),
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) {
-                      return TopologyManagementScreen();
-                    }));
+
+                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
+                    return TopologyManagementScreen();
+                    }), (route) => false);
                   },
                 ),
                 PopupMenuItem<String>(
@@ -88,8 +90,8 @@ class _TopologyViewState extends State<TopologyViewBody> {
       ),
       body: Container(
         color: Colors.white,
-        width: size.width * 100,
-        height: size.height * 100,
+        width: size.width ,
+        height: size.height ,
         child: SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: SingleChildScrollView(
@@ -212,11 +214,15 @@ class _SimpleGraphState extends State<SimpleGraph> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     SugiyamaConfiguration builder = SugiyamaConfiguration()
-      ..nodeSeparation = (60)
-      ..levelSeparation = (100)
-      ..orientation = (BuchheimWalkerConfiguration.ORIENTATION_LEFT_RIGHT)
-      ..levelSeparation = (150)
-      ..nodeSeparation = (100);
+      ..nodeSeparation = 2               // Reduced space between nodes to minimize long arcs
+      //..levelSeparation = 120              // Adequate space between levels for clarity
+      ..orientation = SugiyamaConfiguration.ORIENTATION_TOP_BOTTOM // Vertical layout for better readability
+      //..iterations = SugiyamaConfiguration.DEFAULT_ITERATIONS // Use the default number of iterations
+      ..bendPointShape = SharpBendPointShape(); // Uncomment if you want to enforce sharp bends
+
+
+
+
 
     return Scaffold(
       body: graph == null
@@ -228,14 +234,14 @@ class _SimpleGraphState extends State<SimpleGraph> {
             boundaryMargin: const EdgeInsets.all(200),
             constrained: false,
             minScale: 0.01,
-            maxScale: 5.6,
+            maxScale: 1.0,
             child: Center(
               child: GraphView(
                 algorithm: SugiyamaAlgorithm(builder),
                 graph: graph!,
                 paint: Paint()
-                  ..strokeWidth = 2
-                  ..style = PaintingStyle.stroke,
+                  ..strokeWidth = 1
+                  ..style = PaintingStyle.fill,
                 builder: (Node node) {
                   String nodeId = node.key?.value ?? '';
                   return MouseRegion(

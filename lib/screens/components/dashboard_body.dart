@@ -102,9 +102,9 @@ class _DashboardState extends State<DashboardBody> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return  SettingsScreen();
-              }));
+              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
+                return SettingsScreen();
+              }), (route) => false);
             },
           ),
           IconButton(
@@ -112,9 +112,10 @@ class _DashboardState extends State<DashboardBody> {
             onPressed: () async {
               Provider serviceProvider = Provider.instance;
               serviceProvider.Signout();
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                return LoginScreen();
-              }));
+
+              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
+              return LoginScreen();
+              }), (route) => false);
             },
           ),
         ],
@@ -208,9 +209,9 @@ class _DashboardState extends State<DashboardBody> {
                                     children: <Widget>[
                                       ElevatedButton(
                                         onPressed: () {
-                                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                                            return  TopologyManagementScreen();
-                                          }));
+                                          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
+                                            return TopologyManagementScreen();
+                                          }), (route) => false);
                                         },
                                         style: ElevatedButton.styleFrom(
                                           foregroundColor: Colors.white,
@@ -234,9 +235,9 @@ class _DashboardState extends State<DashboardBody> {
                                       const SizedBox(height: 20),
                                       ElevatedButton(
                                         onPressed: () {
-                                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                                            return  TopologyViewScreen();
-                                          }));
+                                          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
+                                            return TopologyViewScreen();
+                                          }), (route) => false);
                                         },
                                         style: ElevatedButton.styleFrom(
                                           foregroundColor: Colors.white,
@@ -260,9 +261,9 @@ class _DashboardState extends State<DashboardBody> {
                                       const SizedBox(height: 20),
                                       ElevatedButton(
                                         onPressed: () {
-                                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                                            return DeployScreen();
-                                          }));
+                                          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
+                                            return TopologyViewScreen();
+                                          }), (route) => false);
                                         },
                                         style: ElevatedButton.styleFrom(
                                           foregroundColor: Colors.white,

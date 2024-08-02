@@ -101,8 +101,12 @@ class  _DeployState extends State<DeployBody > {
                   value: '2',
                   child: Text('Edit your Topology'),
                   onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder: (context){return TopologyManagementScreen() ;},),);
-                  },
+                    //Navigator.push(context, MaterialPageRoute(builder: (context){return TopologyManagementScreen() ;},),);
+
+                  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
+                  return TopologyManagementScreen();
+                  }), (route) => false);
+                                },
 
                 ),
                 PopupMenuItem<String>(
@@ -110,9 +114,10 @@ class  _DeployState extends State<DeployBody > {
                   child: Text('View a Topology'),
 
                   onTap: () async {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                      return TopologyViewScreen();
-                    }));
+
+                  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
+                  return TopologyViewScreen();
+                  }), (route) => false);
                   }
                 ),
 

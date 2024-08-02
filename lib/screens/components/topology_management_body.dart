@@ -29,10 +29,14 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
   @override
   void initState() {
     super.initState();
-    // I need a root node otherwise it will be shown an error that the graph is empty at first
+    _initializeGraph();
+    _loadNodeDescriptions();
+  }
+
+  void _initializeGraph() {
+    graph = Graph()..isTree = false;  // Reinitialize the graph
     rootNode = Node.Id('Root Node');
     graph.addNode(rootNode!);
-    _loadNodeDescriptions();
   }
 
   Future<void> _loadNodeDescriptions() async {
@@ -76,24 +80,6 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     return Image.asset('assets/icons/icons8-topology-53.png', width: 24, height: 24);
   }
 
-  Future<void> _fetchNodeDescriptionForManagement(String type) async {
-    try {
-      if (type.isNotEmpty) {
-        var yamlDescription = await ServiceProvider.GetDescriptionByType(type);
-        YamlMap? descriptionMap = yamlDescription;
-        if (descriptionMap != null) {
-          setState(() {
-            nodeDescriptions[type] = _formatYamlMap(descriptionMap, 0);
-          });
-        }
-      } else {
-        print('Type key not found in nodeId: $type');
-      }
-    } catch (e) {
-      print('Error fetching node description: $e');
-    }
-  }
-
   Future<void> _loadNodeDefinitions() async {
     setState(() {
       sidebarItems = [];
@@ -103,13 +89,11 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       List<String> keyTypes = await ServiceProvider.NodesDefinition() as List<String>;
 
       for (var key in keyTypes) {
-        print(key);
         sidebarItems.add({
           'title': key,
           'onTap': () {
             setState(() {
               graph = ServiceProvider.TopologyCreator(key, graph, rootNode) as Graph;
-              print('$key tapped');
             });
           },
         });
@@ -132,9 +116,9 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) {
+            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
               return HomeScreen();
-            }));
+            }), (route) => false);
           },
         ),
         actions: [
@@ -150,9 +134,9 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   value: '1',
                   child: const Text('Make the Deploy'),
                   onTap: () async {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
                       return DeployScreen();
-                    }));
+                    }), (route) => false);
                   },
                 ),
                 PopupMenuItem<String>(
@@ -166,9 +150,9 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   value: '3',
                   child: const Text('View your Topology'),
                   onTap: () async {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
                       return TopologyViewScreen();
-                    }));
+                    }), (route) => false);
                   },
                 ),
               ];

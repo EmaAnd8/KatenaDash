@@ -976,6 +976,7 @@ class Provider {
       node = Node.Id(type);
       print(node);
       graph.addNode(node);
+      return graph;
 
     }
 
