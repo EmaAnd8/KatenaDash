@@ -504,255 +504,6 @@ class Provider {
     }
   }
 
-  Future<List<Widget>?> TopologyPrinterFromYaml() async {
-    var yamlFile = await ServiceProvider.ImportYaml();
-
-    print(yamlFile);
-    print(yamlFile?["topology_template"]["node_templates"]["userWallet"]);
-    if (yamlFile?["topology_template"]["node_templates"]["ganache"]
-        .toString() != null) {
-      if (yamlFile?["topology_template"]["node_templates"]["ganache"]
-          .toString() != null &&
-          yamlFile?["topology_template"]["node_templates"]["userWallet"]
-              .toString() != null) {
-        List<Widget> nodes = [
-          // User Wallet Node
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(left: 40, right: 40, bottom: 20),
-                child: Image.asset(
-                  "assets/icons/wallet_4121117.png",
-                  width: 50,
-                  height: 50,
-                ),
-              ),
-              const Text("User wallet"),
-            ],
-          ),
-          // Arrow to Ganache
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 30),
-            child: CustomPaint(
-              painter: ArrowPainter(
-                color: Colors.blue,
-                angle: 0,
-                length: 120,
-              ),
-              size: const Size(10, 50),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 75),
-            child: const Text("Hosted on", textAlign: TextAlign.center),
-          ),
-          // Ganache Node
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-            child: Image.asset(
-              "assets/icons/Ganache Blockchain.png",
-              width: 100,
-              height: 100,
-            ),
-          ),
-        ];
-
-        // EnsRegistry Node
-        if (yamlFile?["topology_template"]["node_templates"]["ensRegistry"]
-            .toString() != null) {
-          print(yamlFile?["topology_template"]["node_templates"]["ensRegistry"]
-              .toString());
-          nodes.addAll([
-            // Arrow to EnsRegistry
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: CustomPaint(
-                painter: ArrowPainter(
-                  color: Colors.blue,
-                  angle: (3 / 4) * math.pi,
-                  length: 60,
-                ),
-                size: const Size(10, 50),
-              ),
-            ),
-            Padding(padding: const EdgeInsets.only(bottom: 200, left: 100),
-              child: Column(
-
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 10),
-                    child: Image.asset(
-                      "assets/icons/smart_14210186.png",
-                      width: 50,
-                      height: 50,
-                    ),
-                  ),
-                  const Padding(padding: EdgeInsets.only(bottom: 5),
-                    child: Text("EnsRegister"),
-                  ),
-                  const Text("abi: ENSRegistry")
-                ],
-
-              ),
-            ),
-          ]);
-        } else {
-          print("No ens Register");
-        }
-
-        // PublicResolver Node
-        if (yamlFile?["topology_template"]["node_templates"]["publicResolver"]
-            .toString() != null) {
-          print(
-              yamlFile?["topology_template"]["node_templates"]["publicResolver"]
-                  .toString());
-          nodes.addAll([
-            // Arrow to PublicResolver
-            Stack(
-              fit: StackFit.loose,
-              children: <Widget>
-              [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 70, vertical: 30),
-                  child: CustomPaint(
-                    painter: ArrowPainter(
-                      color: Colors.blue,
-                      angle: (-2 * math.pi) + (math.pi / 2) + (-math.pi / 3),
-                      length: 70,
-                    ),
-                    size: const Size(10, 50),
-                  ),
-                ),
-
-                const Padding(padding: EdgeInsets.only(right: 25, top: 35),
-                  child: Text("Connected to"),
-                ),
-
-
-              ],
-            ),
-            Column(
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: Image.asset(
-                    "assets/icons/smart_14210186.png",
-                    width: 50,
-                    height: 50,
-                  ),
-                ),
-                const Padding(padding: EdgeInsets.only(bottom: 5),
-                  child: Text("publicResolver"),
-                ),
-                const Text("abi: PublicResolver"),
-              ],
-            ),
-          ]);
-        } else {
-          print("No public Resolver");
-        }
-
-        // ReverseRegistrar Node
-        if (yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"]
-            .toString() != null) {
-          print(
-              yamlFile?["topology_template"]["node_templates"]["reverseRegistrar"]
-                  .toString());
-
-          nodes.addAll([
-            // Arrow to ReverseRegistrar
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: CustomPaint(
-                painter: ArrowPainter(
-                  color: Colors.blue,
-                  angle: -math.pi,
-                  length: 60,
-                ),
-                size: const Size(10, 50),
-              ),
-            ),
-
-
-            Column(
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: Image.asset(
-                    "assets/icons/smart_14210186.png",
-                    width: 50,
-                    height: 50,
-                  ),
-                ),
-
-                const Padding(padding: EdgeInsets.only(bottom: 5),
-                  child: Text("ReverseRegistrar"),
-                ),
-                Text("abi: ReverseRegistrar")
-
-
-              ],
-
-            ),
-
-          ]);
-        } else {
-          print("No reverseRegistrar");
-        }
-
-        // Registrar Node
-        if (yamlFile?["topology_template"]["node_templates"]["registrar"]
-            .toString() != null) {
-          print(yamlFile?["topology_template"]["node_templates"]["registrar"]
-              .toString());
-          nodes.addAll([
-            // Arrow to Registrar
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: CustomPaint(
-                painter: ArrowPainter(
-                  color: Colors.blue,
-                  angle: -math.pi,
-                  length: 60,
-                ),
-                size: const Size(10, 50),
-              ),
-            ),
-            Column(
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: Image.asset(
-                    "assets/icons/smart_14210186.png",
-                    width: 50,
-                    height: 50,
-                  ),
-                ),
-
-                const Padding(padding: EdgeInsets.only(bottom: 5),
-                  child: Text("Registrar"),
-
-                ),
-                const Text("abi: Registrar")
-
-              ],
-            ),
-          ]);
-        } else {
-          print("No Registrar");
-        }
-
-        return nodes;
-      } else {
-        print("no network defined");
-      }
-    } else {
-      print("empty topology");
-    }
-    return null;
-  }
 
 
   Future<YamlMap?> loadYamlFromAssets(String assetPath) async {
@@ -888,13 +639,7 @@ class Provider {
     return '${directory.path}/topology.yaml';
   }
 
-  Future<void> _saveFile1() async {
-    final filePath = await _getFilePath();
-    final file = File(filePath);
 
-    // Write some data to the file
-    await file.writeAsString('Hello, this is a saved file!');
-  }
 
   void saveFile(String data) {
     // Define the file content
@@ -913,6 +658,49 @@ class Provider {
     // Revoke the object URL to free memory
     html.Url.revokeObjectUrl(url);
   }
+
+
+  Future<YamlMap?> GetDescriptionByTypeforManagement(String? type) async {
+
+    try {
+      // Load the AssetManifest.json which contains a list of all assets
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      // Filter the list to get only the YAML files in the katena-main/nodes directory
+      final yamlFiles = manifestMap.keys
+          .where((String key) =>
+      key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
+          .toList();
+
+      for (var file in yamlFiles) {
+        // Read the YAML file
+        final yamlContent = await rootBundle.loadString(file);
+        final yamlMap = loadYaml(yamlContent) as YamlMap;
+        var nodeTypes = yamlMap["node_types"];
+        // print(yamlMap);
+
+        // print(nodeTypes);
+        if(nodeTypes!=null)
+        {
+          for (var entry in nodeTypes.entries) {
+            if(entry.key==type) {
+              // print('Key: ${entry.key}, Value: ${entry.value}');
+              return entry.value;
+            }
+          }
+        }
+
+
+
+
+      }
+    } catch(e) {
+      print('Error loading descriptions: $e');
+    }
+    return null;
+  }
+
 
   Future<YamlMap?> GetDescriptionByType(String type) async {
 
@@ -957,14 +745,102 @@ class Provider {
 
 
 
-  Future<Graph?> TopologyCreator(String type,Graph graph,Node? root) async {
+  String? getType(String yamlContent) {
+    // Parse the YAML content
+    final parsedYaml = loadYaml(yamlContent);
+
+    // Traverse the parsed structure to find the type
+    if (parsedYaml['host'] != null && parsedYaml['host']['type'] != null) {
+      return parsedYaml['host']['type'];
+    } else {
+      return null;
+    }
+  }
+
+  Future<String?> GetCapabilitiesByType(String type) async {
+
+    try {
+      // Load the AssetManifest.json which contains a list of all assets
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+      var yamlContentToBeFound;
+      var yamlMapToBeFound;
+      var nodeTypeToBeFound;
+      String? capability;
+      // Filter the list to get only the YAML files in the katena-main/nodes directory
+      final yamlFiles = manifestMap.keys
+          .where((String key) =>
+      key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
+          .toList();
+
+      for (var file in yamlFiles) {
+        // Read the YAML file
+        final yamlContent = await rootBundle.loadString(file);
+        final yamlMap = loadYaml(yamlContent) as YamlMap;
+        var nodeTypes = yamlMap["node_types"];
+        // print(yamlMap);
+
+        // print(nodeTypes);
+        if(nodeTypes!=null)
+        {
+          for (var entry in nodeTypes.entries) {
+            if(entry.key==type) {
+              // print('Key: ${entry.key}, Value: ${entry.value}');
+               yamlContentToBeFound = await rootBundle.loadString(file);
+               yamlMapToBeFound= loadYaml(yamlContent) as YamlMap;
+               nodeTypeToBeFound=yamlMapToBeFound["node_types"];
+              break;
+
+            }
+          }
+        }
+
+
+
+
+      }
+
+
+      for (var nodeTypeEntry in nodeTypeToBeFound.entries) {
+        String nodeTypeName = nodeTypeEntry.key;
+        YamlMap nodeType = nodeTypeEntry.value;
+
+        if (nodeType.containsKey('capabilities')) {
+          var capabilities = nodeType['capabilities'];
+          print(capabilities);
+          /*
+          for (var capability in capabilities) {
+            print('Capability in $nodeTypeName: ${capability['name']}');
+            print(capability);
+          }
+
+           */
+          capability=getType(capabilities.toString());
+          return capability;
+
+        }else{
+            print("It could be a child or capabilities are not defined for that node");
+        }
+      }
+
+    } catch(e) {
+      print('Error loading descriptions: $e');
+    }
+    return null;
+  }
+
+
+
+  Future<Graph?> TopologyCreatorNodes(String type,Graph graph,Node? root) async {
     Provider serviceProvider=Provider.instance;
+
 
     if(graph.hasNodes())
       {
         print("graph is not empty");
         graph.removeNode(root);
-      }else{
+      }
+    else{
           print("graph is empty a new one is created");
           graph = Graph()
             ..isTree = false;
@@ -972,11 +848,13 @@ class Provider {
     Node node;
     final yamlMap = await serviceProvider.GetDescriptionByType(type)  as YamlMap;
 
+
+
     if(yamlMap!=null) {
       node = Node.Id(type);
       print(node);
       graph.addNode(node);
-      return graph;
+
 
     }
 
@@ -985,8 +863,66 @@ class Provider {
 
 
     print(yamlMap);
-    return null;
+    return graph;
 
 
   }
-}
+
+  Future<Graph?> TopologyCreatorEdges(String type,Graph graph,Node sourceNode,Node destinationNode) async {
+    Provider serviceProvider= Provider.instance;
+
+
+    if(graph.nodes.length==1 && type=="Add edge")
+    {
+
+            Node node1 = Node.Id("Root Node");
+            graph.addNode(node1);
+
+            return graph;
+    }else if(type=="Add edge" && graph.nodes.length>1)
+    {
+
+         YamlMap? source = await serviceProvider.GetDescriptionByTypeforManagement(sourceNode.key?.value);
+         YamlMap? destination = await serviceProvider.GetDescriptionByTypeforManagement(destinationNode.key?.value);
+
+         if(source?["requirements"]!=null) {
+           var sourceReq=source?["requirements"];
+
+           for(var req in sourceReq)
+             {
+               var sreq = req.values.first;
+
+                    if(sreq["capability"]!=null)
+                      {
+                        //print(await serviceProvider.GetCapabilitiesByType(destinationNode.key?.value));
+                        String? capacity_fatality=await serviceProvider.GetCapabilitiesByType(destinationNode.key?.value);
+                        if(sreq["capability"]==capacity_fatality) {
+                          graph.addEdge(sourceNode, destinationNode);
+                        }else
+                          {
+                            print("the two nodes are not compatible");
+                          }
+                      }else{
+
+                        print("if requirement is null the node is not connectable");
+
+                    }
+
+             }
+
+
+         }else
+           {
+             print("up to now do nothing");
+           }
+
+
+      return graph;
+    }
+      return null;
+  }
+
+  }
+
+
+

@@ -80,6 +80,18 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     return Image.asset('assets/icons/icons8-topology-53.png', width: 24, height: 24);
   }
 
+  void _showSnackBar(String message) {
+    final snackBar = SnackBar(
+      backgroundColor: Colors.red,
+      content: Text(message,
+          style: const TextStyle(color: CupertinoColors.white)),
+      duration: const Duration(seconds: 3),
+    );
+
+    // Show the snackbar
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
   Future<void> _loadNodeDefinitions() async {
     setState(() {
       sidebarItems = [];
@@ -93,16 +105,72 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
           'title': key,
           'onTap': () {
             setState(() {
-              graph = ServiceProvider.TopologyCreator(key, graph, rootNode) as Graph;
+              graph = ServiceProvider.TopologyCreatorNodes(key, graph, rootNode) as Graph;
             });
           },
         });
       }
 
+      String key1 = "Add edge";
+      sidebarItems.add({
+        'title': key1,
+        'onTap': () {
+          _promptForEdgeCreation();
+        },
+      });
+
       setState(() {});
     } catch (e) {
       print('Error loading node definitions: $e');
     }
+  }
+
+  Future<void> _promptForEdgeCreation() async {
+    if (graph.nodes.length <= 1) {
+      _showSnackBar("Cannot add an edge because the graph has only one node.");
+      return;
+    }
+
+    Node? sourceNode = await _selectNode("Select source node");
+    if (sourceNode == null) return;
+
+    Node? destinationNode = await _selectNode("Select destination node");
+    if (destinationNode == null) return;
+
+    setState(() async {
+      if(destinationNode.key?.value!=sourceNode.key?.value) {
+        graph = await ServiceProvider.TopologyCreatorEdges("Add edge", graph, sourceNode, destinationNode) as Graph;
+      } else
+        {
+
+            _showSnackBar("Cannot connect a node to itself");
+        }
+    });
+  }
+
+  Future<Node?> _selectNode(String title) async {
+    return showDialog<Node?>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Container(
+            width: double.minPositive,
+            child: ListView(
+              shrinkWrap: true,
+              children: graph.nodes.map((node) {
+                return ListTile(
+                  title: Text(node.key!.value),
+                  onTap: () {
+                    Navigator.of(context).pop(node);
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
