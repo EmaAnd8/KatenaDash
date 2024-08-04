@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
+import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
@@ -211,7 +212,12 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   value: '2',
                   child: const Text('Export your Topology'),
                   onTap: () async {
-                    ServiceProvider.saveFile(topologyYaml);
+                    if(graph.hasNodes()) {
+                      ServiceProvider.saveFile(graph);
+
+                    }else{
+                      _showSnackBar("you cannot export an empty file");
+                    }
                   },
                 ),
                 PopupMenuItem<String>(
@@ -221,6 +227,13 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
                       return TopologyViewScreen();
                     }), (route) => false);
+                  },
+                ),
+                PopupMenuItem<String>(
+                  value: '4',
+                  child: const Text('Import your Topology'),
+                  onTap: () async {
+                      graph=(await serviceProvider.TopologyGraphFromYamlWithTypes())!;
                   },
                 ),
               ];

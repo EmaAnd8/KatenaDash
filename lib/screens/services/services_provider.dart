@@ -30,6 +30,7 @@ import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
 
 import 'package:katena_dashboard/screens/settings/settings_screen.dart';
+import 'package:yaml_writer/yaml_writer.dart';
 
 enum AuthStatus {
   successful,
@@ -640,22 +641,57 @@ class Provider {
   }
 
 
+  Future<YamlMap?> graphToYamlParser(Graph graph) async{
+    final yamlWriter = YAMLWriter();
+    final Map<String, dynamic> yamlMap = {
+      'tosca_definitions_version': 'tosca_simple_yaml_1_3',
+      'topology_template': {
+        'node_templates': {}
+      }
+    };
+/*
+    for (var node in graph.nodes) {
+      yamlMap['topology_template']['node_templates'][node.key?.value] = {
+        'type': node.type,
+        'properties': node.properties,
+        'requirements': node.requirements.entries.map((entry) => {entry.key: entry.value}).toList(),
+      };
+    }
 
-  void saveFile(String data) {
-    // Define the file content
-    final text = data;
+ */
+
+
+
+    final yamlString = yamlWriter.write(yamlMap);
+    return loadYaml(yamlString) as YamlMap;
+
+
+  }
+
+
+
+  String getCurrentTimestampString() {
+    final DateTime now = DateTime.now();
+    return now.toString();
+  }
+
+  Future<void> saveFile(Graph graph) async {
+    Provider serviceProvider= Provider.instance;
+    YamlMap? grahToYamlData= await serviceProvider.graphToYamlParser(graph);
+    final text = grahToYamlData;
 
     // Convert the text to bytes and create a Blob
-    final bytes = utf8.encode("tosca_definitions_version: tosca_simple_yaml_1_3\n$text");
+    final bytes = utf8.encode(text.toString());
     final blob = html.Blob([bytes]);
 
     // Create a URL for the Blob and an anchor element
+    //Timestamp added to each topology name to avoid confusion
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', 'topology.yaml')
+      ..setAttribute('download', 'topology${serviceProvider.getCurrentTimestampString()}.yaml')
       ..click();
 
-    // Revoke the object URL to free memory
+    // Revoke the object URL
     html.Url.revokeObjectUrl(url);
   }
 
@@ -868,6 +904,80 @@ class Provider {
 
   }
 
+  Future<Graph?> TopologyGraphFromYamlWithTypes() async {
+    var yamlFile = await ServiceProvider.ImportYaml();
+    var nodeProperties = yamlFile?['topology_template']['node_templates'];
+    if (nodeProperties == null) {
+      print("No node templates found in YAML.");
+      return null;
+    }
+
+    Graph graph = Graph()..isTree = false;
+    List<String> imports = [];
+
+    // Load imports
+    if (yamlFile?["imports"] != null && yamlFile!["imports"].isNotEmpty) {
+      for (var importPath in yamlFile["imports"]) {
+        try {
+          YamlMap? yamlMap = await loadYamlFromAssets("katena-main/$importPath");
+          var nodeTypes = yamlMap?['node_types'];
+          if (nodeTypes != null) {
+            imports.addAll(nodeTypes.keys.cast<String>());
+          }
+        } catch (e) {
+          print("Error loading import: $importPath - $e");
+        }
+      }
+    } else {
+      print("No imports found in YAML.");
+    }
+
+    // Create nodes and add to graph
+    Map<String, Node> nodes = {};
+    for (var key in nodeProperties.keys) {
+      if (imports.contains(nodeProperties[key]["type"])) {
+        Node node = Node.Id(nodeProperties[key]["type"]);
+        graph.addNode(node);
+        nodes[key] = node;
+        print("Node added: ${node.key?.value}"); // Debug print
+      } else {
+        print("Node type not in imports: ${nodeProperties[key]["type"]}"); // Debug print
+      }
+    }
+
+    // Add edges based on requirements
+    for (var key in nodeProperties.keys) {
+      var requirements = nodeProperties[key]["requirements"];
+      if (requirements != null) {
+        Node? node = nodes[key];
+        if (node != null) {
+          for (var requirement in requirements) {
+            var targetNodeName = requirement.values.first;
+            print("Node $key requires: $targetNodeName"); // Debug print
+            Node? targetNode;
+            if (targetNodeName is YamlMap) {
+              print("Target node name (YamlMap): ${targetNodeName.values.first}");
+              targetNode = nodes[targetNodeName.values.first.toString()];
+            } else {
+              print("Target node name: $targetNodeName");
+              targetNode = nodes[targetNodeName];
+            }
+
+            if (targetNode != null) {
+              graph.addEdge(node, targetNode);
+              print("Edge added from ${node.key?.value} to ${targetNode.key?.value}"); // Debug print
+            } else {
+              print("Target node not found: $targetNodeName"); // Debug print
+            }
+          }
+        }
+      }
+    }
+
+    print("Graph nodes: ${graph.nodes.length}, ${graph.edges.length} edges created."); // Debug print
+    return graph;
+  }
+
   Future<Graph?> TopologyCreatorEdges(String type,Graph graph,Node sourceNode,Node destinationNode) async {
     Provider serviceProvider= Provider.instance;
 
@@ -921,6 +1031,8 @@ class Provider {
     }
       return null;
   }
+
+
 
   }
 
