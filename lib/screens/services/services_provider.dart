@@ -867,7 +867,7 @@ class Provider {
 
 
 
-  Future<Graph?> TopologyCreatorNodes(String type,Graph graph,Node? root) async {
+  Future<Graph?> TopologyCreatorNodes(String name,String type,Graph graph,Node? root) async {
     Provider serviceProvider=Provider.instance;
 
 
@@ -887,7 +887,7 @@ class Provider {
 
 
     if(yamlMap!=null) {
-      node = Node.Id(type);
+      node = Node.Id("name:$name\ntype:$type");
       print(node);
       graph.addNode(node);
 
@@ -991,10 +991,39 @@ class Provider {
             return graph;
     }else if(type=="Add edge" && graph.nodes.length>1)
     {
+      String? key1;
+      String? value;
+      String nodeId=sourceNode.key?.value;
+      List<String> lines = nodeId.split('\n');
+      Map<String, String> typeMap = {};
+      for (var line in lines) {
+        List<String> parts = line.split(':');
+        if (parts.length == 2) {
+           key1 = parts[0].trim();
+          value = parts[1].trim();
+          typeMap[key1] = value;
+        }
 
-         YamlMap? source = await serviceProvider.GetDescriptionByTypeforManagement(sourceNode.key?.value);
-         YamlMap? destination = await serviceProvider.GetDescriptionByTypeforManagement(destinationNode.key?.value);
-
+      }
+      print(value! +'c');
+      String? key2;
+      String? value2;
+      String nodeId2=destinationNode.key?.value;
+      List<String> lines2 = nodeId2.split('\n');
+      Map<String, String> typeMap2 = {};
+      for (var line2 in lines2) {
+        List<String> parts2 = line2.split(':');
+        if (parts2.length == 2) {
+         key2 = parts2[0].trim();
+         value2 = parts2[1].trim();
+         typeMap2[key2] = value2;
+        }
+      }
+      print(value2!+'d');
+         YamlMap? source = await serviceProvider.GetDescriptionByTypeforManagement(value!);
+         YamlMap? destination = await serviceProvider.GetDescriptionByTypeforManagement(value2!);
+print(source);
+print(destination);
          if(source?["requirements"]!=null) {
            var sourceReq=source?["requirements"];
 
@@ -1005,7 +1034,7 @@ class Provider {
                     if(sreq["capability"]!=null)
                       {
                         //print(await serviceProvider.GetCapabilitiesByType(destinationNode.key?.value));
-                        String? capacity_fatality=await serviceProvider.GetCapabilitiesByType(destinationNode.key?.value);
+                        String? capacity_fatality=await serviceProvider.GetCapabilitiesByType(value2);
                         if(sreq["capability"]==capacity_fatality) {
                           graph.addEdge(sourceNode, destinationNode);
                         }else

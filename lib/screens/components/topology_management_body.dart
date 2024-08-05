@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
-import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
@@ -13,6 +12,7 @@ String topologyYaml = "";
 List<Map<String, dynamic>> sidebarItems = [];
 Graph graph = Graph()..isTree = false;
 String nodeDescription = "";
+String name = '';
 final BuchheimWalkerConfiguration builder = BuchheimWalkerConfiguration();
 Node? rootNode;
 Map<String, String> nodeDescriptions = {};
@@ -38,6 +38,23 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     graph = Graph()..isTree = false;  // Reinitialize the graph
     rootNode = Node.Id('Root Node');
     graph.addNode(rootNode!);
+  }
+
+  Future<void> _fetchNodeDescription(String type) async {
+    try {
+      var yamlDescription = await ServiceProvider.GetDescriptionByType(type);
+
+      YamlMap? descriptionMap = yamlDescription;
+      String description = "";
+      if (descriptionMap != null) {
+        description = _formatYamlMap(descriptionMap, 0);
+      }
+      setState(() {
+        nodeDescription = description;
+      });
+    } catch (e) {
+      print('Error fetching node description: $e');
+    }
   }
 
   Future<void> _loadNodeDescriptions() async {
@@ -70,12 +87,12 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     return buffer.toString();
   }
 
-  Widget fetchNodeIcon(String nodeId) {
-    if (nodeId.contains("network")) {
+  Widget fetchNodeIcon(String type) {
+    if (type.contains("network")) {
       return Image.asset('assets/icons/worldwide_10969702.png', width: 24, height: 24);
-    } else if (nodeId.contains("wallet")) {
+    } else if (type.contains("wallet")) {
       return Image.asset('assets/icons/wallet_4121117.png', width: 24, height: 24);
-    } else if (nodeId.contains('contract')) {
+    } else if (type.contains('contract')) {
       return Image.asset('assets/icons/smart_14210186.png', width: 24, height: 24);
     }
     return Image.asset('assets/icons/icons8-topology-53.png', width: 24, height: 24);
@@ -84,8 +101,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
   void _showSnackBar(String message) {
     final snackBar = SnackBar(
       backgroundColor: Colors.red,
-      content: Text(message,
-          style: const TextStyle(color: CupertinoColors.white)),
+      content: Text(message, style: const TextStyle(color: CupertinoColors.white)),
       duration: const Duration(seconds: 3),
     );
 
@@ -104,10 +120,13 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       for (var key in keyTypes) {
         sidebarItems.add({
           'title': key,
-          'onTap': () {
-            setState(() {
-              graph = ServiceProvider.TopologyCreatorNodes(key, graph, rootNode) as Graph;
-            });
+          'onTap': () async {
+            String? nodeName = await _showNameInputDialog(context);
+            if (nodeName != null && nodeName.isNotEmpty) {
+              setState(() {
+                graph = ServiceProvider.TopologyCreatorNodes(nodeName, key, graph, rootNode) as Graph;
+              });
+            }
           },
         });
       }
@@ -138,15 +157,13 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     Node? destinationNode = await _selectNode("Select destination node");
     if (destinationNode == null) return;
 
-    setState(() async {
-      if(destinationNode.key?.value!=sourceNode.key?.value) {
+    if (destinationNode.key?.value != sourceNode.key?.value) {
+      setState(() async {
         graph = await ServiceProvider.TopologyCreatorEdges("Add edge", graph, sourceNode, destinationNode) as Graph;
-      } else
-        {
-
-            _showSnackBar("Cannot connect a node to itself");
-        }
-    });
+      });
+    } else {
+      _showSnackBar("Cannot connect a node to itself");
+    }
   }
 
   Future<Node?> _selectNode(String title) async {
@@ -174,10 +191,48 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     );
   }
 
+  void _resetGraphView() {
+    setState(() {
+      graph = Graph()..isTree = false;
+      rootNode = Node.Id('Root Node');
+      graph.addNode(rootNode!);
+    });
+  }
+
+  Future<String?> _showNameInputDialog(BuildContext context) async {
+    String nodeName = '';
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Enter node name'),
+          content: TextField(
+            onChanged: (value) {
+              nodeName = value;
+            },
+            decoration: InputDecoration(hintText: "Name"),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(nodeName);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
     String selectedOption = 'Option 1';
-    Size size = MediaQuery.of(context).size; // Get screen dimensions
+    SugiyamaConfiguration builder = SugiyamaConfiguration()
+      ..nodeSeparation = 2
+      ..orientation = SugiyamaConfiguration.ORIENTATION_TOP_BOTTOM;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Topology Editor'),
@@ -212,11 +267,10 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   value: '2',
                   child: const Text('Export your Topology'),
                   onTap: () async {
-                    if(graph.hasNodes()) {
+                    if (graph.hasNodes()) {
                       ServiceProvider.saveFile(graph);
-
-                    }else{
-                      _showSnackBar("you cannot export an empty file");
+                    } else {
+                      _showSnackBar("You cannot export an empty file");
                     }
                   },
                 ),
@@ -233,7 +287,20 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   value: '4',
                   child: const Text('Import your Topology'),
                   onTap: () async {
-                      graph=(await serviceProvider.TopologyGraphFromYamlWithTypes())!;
+                    // Reset the graph view immediately
+                    setState(() {
+                      graph = Graph()..isTree = false;
+                      rootNode = Node.Id('Root Node');
+                      graph.addNode(rootNode!);
+                    });
+
+                    // Fetch the new graph asynchronously
+                    final newGraph = await ServiceProvider.TopologyGraphFromYaml();
+
+                    // Update the state with the new graph
+                    setState(() {
+                      graph = newGraph!;
+                    });
                   },
                 ),
               ];
@@ -259,37 +326,36 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
           },
           child: Stack(
             children: [
-              SingleChildScrollView(
-                child: Column(
-                  children: <Widget>[
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-                      alignment: Alignment.topLeft,
-                    ),
-                    SizedBox(
-                      height: size.height,
-                      width: size.width - 250, // Adjust the width based on drawer
-                      child: InteractiveViewer(
-                        constrained: false,
-                        boundaryMargin: const EdgeInsets.all(100),
-                        minScale: 0.01,
-                        maxScale: 5.6,
-                        child: GraphView(
-                          graph: graph,
-                          algorithm: BuchheimWalkerAlgorithm(builder, TreeEdgeRenderer(builder)),
-                          builder: (Node node) {
-                            var nodeId = node.key?.value as String?;
-                            return nodeId != null ? nodeWidget(nodeId) : Container();
-                          },
-                        ),
+              Column(
+                children: <Widget>[
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                    alignment: Alignment.topLeft,
+                  ),
+                  Expanded(
+                    child: InteractiveViewer(
+                      constrained: false,
+                      boundaryMargin: const EdgeInsets.all(100),
+                      minScale: 0.01,
+                      maxScale: 5.6,
+                      child: GraphView(
+                        graph: graph,
+                        algorithm: SugiyamaAlgorithm(builder),
+                        paint: Paint()
+                          ..strokeWidth = 1
+                          ..style = PaintingStyle.fill,
+                        builder: (Node node) {
+                          var nodeData = node.key?.value as String?;
+                          return nodeData != null ? nodeWidget(node, nodeData) : Container();
+                        },
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
-                left: _isDrawerOpen ? 0 : -250, // Width of the drawer
+                left: _isDrawerOpen ? 0 : -250,
                 top: 0,
                 bottom: 0,
                 child: MouseRegion(
@@ -327,7 +393,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                                 title: Text(item['title']),
                                 onTap: item['onTap'],
                               ),
-                              Divider(),
+                              const Divider(),
                             ],
                           );
                         }).toList(),
@@ -343,21 +409,51 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     );
   }
 
-  Widget nodeWidget(String nodeId) {
-    String description = nodeDescriptions[nodeId] ?? 'No description available';
+  Widget nodeWidget(Node node, String nodeData) {
+    List<String> parts = nodeData.split('\n');
+    String nodeName = parts.length > 1 ? parts[0].replaceFirst('name:', '') : '';
+    String type = parts.length > 1 ? parts[1].replaceFirst('type:', '') : '';
+
     return Tooltip(
-      message: description,
-      child: GestureDetector(
-        onTap: () {
-          print('Node $nodeId tapped');
-        },
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            fetchNodeIcon(nodeId),
-            const SizedBox(width: 8),
-            Text(nodeId),
-          ],
+      message: nodeDescriptions[type] ?? 'No description available',
+      child: Draggable<Node>(
+        data: node,
+        feedback: Material(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              fetchNodeIcon(type),
+              const SizedBox(height: 4),
+              Text('name: $nodeName'),
+              Text('type: $type'),
+            ],
+          ),
+        ),
+        child: GestureDetector(
+          onTap: () async {
+            String? newName = await _showNameInputDialog(context);
+            if (newName != null && newName.isNotEmpty) {
+              setState(() {
+                // Update the node ID to include the new name
+                node.key = Key('name:$newName\ntype:$type') as ValueKey?;
+                Node updatedNode = Node.Id('name:$newName\ntype:$type');
+                graph.addNode(updatedNode);
+                graph.removeNode(node);
+                if (rootNode != null) {
+                  graph.addEdge(rootNode!, updatedNode);
+                }
+              });
+            }
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              fetchNodeIcon(type),
+              const SizedBox(height: 4),
+              Text('name: $nodeName'),
+              Text('type: $type'),
+            ],
+          ),
         ),
       ),
     );
