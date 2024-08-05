@@ -643,24 +643,54 @@ class Provider {
 
   Future<YamlMap?> graphToYamlParser(Graph graph) async{
     final yamlWriter = YAMLWriter();
+    Provider ServiceProvider= Provider.instance;
     final Map<String, dynamic> yamlMap = {
-      'tosca_definitions_version': 'tosca_simple_yaml_1_3',
+      'tosca_definitions_version': 'tosca_simple_yaml_1_3\n',
       'topology_template': {
         'node_templates': {}
       }
     };
-/*
+
     for (var node in graph.nodes) {
-      yamlMap['topology_template']['node_templates'][node.key?.value] = {
-        'type': node.type,
-        'properties': node.properties,
-        'requirements': node.requirements.entries.map((entry) => {entry.key: entry.value}).toList(),
-      };
+      print(node);
+      String nodeId2=node.key?.value;
+      List<String> lines2 = nodeId2.split('\n');
+      Map<String, String> typeMap2 = {};
+      for (var line2 in lines2) {
+        List<String> parts2 = line2.split(':');
+        if (parts2.length == 2) {
+        String?  key2 = parts2[0].trim();
+        String?  value2 = parts2[1].trim();
+        typeMap2[key2] = value2;
+
+        }
+      }
+    print(typeMap2);
+
+
+            yamlMap['topology_template']['node_templates'][typeMap2["name"]] = {
+
+
+              'type': typeMap2["type"],
+
+              'requirements':'',
+
+              'properties':'',
+
+                };
+
+
+
+
+
     }
 
- */
+    for(var edge in graph.edges)
+      {
 
 
+
+      }
 
     final yamlString = yamlWriter.write(yamlMap);
     return loadYaml(yamlString) as YamlMap;
@@ -1019,7 +1049,7 @@ class Provider {
          typeMap2[key2] = value2;
         }
       }
-      print(value2!+'d');
+
          YamlMap? source = await serviceProvider.GetDescriptionByTypeforManagement(value!);
          YamlMap? destination = await serviceProvider.GetDescriptionByTypeforManagement(value2!);
 print(source);
