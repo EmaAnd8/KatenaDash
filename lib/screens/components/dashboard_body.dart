@@ -93,12 +93,15 @@ class _DashboardState extends State<DashboardBody> {
           },
         ),
         actions: [
+          /*
           TextButton(
             onPressed: loadProfileImage,
             child: Container(
                 child: newIcon,
             ),
           ),
+
+           */
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {

@@ -303,6 +303,19 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                     });
                   },
                 ),
+                PopupMenuItem<String>(
+                  value: '5',
+                  child: const Text('Reset your Topology'),
+                  onTap: () async {
+                    // Reset the graph view immediately
+                    setState(() {
+                      graph = Graph()
+                        ..isTree = false;
+                      rootNode = Node.Id('Root Node');
+                      graph.addNode(rootNode!);
+                    });
+                  }
+                ),
               ];
             },
             icon: const Icon(Icons.menu),

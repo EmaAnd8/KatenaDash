@@ -520,11 +520,12 @@ class Provider {
   Future<Graph?> TopologyGraphFromYaml() async {
     var yamlFile = await ServiceProvider.ImportYaml();
     var nodeProperties = yamlFile?['topology_template']['node_templates'];
+
     if (nodeProperties == null) {
       print("No node templates found in YAML.");
       return null;
     }
-
+    print(yamlFile);
     Graph graph = Graph()..isTree = false;
     List<String> imports = [];
 
@@ -635,21 +636,39 @@ class Provider {
     return null;
 
   }
-  Future<String> _getFilePath() async {
-    final directory = await getApplicationDocumentsDirectory();
-    return '${directory.path}/topology.yaml';
-  }
 
 
   Future<YamlMap?> graphToYamlParser(Graph graph) async{
     final yamlWriter = YAMLWriter();
+    String requirementName='';
     Provider ServiceProvider= Provider.instance;
     final Map<String, dynamic> yamlMap = {
       'tosca_definitions_version': 'tosca_simple_yaml_1_3\n',
-      'topology_template': {
+        'imports': [
+        'nodes/contract.yaml',
+        'nodes/network.yaml',
+        'nodes/wallet.yaml'
+        ],'topology_template': {
         'node_templates': {}
       }
     };
+
+    void findCapabilities(YamlMap yamlMap) {
+      YamlMap nodeTypes = yamlMap['node_types'];
+
+      for (var nodeTypeEntry in nodeTypes.entries) {
+        String nodeTypeName = nodeTypeEntry.key;
+        YamlMap nodeType = nodeTypeEntry.value;
+
+        if (nodeType.containsKey('capabilities')) {
+          YamlList capabilities = nodeType['capabilities'];
+          for (var capability in capabilities) {
+           // print('Capability in $nodeTypeName: ${capability['name']}');
+          }
+        }
+      }
+    }
+
 
     for (var node in graph.nodes) {
       print(node);
@@ -673,9 +692,9 @@ class Provider {
 
               'type': typeMap2["type"],
 
-              'requirements':'',
+              'requirements':[],
 
-              'properties':'',
+              'properties':{},
 
                 };
 
@@ -688,7 +707,80 @@ class Provider {
     for(var edge in graph.edges)
       {
 
+            //TODO adding the requirements and export every topology
+        String? key2;
+        String? value2;
+        String nodeId2=edge.source.key?.value;
+        List<String> lines2 = nodeId2.split('\n');
+        Map<String, String> typeMap2 = {};
+        for (var line2 in lines2) {
+          List<String> parts2 = line2.split(':');
+          if (parts2.length == 2) {
+            key2 = parts2[0].trim();
+            value2 = parts2[1].trim();
+            typeMap2[key2] = value2;
+          }
+        }
+        String? key;
+        String? value;
+        String nodeId=edge.destination.key?.value;
+        List<String> lines = nodeId.split('\n');
+        Map<String, String> typeMap = {};
+        for (var line in lines) {
+          List<String> parts = line.split(':');
+          if (parts.length == 2) {
+            key = parts[0].trim();
+            value= parts[1].trim();
+            typeMap[key] = value;
+          }
+        }
+            YamlMap? sourceNodeDesc = await ServiceProvider.GetDescriptionByTypeforManagement(value2);
+            YamlMap? destinationNodeDesc = await ServiceProvider.GetDescriptionByTypeforManagement(value);
+            print(value2);
+            print(value);
+            if(sourceNodeDesc?["requirements"]!=null || destinationNodeDesc?["requirements"]!=null) {
+              var sourceReq = sourceNodeDesc?["requirements"];
 
+              for (var req in sourceReq) {
+                var sreq = req.values.first;
+
+                if (sreq["capability"] != null) {
+                  //print(await serviceProvider.GetCapabilitiesByType(destinationNode.key?.value));
+                  String? capacity_fatality = await ServiceProvider
+                      .GetCapabilitiesByType(value!);
+                  if (sreq["capability"] == capacity_fatality) {
+                    print(req);
+                    String newOne=req.toString().replaceFirst("{", "");
+                    requirementName = newOne.toString().split(':')[0].trim();
+
+
+
+
+
+
+
+                    yamlMap['topology_template']['node_templates'][typeMap2["name"]]['requirements']=
+                        [
+                           {requirementName:typeMap["name"]},
+                        ];
+
+
+
+
+
+                   // print( yamlMap['topology_template']['node_templates'][typeMap2["name"]]['requirements']);
+
+
+
+
+                  } else {
+                    print("the two nodes are not compatible");
+                  }
+                } else {
+                  print("if requirement is null the node is not connectable");
+                }
+              }
+            }
 
       }
 
@@ -1052,8 +1144,7 @@ class Provider {
 
          YamlMap? source = await serviceProvider.GetDescriptionByTypeforManagement(value!);
          YamlMap? destination = await serviceProvider.GetDescriptionByTypeforManagement(value2!);
-print(source);
-print(destination);
+
          if(source?["requirements"]!=null) {
            var sourceReq=source?["requirements"];
 
