@@ -40,22 +40,6 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     graph.addNode(rootNode!);
   }
 
-  Future<void> _fetchNodeDescription(String type) async {
-    try {
-      var yamlDescription = await ServiceProvider.GetDescriptionByType(type);
-
-      YamlMap? descriptionMap = yamlDescription;
-      String description = "";
-      if (descriptionMap != null) {
-        description = _formatYamlMap(descriptionMap, 0);
-      }
-      setState(() {
-        nodeDescription = description;
-      });
-    } catch (e) {
-      print('Error fetching node description: $e');
-    }
-  }
 
   Future<void> _loadNodeDescriptions() async {
     try {
@@ -130,6 +114,43 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
           },
         });
       }
+
+
+      String key_ens = "Add ens topology";
+      sidebarItems.add({
+        'title': key_ens,
+        'onTap': () async {
+         // _promptForEdgeCreation();
+          final generated_graph= await ServiceProvider.TopologyGraphFromYamlGivenName("ens.yaml") as Graph;
+          setState(() {
+            graph=generated_graph;
+          });
+        },
+      });
+
+      String key_dxdy = "Add dxdy topology";
+      sidebarItems.add({
+        'title': key_dxdy,
+        'onTap': () async {
+          // _promptForEdgeCreation();
+
+          final generated_graph=await ServiceProvider.TopologyGraphFromYamlGivenName("dydx.yaml") as Graph;
+          setState(() {
+            graph=generated_graph;
+          });
+        },
+      });
+
+      String key_darkforest = "Add dark forest topology";
+      sidebarItems.add({
+        'title': key_darkforest,
+        'onTap': () async {
+          final generated_graph=await ServiceProvider.TopologyGraphFromYamlGivenName("dark-forest.yaml") as Graph;
+          setState(() {
+            graph=generated_graph;
+          });
+        },
+      });
 
       String key1 = "Add edge";
       sidebarItems.add({

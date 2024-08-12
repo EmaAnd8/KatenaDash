@@ -86,6 +86,7 @@ flutter:
     - assets/output/
     - assets/katena-main/
     - assets/katena-main/nodes/
+    - assets/katena-main/benchmark/
 
 
 
