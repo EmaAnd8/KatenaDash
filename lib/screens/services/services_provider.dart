@@ -1312,7 +1312,7 @@ class Provider {
         var source=await serviceProvider.GetDescriptionByType(yamlContent["derived_from"]);
         print(source!);
         print("UUUUUUUUU");
-        if (source?["requirements"] != null) {
+        if (source["requirements"] != null) {
 
           return source;
         }

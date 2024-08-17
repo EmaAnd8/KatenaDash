@@ -235,6 +235,7 @@ class _DashboardState extends State<DashboardBody> {
                                           ],
                                         ),
                                       ),
+
                                       const SizedBox(height: 20),
                                       ElevatedButton(
                                         onPressed: () {
@@ -261,11 +262,13 @@ class _DashboardState extends State<DashboardBody> {
                                           ],
                                         ),
                                       ),
+
+
                                       const SizedBox(height: 20),
                                       ElevatedButton(
                                         onPressed: () {
                                           Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
-                                            return TopologyViewScreen();
+                                            return DeployScreen();
                                           }), (route) => false);
                                         },
                                         style: ElevatedButton.styleFrom(

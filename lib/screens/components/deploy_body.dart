@@ -1,10 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:graphview/GraphView.dart';
-import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
-import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
-import 'package:katena_dashboard/screens/components/graphiccomponents/simple_rectangle.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
@@ -38,19 +34,7 @@ class  _DeployState extends State<DeployBody > {
 
 
 
-/*
-  Future<void> _loadAndConvertYaml2() async {
 
-
-    //String result = await serviceProvider.Parser('assets/input/simple-relationship-with-args.yaml');
-    simpleTopology=(await ServiceProvider.TopologyPrinter())!;
-    setState(() {
-
-    });
-
-  }
-
- */
 
 
 
@@ -142,14 +126,7 @@ class  _DeployState extends State<DeployBody > {
         child:Column(
 
             children: <Widget>[
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16.0,horizontal: 16.0),
-                alignment:Alignment.topLeft,
 
-                child:const Text("Here you can Deploy! ",
-                  style: TextStyle(color: Colors.black,fontSize: 30),
-                  textAlign:TextAlign.left,),
-              ),
               Stack(
                 alignment: Alignment.center,
 
