@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
+import 'package:katena_dashboard/screens/components/graphiccomponents/simple_graph.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
@@ -120,7 +121,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       sidebarItems.add({
         'title': key_ens,
         'onTap': () async {
-         // _promptForEdgeCreation();
+          // _promptForEdgeCreation();
           final generated_graph= await ServiceProvider.TopologyGraphFromYamlGivenName("ens.yaml") as Graph;
           setState(() {
             graph=generated_graph;
@@ -160,10 +161,22 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
         },
       });
 
+      String keyx = "Remove edge";
+      sidebarItems.add({
+        'title': keyx,
+        'onTap': () {
+          _promptForEdgeRemoval();
+        },
+      });
+
       setState(() {});
     } catch (e) {
       print('Error loading node definitions: $e');
     }
+
+
+
+
   }
 
   Future<void> _promptForEdgeCreation() async {
@@ -187,6 +200,27 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     }
   }
 
+
+  Future<void> _promptForEdgeRemoval() async {
+    if (graph.nodes.length <= 1) {
+      _showSnackBar("Cannot remove an edge because the graph has only one node.");
+      return;
+    }
+
+    Node? sourceNode = await _selectNode("Select source node");
+    if (sourceNode == null) return;
+
+    Node? destinationNode = await _selectNode("Select destination node");
+    if (destinationNode == null) return;
+
+    if (destinationNode.key?.value != sourceNode.key?.value) {
+      setState(() async {
+        graph = await ServiceProvider.TopologyRemoveEdges( graph, sourceNode, destinationNode) as Graph;
+      });
+    } else {
+      _showSnackBar("Cannot connect a node to itself");
+    }
+  }
   Future<Node?> _selectNode(String title) async {
     return showDialog<Node?>(
       context: context,
@@ -325,17 +359,17 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   },
                 ),
                 PopupMenuItem<String>(
-                  value: '5',
-                  child: const Text('Reset your Topology'),
-                  onTap: () async {
-                    // Reset the graph view immediately
-                    setState(() {
-                      graph = Graph()
-                        ..isTree = false;
-                      rootNode = Node.Id('Root Node');
-                      graph.addNode(rootNode!);
-                    });
-                  }
+                    value: '5',
+                    child: const Text('Reset your Topology'),
+                    onTap: () async {
+                      // Reset the graph view immediately
+                      setState(() {
+                        graph = Graph()
+                          ..isTree = false;
+                        rootNode = Node.Id('Root Node');
+                        graph.addNode(rootNode!);
+                      });
+                    }
                 ),
               ];
             },
