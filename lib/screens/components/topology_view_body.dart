@@ -21,22 +21,21 @@ class TopologyViewBody extends StatefulWidget {
 
 class _TopologyViewState extends State<TopologyViewBody> {
   bool _isDrawerOpen = false;
-  Node? rootNode;
+  Node? rootnode;
 
   @override
   void initState() {
     super.initState();
-    _initializeGraph();
+    initializeGraph();
     _loadNodeDescriptions();
   }
 
-  void _initializeGraph() {
+  void initializeGraph() {
     graph = Graph()..isTree = false;
-    rootNode = Node.Id('Root Node');
-    graph.addNode(rootNode!);
+    rootnode = Node.Id('Root Node');
+    graph.addNode(rootnode!);
 
-    // Example of adding a self-referential edge
-    graph.addEdge(rootNode!, rootNode!);
+
   }
 
   Future<void> _loadNodeDescriptions() async {
@@ -235,12 +234,15 @@ class _TopologyViewState extends State<TopologyViewBody> {
     String nodeName = parts.length > 1 ? parts[0].replaceFirst('name:', '') : '';
     String type = parts.length > 1 ? parts[1].replaceFirst('type:', '') : '';
 
+    // Check if the node is self-referential based on the provided TOSCA data
+    bool isSelfReferential = nodeName == 'testMakerOracle'; // Adjust this condition as needed
+
     return Tooltip(
       message: nodeDescriptions[type] ?? 'No description available',
-      child: Draggable<Node>(
-        data: node,
-        feedback: Material(
-          child: Column(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               fetchNodeIcon(type),
@@ -249,18 +251,16 @@ class _TopologyViewState extends State<TopologyViewBody> {
               Text('type: $type'),
             ],
           ),
-        ),
-        child: GestureDetector(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              fetchNodeIcon(type),
-              const SizedBox(height: 4),
-              Text('name: $nodeName'),
-              Text('type: $type'),
-            ],
-          ),
-        ),
+          if (isSelfReferential)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Transform.rotate(
+                angle: 0.5, // Adjust the angle for the loop
+                child: Icon(Icons.loop, size: 16, color: Colors.red),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -268,8 +268,8 @@ class _TopologyViewState extends State<TopologyViewBody> {
   Future<void> _loadAndConvertYaml() async {
     setState(() {
       graph = Graph()..isTree = false;
-      rootNode = Node.Id('Root Node');
-      graph.addNode(rootNode!);
+      rootnode = Node.Id('Root Node');
+      graph.addNode(rootnode!);
     });
 
     final newGraph = await serviceProvider.TopologyGraphFromYaml();
@@ -277,15 +277,13 @@ class _TopologyViewState extends State<TopologyViewBody> {
     setState(() {
       if (newGraph != null) {
         graph = newGraph;
-        // Example of adding self-referential edges to the new graph
-        for (final node in graph.nodes) {
-          graph.addEdge(node, node);
-        }
+
+
       }
     });
   }
 
-Future<void> _loadNodeDefinitions() async {
+  Future<void> _loadNodeDefinitions() async {
     setState(() {
       sidebarItems = [];
     });
@@ -294,19 +292,17 @@ Future<void> _loadNodeDefinitions() async {
       List<String> keyTypes = await ServiceProvider.TopologyExamples() as List<String>;
 
       for (var key in keyTypes) {
-        String diff_key=key.replaceFirst(".yaml", "");
+        String diff_key = key.replaceFirst(".yaml", "");
         sidebarItems.add({
-          'title':"Add ${diff_key} topology",
+          'title': "Add ${diff_key} topology",
           'onTap': () async {
-
-
-              setState(() async {
-                graph = await ServiceProvider.TopologyGraphFromYamlGivenName2(key) as Graph;
-              });
-
+            setState(() async {
+              graph = await ServiceProvider.TopologyGraphFromYamlGivenName2(key) as Graph;
+            });
           },
         });
       }
+
       String key_ens = "Add ens topology";
       sidebarItems.add({
         'title': key_ens,

@@ -21,8 +21,27 @@ class LoginBody extends StatefulWidget {
   _LoginFormState createState() => _LoginFormState();
 }
 
-class _LoginFormState extends State<LoginBody> {
+class _LoginFormState extends State<LoginBody> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  double _buttonOffsetX = 0;
+  double _buttonOffsetY = 0;
+  late AnimationController _controller;
+  Color _buttonColor = Colors.blue; // Initial button color
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +53,7 @@ class _LoginFormState extends State<LoginBody> {
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: size.height * 0.1),
           child: Container(
             decoration: const BoxDecoration(
-              color: Colors.white, // Set the background color to white
+              color: Colors.white,
             ),
             child: Form(
               key: _formKey,
@@ -45,7 +64,7 @@ class _LoginFormState extends State<LoginBody> {
                   const SizedBox(height: 20),
                   const Text(
                     "Welcome to BlockVerse",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold,color:Colors.blue),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
                   ),
                   const SizedBox(height: 30),
                   SizedBox(
@@ -56,9 +75,9 @@ class _LoginFormState extends State<LoginBody> {
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(5.0),
-                          borderSide: BorderSide(color: Colors.blue),
+                          borderSide: const BorderSide(color: Colors.blue),
                         ),
-                        prefixIcon: Icon(Icons.email, color: Colors.blue),
+                        prefixIcon: const Icon(Icons.email, color: Colors.blue),
                         filled: true,
                       ),
                       validator: (value) {
@@ -84,9 +103,9 @@ class _LoginFormState extends State<LoginBody> {
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(5.0),
-                          borderSide: BorderSide(color: Colors.blue),
+                          borderSide: const BorderSide(color: Colors.blue),
                         ),
-                        prefixIcon: Icon(Icons.lock, color: Colors.blue),
+                        prefixIcon: const Icon(Icons.lock, color: Colors.blue),
                         filled: true,
                       ),
                       obscureText: true,
@@ -105,52 +124,77 @@ class _LoginFormState extends State<LoginBody> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: 400,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
-                          try {
-                            WidgetsFlutterBinding.ensureInitialized();
-                            await Firebase.initializeApp(
-                              options: DefaultFirebaseOptions.currentPlatform,
-                            );
-                            Provider serviceProvider = Provider.instance;
-                             serviceProvider.Login(context, email, password);
-                            if (FirebaseAuth.instance.currentUser!.emailVerified) {
-                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
+                  AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(_buttonOffsetX, _buttonOffsetY),
+                        child: MouseRegion(
+                          onEnter: (event) {
+                            if (!_formKey.currentState!.validate()) {
+                              _moveButton();
                             } else {
-                              // Handle email not verified case without showing alert dialog
-                              const snackBar = SnackBar(
-                                content: Text('Your email is not verified.'),
-                                backgroundColor: Colors.red,
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                              _resetButtonPosition();
                             }
-                          } catch (e) {
-                            print(e);
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.blue,
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5.0),
+                          },
+                          child: child,
                         ),
-                      ),
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(fontSize: 18),
+                      );
+                    },
+                    child: SizedBox(
+                      width: 400,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            _formKey.currentState!.save();
+                            try {
+                              WidgetsFlutterBinding.ensureInitialized();
+                              await Firebase.initializeApp(
+                                options: DefaultFirebaseOptions.currentPlatform,
+                              );
+                              Provider serviceProvider = Provider.instance;
+                              serviceProvider.Login(context, email, password);
+                              if (FirebaseAuth.instance.currentUser!.emailVerified) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => HomeScreen(),
+                                  ),
+                                );
+                              } else {
+                                const snackBar = SnackBar(
+                                  content: Text('Your email is not verified.'),
+                                  backgroundColor: Colors.red,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                              }
+                            } catch (e) {
+                              print(e);
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: _buttonColor, // Use the dynamic button color
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(fontSize: 18),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ResetPasswordScreen()));
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => ResetPasswordScreen()),
+                      );
                     },
                     child: const Text(
                       'Forgot password?',
@@ -175,5 +219,34 @@ class _LoginFormState extends State<LoginBody> {
       ),
     );
   }
-}
 
+  void _moveButton() {
+    setState(() {
+      _buttonOffsetX = _generateRandomOffsetX();
+      _buttonOffsetY = _generateRandomOffsetY();
+      _buttonColor = Colors.red; // Change button color to red when invalid
+      _controller.forward(from: 0); // Start the animation
+    });
+  }
+
+  void _resetButtonPosition() {
+    setState(() {
+      _buttonOffsetX = 0;
+      _buttonOffsetY = 0;
+      _buttonColor = Colors.blue; // Reset button color to original when valid
+      _controller.reverse(); // Reset the animation
+    });
+  }
+
+  // Generate a random X offset for the button within safe bounds
+  double _generateRandomOffsetX() {
+    double maxX = 100; // Set a safe horizontal movement range
+    return Random().nextDouble() * maxX - maxX / 2;
+  }
+
+  // Generate a random Y offset for the button within safe bounds
+  double _generateRandomOffsetY() {
+    double maxY = 30; // Set a safe vertical movement range
+    return Random().nextDouble() * maxY - maxY / 2;
+  }
+}

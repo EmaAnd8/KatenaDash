@@ -582,9 +582,11 @@ class Provider {
             }
 
             if (targetNode != null) {
-              graph.addEdge(node, targetNode);
-              print("Edge added from ${node.key?.value} to ${targetNode.key
-                  ?.value}"); // Debug print
+              if(node!=targetNode) {
+                graph.addEdge(node, targetNode);
+              }else{
+                print("the node is connected to itself");
+              }
             } else {
               print("Target node not found: $targetNodeName"); // Debug print
             }
@@ -1281,9 +1283,11 @@ class Provider {
             }
 
             if (targetNode != null) {
-              graph.addEdge(node, targetNode);
-              // print("Edge added from ${node.key?.value} to ${targetNode.key
-              //   ?.value}"); // Debug print
+              if(node!=targetNode) {
+                graph.addEdge(node, targetNode);
+              }else{
+                print("the node is connected to itself");
+              }
             } else {
               print("Target node not found: $targetNodeName"); // Debug print
             }
@@ -1381,9 +1385,12 @@ class Provider {
               }
 
               if (targetNode != null) {
-                graph.addEdge(node, targetNode);
-                // print("Edge added from ${node.key?.value} to ${targetNode.key
-                //   ?.value}"); // Debug print
+                if(node!=targetNode) {
+                  graph.addEdge(node, targetNode);
+                }else{
+                  print("the node is connected to itself");
+                }
+
               } else {
                 print("Target node not found: $targetNodeName"); // Debug print
               }
