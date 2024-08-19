@@ -35,11 +35,10 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
   }
 
   void _initializeGraph() {
-    graph = Graph()..isTree = false;  // Reinitialize the graph
+    graph = Graph()..isTree = false;
     rootNode = Node.Id('Root Node');
     graph.addNode(rootNode!);
   }
-
 
   Future<void> _loadNodeDescriptions() async {
     try {
@@ -88,8 +87,6 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       content: Text(message, style: const TextStyle(color: CupertinoColors.white)),
       duration: const Duration(seconds: 3),
     );
-
-    // Show the snackbar
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
@@ -115,15 +112,13 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
         });
       }
 
-
       String key_ens = "Add ens topology";
       sidebarItems.add({
         'title': key_ens,
         'onTap': () async {
-          // _promptForEdgeCreation();
-          final generated_graph= await ServiceProvider.TopologyGraphFromYamlGivenName("ens.yaml") as Graph;
+          final generated_graph = await ServiceProvider.TopologyGraphFromYamlGivenName("ens.yaml") as Graph;
           setState(() {
-            graph=generated_graph;
+            graph = generated_graph;
           });
         },
       });
@@ -132,11 +127,9 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       sidebarItems.add({
         'title': key_dxdy,
         'onTap': () async {
-          // _promptForEdgeCreation();
-
-          final generated_graph=await ServiceProvider.TopologyGraphFromYamlGivenName("dydx.yaml") as Graph;
+          final generated_graph = await ServiceProvider.TopologyGraphFromYamlGivenName("dydx.yaml") as Graph;
           setState(() {
-            graph=generated_graph;
+            graph = generated_graph;
           });
         },
       });
@@ -145,9 +138,9 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       sidebarItems.add({
         'title': key_darkforest,
         'onTap': () async {
-          final generated_graph=await ServiceProvider.TopologyGraphFromYamlGivenName("dark-forest.yaml") as Graph;
+          final generated_graph = await ServiceProvider.TopologyGraphFromYamlGivenName("dark-forest.yaml") as Graph;
           setState(() {
-            graph=generated_graph;
+            graph = generated_graph;
           });
         },
       });
@@ -172,15 +165,11 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     } catch (e) {
       print('Error loading node definitions: $e');
     }
-
-
-
-
   }
 
   Future<void> _promptForEdgeCreation() async {
-    if (graph.nodes.length <= 1) {
-      _showSnackBar("Cannot add an edge because the graph has only one node.");
+    if (graph.nodes.isEmpty) {
+      _showSnackBar("Cannot add an edge because the graph has no nodes.");
       return;
     }
 
@@ -190,19 +179,14 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     Node? destinationNode = await _selectNode("Select destination node");
     if (destinationNode == null) return;
 
-    if (destinationNode.key?.value != sourceNode.key?.value) {
-      setState(() async {
-        graph = await ServiceProvider.TopologyCreatorEdges("Add edge", graph, sourceNode, destinationNode) as Graph;
-      });
-    } else {
-      _showSnackBar("Cannot connect a node to itself");
-    }
+    setState(() async {
+      graph = await ServiceProvider.TopologyCreatorEdges("Add edge", graph, sourceNode, destinationNode) as Graph;
+    });
   }
-
 
   Future<void> _promptForEdgeRemoval() async {
-    if (graph.nodes.length <= 1) {
-      _showSnackBar("Cannot remove an edge because the graph has only one node.");
+    if (graph.nodes.isEmpty) {
+      _showSnackBar("Cannot remove an edge because the graph has no nodes.");
       return;
     }
 
@@ -212,14 +196,11 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     Node? destinationNode = await _selectNode("Select destination node");
     if (destinationNode == null) return;
 
-    if (destinationNode.key?.value != sourceNode.key?.value) {
-      setState(() async {
-        graph = await ServiceProvider.TopologyRemoveEdges( graph, sourceNode, destinationNode) as Graph;
-      });
-    } else {
-      _showSnackBar("Cannot connect a node to itself");
-    }
+    setState(() async {
+      graph = await ServiceProvider.TopologyRemoveEdges(graph, sourceNode, destinationNode) as Graph;
+    });
   }
+
   Future<Node?> _selectNode(String title) async {
     return showDialog<Node?>(
       context: context,
@@ -341,34 +322,29 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   value: '4',
                   child: const Text('Import your Topology'),
                   onTap: () async {
-                    // Reset the graph view immediately
                     setState(() {
                       graph = Graph()..isTree = false;
                       rootNode = Node.Id('Root Node');
                       graph.addNode(rootNode!);
                     });
 
-                    // Fetch the new graph asynchronously
                     final newGraph = await ServiceProvider.TopologyGraphFromYaml();
 
-                    // Update the state with the new graph
                     setState(() {
                       graph = newGraph!;
                     });
                   },
                 ),
                 PopupMenuItem<String>(
-                    value: '5',
-                    child: const Text('Reset your Topology'),
-                    onTap: () async {
-                      // Reset the graph view immediately
-                      setState(() {
-                        graph = Graph()
-                          ..isTree = false;
-                        rootNode = Node.Id('Root Node');
-                        graph.addNode(rootNode!);
-                      });
-                    }
+                  value: '5',
+                  child: const Text('Reset your Topology'),
+                  onTap: () async {
+                    setState(() {
+                      graph = Graph()..isTree = false;
+                      rootNode = Node.Id('Root Node');
+                      graph.addNode(rootNode!);
+                    });
+                  },
                 ),
               ];
             },
@@ -501,7 +477,6 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
             String? newName = await _showNameInputDialog(context);
             if (newName != null && newName.isNotEmpty) {
               setState(() {
-                // Update the node ID to include the new name
                 node.key = Key('name:$newName\ntype:$type') as ValueKey?;
                 Node updatedNode = Node.Id('name:$newName\ntype:$type');
                 graph.addNode(updatedNode);

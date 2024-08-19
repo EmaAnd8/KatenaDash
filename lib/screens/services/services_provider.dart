@@ -9,6 +9,7 @@ import 'dart:convert'; // For utf8.encode
 import 'package:file_picker/file_picker.dart';
 import 'dart:math' as math ;
 import 'dart:convert';
+import 'package:path/path.dart' as path;
 import 'package:flutter/services.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:katena_dashboard/screens/components/change_name_body.dart';
@@ -1203,14 +1204,16 @@ class Provider {
 
 
   Future<Graph?> TopologyGraphFromYamlGivenName(String nametop) async {
-    var yamlFile = await ServiceProvider.loadYamlFromAssets("katena-main/benchmark/$nametop");
+   try{
+    var yamlFile = await ServiceProvider.loadYamlFromAssets(
+        "katena-main/benchmark/$nametop");
 
     var nodeProperties = yamlFile?['topology_template']['node_templates'];
 
     if (nodeProperties == null) {
       print("No node templates found in YAML.");
       return null;
-    }else {
+    } else {
       print(yamlFile);
       print("///////////////////////");
     }
@@ -1239,25 +1242,28 @@ class Provider {
     // Create nodes and add to graph
     Map<String, Node> nodes = {};
     for (var key in nodeProperties.keys) {
-      if(nodeProperties[key]["type"].toString().isNotEmpty){
-      if (imports.contains(nodeProperties[key]["type"])) {
-        Node node = Node.Id("name:$key\ntype:${nodeProperties[key]["type"]}");
-        graph.addNode(node);
-        nodes[key] = node;
-       // print("Node added: ${node.key?.value}"); // Debug print
+      if (nodeProperties[key]["type"]
+          .toString()
+          .isNotEmpty) {
+        if (imports.contains(nodeProperties[key]["type"])) {
+          Node node = Node.Id("name:$key\ntype:${nodeProperties[key]["type"]}");
+          graph.addNode(node);
+          nodes[key] = node;
+          // print("Node added: ${node.key?.value}"); // Debug print
+        } else {
+          print(
+              "Node type not in imports: ${nodeProperties[key]["type"]}"); // Debug print
+        }
       } else {
-        print(
-            "Node type not in imports: ${nodeProperties[key]["type"]}"); // Debug print
-      }
-    }else{
         print("type is empty");
       }
-}
+    }
     // Add edges based on requirements
     for (var key in nodeProperties.keys) {
       //print(key+'me');
-      var requirements = nodeProperties[key]["requirements"];
-      if (requirements != null) {
+      if (nodeProperties[key]["requirements"] != null) {
+        var requirements = nodeProperties[key]["requirements"];
+
         Node? node = nodes[key];
         if (node != null) {
           for (var requirement in requirements) {
@@ -1276,19 +1282,126 @@ class Provider {
 
             if (targetNode != null) {
               graph.addEdge(node, targetNode);
-             // print("Edge added from ${node.key?.value} to ${targetNode.key
-               //   ?.value}"); // Debug print
+              // print("Edge added from ${node.key?.value} to ${targetNode.key
+              //   ?.value}"); // Debug print
             } else {
               print("Target node not found: $targetNodeName"); // Debug print
             }
           }
         }
+      } else {
+        print("exit");
       }
     }
+
 
     print("Graph nodes: ${graph.nodes.length}, ${graph.edges
         .length} edges created."); // Debug print
     return graph;
+  }catch(e){
+      print(e);
+    }
+
+  }
+  Future<Graph?> TopologyGraphFromYamlGivenName2(String nametop) async {
+    try{
+      var yamlFile = await ServiceProvider.loadYamlFromAssets(
+          "katena-main/examples/$nametop");
+
+      var nodeProperties = yamlFile?['topology_template']['node_templates'];
+
+      if (nodeProperties == null) {
+        print("No node templates found in YAML.");
+        return null;
+      } else {
+        print(yamlFile);
+        print("///////////////////////");
+      }
+      Graph graph = Graph()
+        ..isTree = false;
+      List<String> imports = [];
+
+      // Load imports
+      if (yamlFile?["imports"] != null && yamlFile!["imports"].isNotEmpty) {
+        for (var importPath in yamlFile["imports"]) {
+          try {
+            YamlMap? yamlMap = await loadYamlFromAssets(
+                "katena-main/$importPath");
+            var nodeTypes = yamlMap?['node_types'];
+            if (nodeTypes != null) {
+              imports.addAll(nodeTypes.keys.cast<String>());
+            }
+          } catch (e) {
+            print("Error loading import: $importPath - $e");
+          }
+        }
+      } else {
+        print("No imports found in YAML.");
+      }
+
+      // Create nodes and add to graph
+      Map<String, Node> nodes = {};
+      for (var key in nodeProperties.keys) {
+        if (nodeProperties[key]["type"]
+            .toString()
+            .isNotEmpty) {
+          if (imports.contains(nodeProperties[key]["type"])) {
+            Node node = Node.Id("name:$key\ntype:${nodeProperties[key]["type"]}");
+            graph.addNode(node);
+            nodes[key] = node;
+            // print("Node added: ${node.key?.value}"); // Debug print
+          } else {
+            print(
+                "Node type not in imports: ${nodeProperties[key]["type"]}"); // Debug print
+          }
+        } else {
+          print("type is empty");
+        }
+      }
+      // Add edges based on requirements
+      for (var key in nodeProperties.keys) {
+        //print(key+'me');
+        if (nodeProperties[key]["requirements"] != null) {
+          var requirements = nodeProperties[key]["requirements"];
+
+          Node? node = nodes[key];
+          if (node != null) {
+            for (var requirement in requirements) {
+              var targetNodeName = requirement.values.first;
+              //print("Node $key requires: $targetNodeName"); // Debug print
+
+              Node? targetNode;
+              if (targetNodeName is YamlMap) {
+                print(
+                    "Target node name (YamlMap): ${targetNodeName.values.first}");
+                targetNode = nodes[targetNodeName.values.first.toString()];
+              } else {
+                print("Target node name: $targetNodeName");
+                targetNode = nodes[targetNodeName];
+              }
+
+              if (targetNode != null) {
+                graph.addEdge(node, targetNode);
+                // print("Edge added from ${node.key?.value} to ${targetNode.key
+                //   ?.value}"); // Debug print
+              } else {
+                print("Target node not found: $targetNodeName"); // Debug print
+              }
+            }
+          }
+        } else {
+          print("exit");
+        }
+      }
+
+
+      print("Graph nodes: ${graph.nodes.length}, ${graph.edges
+          .length} edges created."); // Debug print
+      return graph;
+    }catch(e){
+      print(e);
+    }
+
   }
 
   Future<String?> getInheritedType(String derivationType, YamlMap? yamlContent) async {
@@ -1324,6 +1437,35 @@ class Provider {
       Node destinationNode) async {
     graph.removeEdgeFromPredecessor(sourceNode, destinationNode);
     return graph;
+  }
+
+
+  Future<List<String>?> TopologyExamples() async {
+    try {
+      List<String> TypesToPrint = [];
+      // Load the AssetManifest.json which contains a list of all assets
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      // Filter the list to get only the YAML files in the katena-main/nodes directory
+      final yamlFiles = manifestMap.keys
+          .where((String key) =>
+      key.startsWith('assets/katena-main/examples/') && key.endsWith('.yaml'))
+          .toList();
+
+      for (var file in yamlFiles) {
+            String fileName = path.basename(file);
+            print("File name: $fileName");
+            TypesToPrint.add(fileName);
+      }
+      return TypesToPrint;
+    } catch (e) {
+      print('Error loading Topologies Examples: $e');
+
+    }
+
+
+    return null;
   }
 
 //TODO add the possibility to show dxdy

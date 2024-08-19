@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
+import 'package:katena_dashboard/screens/components/topology_management_body.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
@@ -8,6 +9,8 @@ import 'package:katena_dashboard/screens/topology/topologymanangement/topology_m
 import 'package:yaml/yaml.dart';
 
 Provider serviceProvider = Provider.instance;
+Graph graph = Graph()..isTree = false;
+Map<String, String> nodeDescriptions = {};
 
 class TopologyViewBody extends StatefulWidget {
   const TopologyViewBody({super.key});
@@ -17,22 +20,72 @@ class TopologyViewBody extends StatefulWidget {
 }
 
 class _TopologyViewState extends State<TopologyViewBody> {
-  String selectedOption = 'Option 1';
-  Widget simpleTopology = Container(); // Initialize here
+  bool _isDrawerOpen = false;
+  Node? rootNode;
 
-  Future<void> _loadAndConvertYaml() async {
-    setState(() {
-      simpleTopology = Container(); // Reset before loading
+  @override
+  void initState() {
+    super.initState();
+    _initializeGraph();
+    _loadNodeDescriptions();
+  }
+
+  void _initializeGraph() {
+    graph = Graph()..isTree = false;
+    rootNode = Node.Id('Root Node');
+    graph.addNode(rootNode!);
+  }
+
+  Future<void> _loadNodeDescriptions() async {
+    try {
+      List<String> keyTypes = await serviceProvider.NodesDefinition() as List<String>;
+      for (var type in keyTypes) {
+        var yamlDescription = await serviceProvider.GetDescriptionByType(type);
+        YamlMap? descriptionMap = yamlDescription;
+        if (descriptionMap != null) {
+          nodeDescriptions[type] = _formatYamlMap(descriptionMap, 0);
+        }
+      }
+      setState(() {});
+    } catch (e) {
+      print('Error loading node descriptions: $e');
+    }
+  }
+
+  String _formatYamlMap(YamlMap map, int indentLevel) {
+    final buffer = StringBuffer();
+    map.forEach((key, value) {
+      buffer.write('${' ' * indentLevel * 2}$key:');
+      if (value is YamlMap) {
+        buffer.write('\n');
+        buffer.write(_formatYamlMap(value, indentLevel + 1));
+      } else {
+        buffer.write(' $value\n');
+      }
     });
-    // Load and rebuild the widget
-    setState(() {
-      simpleTopology = SimpleGraph(key: UniqueKey());
-    });
+    return buffer.toString();
+  }
+
+  Widget fetchNodeIcon(String type) {
+    if (type.contains("network")) {
+      return Image.asset('assets/icons/worldwide_10969702.png', width: 24, height: 24);
+    } else if (type.contains("wallet")) {
+      return Image.asset('assets/icons/wallet_4121117.png', width: 24, height: 24);
+    } else if (type.contains('contract')) {
+      return Image.asset('assets/icons/smart_14210186.png', width: 24, height: 24);
+    }
+    return Image.asset('assets/icons/icons8-topology-53.png', width: 24, height: 24);
   }
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size; // Get screen size
+    Size size = MediaQuery.of(context).size;
+
+    // Use SugiyamaConfiguration for graph layout
+    SugiyamaConfiguration builder = SugiyamaConfiguration()
+      ..nodeSeparation = 50
+      ..orientation = SugiyamaConfiguration.ORIENTATION_TOP_BOTTOM;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Topology Viewer'),
@@ -41,7 +94,6 @@ class _TopologyViewState extends State<TopologyViewBody> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-              selectedOption = "";
               return HomeScreen();
             }));
           },
@@ -50,7 +102,7 @@ class _TopologyViewState extends State<TopologyViewBody> {
           PopupMenuButton<String>(
             onSelected: (String item) {
               setState(() {
-                selectedOption = item;
+                // Handle selected options here
               });
             },
             itemBuilder: (BuildContext context) {
@@ -59,9 +111,8 @@ class _TopologyViewState extends State<TopologyViewBody> {
                   value: '1',
                   child: const Text('Make the Deploy'),
                   onTap: () async {
-
                     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
-                    return DeployScreen();
+                      return DeployScreen();
                     }), (route) => false);
                   },
                 ),
@@ -69,9 +120,8 @@ class _TopologyViewState extends State<TopologyViewBody> {
                   value: '2',
                   child: const Text('Edit your Topology'),
                   onTap: () {
-
                     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) {
-                    return TopologyManagementScreen();
+                      return TopologyManagementScreen();
                     }), (route) => false);
                   },
                 ),
@@ -90,234 +140,241 @@ class _TopologyViewState extends State<TopologyViewBody> {
       ),
       body: Container(
         color: Colors.white,
-        width: size.width ,
-        height: size.height ,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Column(
+        width: double.infinity,
+        height: double.infinity,
+        child: Stack(
+          children: [
+            Column(
               children: <Widget>[
                 Container(
-                  height: size.height,
-                  width: size.width,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      Center(
-                        child: simpleTopology,
-                      ),
-                    ],
+                  padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                  alignment: Alignment.topLeft,
+                ),
+                Expanded(
+                  child: InteractiveViewer(
+                    constrained: false,
+                    boundaryMargin: const EdgeInsets.all(100),
+                    minScale: 0.01,
+                    maxScale: 5.6,
+                    panEnabled: true, // Enable panning
+                    scaleEnabled: true, // Enable scaling
+                    child: GraphView(
+                      graph: graph,
+                      algorithm: SugiyamaAlgorithm(builder),
+                      paint: Paint()
+                        ..strokeWidth = 1
+                        ..style = PaintingStyle.fill,
+                      builder: (Node node) {
+                        var nodeData = node.key?.value as String?;
+                        return nodeData != null ? nodeWidget(node, nodeData) : Container();
+                      },
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-
-class SimpleGraph extends StatefulWidget {
-  const SimpleGraph({super.key});
-
-  @override
-  State<SimpleGraph> createState() => _SimpleGraphState();
-}
-
-class _SimpleGraphState extends State<SimpleGraph> {
-  Graph? graph;
-  String hoveredNodeId = ''; // Track hovered node
-  bool showSidebar = false; // Control sidebar visibility
-  final TransformationController _transformationController = TransformationController();
-  String nodeDescription = "";
-
-  @override
-  void initState() {
-    super.initState();
-    _getGraph();
-  }
-
-  Future<void> _getGraph() async {
-    try {
-      Graph? fetchedGraph = Graph()..isTree = false;
-      fetchedGraph = await serviceProvider.TopologyGraphFromYaml();
-      setState(() {
-        graph = fetchedGraph;
-      });
-    } catch (e) {
-      print('Error fetching graph: $e');
-    }
-  }
-
-  String _getIconPathForNode(String nodeId) {
-    if (nodeId.contains("network")) {
-      return 'assets/icons/worldwide_10969702.png';
-    } else if (nodeId.contains("wallet")) {
-      return 'assets/icons/wallet_4121117.png';
-    } else if (nodeId.contains('contract')) {
-      return 'assets/icons/smart_14210186.png';
-    }
-    return 'assets/icons/icons8-topology-53.png';
-  }
-
-  Future<void> _fetchNodeDescription(String nodeId) async {
-    try {
-      List<String> lines = nodeId.split('\n');
-      Map<String, String> typeMap = {};
-      for (var line in lines) {
-        List<String> parts = line.split(':');
-        if (parts.length == 2) {
-          String key = parts[0].trim();
-          String value = parts[1].trim();
-          typeMap[key] = value;
-        }
-      }
-
-      // Check if typeMap contains the "type" key before accessing it
-      if (typeMap.containsKey("type")) {
-        var yamlDescription = await serviceProvider.GetDescriptionByType(typeMap["type"]!.toString());
-
-        YamlMap? descriptionMap = yamlDescription;
-        String description = "";
-        if (descriptionMap != null) {
-          description = _formatYamlMap(descriptionMap, 0);
-        }
-        setState(() {
-          nodeDescription = description;
-        });
-      } else {
-        print('Type key not found in nodeId: $nodeId');
-      }
-    } catch (e) {
-      print('Error fetching node description: $e');
-    }
-  }
-
-  String _formatYamlMap(YamlMap map, int indentLevel) {
-    final buffer = StringBuffer();
-    map.forEach((key, value) {
-      buffer.write('${' ' * indentLevel * 2}$key:');
-      if (value is YamlMap) {
-        buffer.write('\n');
-        buffer.write(_formatYamlMap(value, indentLevel + 1));
-      } else {
-        buffer.write(' $value\n');
-      }
-    });
-    return buffer.toString();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    SugiyamaConfiguration builder = SugiyamaConfiguration()
-      ..nodeSeparation = 2               // Reduced space between nodes to minimize long arcs
-      //..levelSeparation = 120              // Adequate space between levels for clarity
-      ..orientation = SugiyamaConfiguration.ORIENTATION_TOP_BOTTOM // Vertical layout for better readability
-      //..iterations = SugiyamaConfiguration.DEFAULT_ITERATIONS // Use the default number of iterations
-      ..bendPointShape = SharpBendPointShape(); // Uncomment if you want to enforce sharp bends
-
-
-
-
-
-    return Scaffold(
-      body: graph == null
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-        children: [
-          InteractiveViewer(
-            transformationController: _transformationController,
-            boundaryMargin: const EdgeInsets.all(200),
-            constrained: false,
-            minScale: 0.01,
-            maxScale: 1.0,
-            child: Center(
-              child: GraphView(
-                algorithm: SugiyamaAlgorithm(builder),
-                graph: graph!,
-                paint: Paint()
-                  ..strokeWidth = 1
-                  ..style = PaintingStyle.fill,
-                builder: (Node node) {
-                  String nodeId = node.key?.value ?? '';
-                  return MouseRegion(
-                    onEnter: (_) {
-                      setState(() {
-                        hoveredNodeId = nodeId;
-                        showSidebar = true;
-                      });
-                      _fetchNodeDescription(nodeId);
-                    },
-                    onExit: (_) => setState(() {
-                      hoveredNodeId = '';
-                      showSidebar = false;
-                    }),
-                    child: SizedBox(
-                      width: 90,
-                      height: 90,
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Image.asset(
-                              _getIconPathForNode(nodeId),
-                              width: 20,
-                              height: 20,
-                            ),
-                            Text(
-                              nodeId,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              left: _isDrawerOpen ? 0 : -250,
+              top: 0,
+              bottom: 0,
+              child: MouseRegion(
+                onEnter: (_) {
+                  setState(() {
+                    _isDrawerOpen = true;
+                    _loadNodeDefinitions();
+                  });
+                },
+                onExit: (_) {
+                  setState(() {
+                    _isDrawerOpen = false;
+                  });
+                },
+                child: Drawer(
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: <Widget>[
+                      const DrawerHeader(
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                        ),
+                        child: Text(
+                          'Topology manager',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          if (showSidebar)
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                width: 200,
-                height: size.height,
-                color: Colors.white,
-                padding: const EdgeInsets.all(16.0),
-                child: SingleChildScrollView(
-                  child: _buildSidebarContent(hoveredNodeId),
+                      ...sidebarItems.map((item) {
+                        return Column(
+                          children: [
+                            ListTile(
+                              title: Text(item['title']),
+                              onTap: item['onTap'],
+                            ),
+                            const Divider(),
+                          ],
+                        );
+                      }).toList(),
+                    ],
+                  ),
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSidebarContent(String nodeId) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Node Details: $nodeId',
-          style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold, color: Colors.blue),
+  Widget nodeWidget(Node node, String nodeData) {
+    List<String> parts = nodeData.split('\n');
+    String nodeName = parts.length > 1 ? parts[0].replaceFirst('name:', '') : '';
+    String type = parts.length > 1 ? parts[1].replaceFirst('type:', '') : '';
+
+    return Tooltip(
+      message: nodeDescriptions[type] ?? 'No description available',
+      child: Draggable<Node>(
+        data: node,
+        feedback: Material(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              fetchNodeIcon(type),
+              const SizedBox(height: 4),
+              Text('name: $nodeName'),
+              Text('type: $type'),
+            ],
+          ),
         ),
-        const Divider(),
-        Text(
-          'Description: $nodeDescription',
-          style: const TextStyle(color: Colors.blue),
+        child: GestureDetector(
+          onTap: () async {
+            String? newName = await _showNameInputDialog(context);
+            if (newName != null && newName.isNotEmpty) {
+              setState(() {
+                node.key = Key('name:$newName\ntype:$type') as ValueKey?;
+                Node updatedNode = Node.Id('name:$newName\ntype:$type');
+                graph.addNode(updatedNode);
+                graph.removeNode(node);
+                if (rootNode != null) {
+                  graph.addEdge(rootNode!, updatedNode);
+                }
+              });
+            }
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              fetchNodeIcon(type),
+              const SizedBox(height: 4),
+              Text('name: $nodeName'),
+              Text('type: $type'),
+            ],
+          ),
         ),
-      ],
+      ),
     );
+  }
+
+  Future<String?> _showNameInputDialog(BuildContext context) async {
+    String nodeName = '';
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Enter node name'),
+          content: TextField(
+            onChanged: (value) {
+              nodeName = value;
+            },
+            decoration: InputDecoration(hintText: "Name"),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(nodeName);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _loadAndConvertYaml() async {
+    setState(() {
+      graph = Graph()..isTree = false;
+      rootNode = Node.Id('Root Node');
+      graph.addNode(rootNode!);
+    });
+
+    final newGraph = await serviceProvider.TopologyGraphFromYaml();
+
+    setState(() {
+      graph = newGraph!;
+    });
+  }
+
+  Future<void> _loadNodeDefinitions() async {
+    setState(() {
+      sidebarItems = [];
+    });
+
+    try {
+      List<String> keyTypes = await ServiceProvider.TopologyExamples() as List<String>;
+
+      for (var key in keyTypes) {
+        String diff_key=key.replaceFirst(".yaml", "");
+        sidebarItems.add({
+          'title':"Add ${diff_key} topology",
+          'onTap': () async {
+
+
+              setState(() async {
+                graph = await ServiceProvider.TopologyGraphFromYamlGivenName2(key) as Graph;
+              });
+
+          },
+        });
+      }
+      String key_ens = "Add ens topology";
+      sidebarItems.add({
+        'title': key_ens,
+        'onTap': () async {
+          final generated_graph = await ServiceProvider.TopologyGraphFromYamlGivenName("ens.yaml") as Graph;
+          setState(() {
+            graph = generated_graph;
+          });
+        },
+      });
+
+      String key_dxdy = "Add dxdy topology";
+      sidebarItems.add({
+        'title': key_dxdy,
+        'onTap': () async {
+          final generated_graph = await ServiceProvider.TopologyGraphFromYamlGivenName("dydx.yaml") as Graph;
+          setState(() {
+            graph = generated_graph;
+          });
+        },
+      });
+
+      String key_darkforest = "Add dark forest topology";
+      sidebarItems.add({
+        'title': key_darkforest,
+        'onTap': () async {
+          final generated_graph = await ServiceProvider.TopologyGraphFromYamlGivenName("dark-forest.yaml") as Graph;
+          setState(() {
+            graph = generated_graph;
+          });
+        },
+      });
+
+      setState(() {});
+    } catch (e) {
+      print('Error loading node definitions: $e');
+    }
   }
 }

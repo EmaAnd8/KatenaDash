@@ -184,7 +184,7 @@ topology_template:
       requirements:
       - host: ganache
       - wallet: userWallet
-      - constructorCalls: testMakerOracle
+      #- constructorCalls: testMakerOracle
       properties:
         abi: "WethPriceOracle"
         parameters:
