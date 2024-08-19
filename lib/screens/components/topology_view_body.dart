@@ -34,6 +34,9 @@ class _TopologyViewState extends State<TopologyViewBody> {
     graph = Graph()..isTree = false;
     rootNode = Node.Id('Root Node');
     graph.addNode(rootNode!);
+
+    // Example of adding a self-referential edge
+    graph.addEdge(rootNode!, rootNode!);
   }
 
   Future<void> _loadNodeDescriptions() async {
@@ -81,7 +84,6 @@ class _TopologyViewState extends State<TopologyViewBody> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
-    // Use SugiyamaConfiguration for graph layout
     SugiyamaConfiguration builder = SugiyamaConfiguration()
       ..nodeSeparation = 50
       ..orientation = SugiyamaConfiguration.ORIENTATION_TOP_BOTTOM;
@@ -249,20 +251,6 @@ class _TopologyViewState extends State<TopologyViewBody> {
           ),
         ),
         child: GestureDetector(
-          onTap: () async {
-            String? newName = await _showNameInputDialog(context);
-            if (newName != null && newName.isNotEmpty) {
-              setState(() {
-                node.key = Key('name:$newName\ntype:$type') as ValueKey?;
-                Node updatedNode = Node.Id('name:$newName\ntype:$type');
-                graph.addNode(updatedNode);
-                graph.removeNode(node);
-                if (rootNode != null) {
-                  graph.addEdge(rootNode!, updatedNode);
-                }
-              });
-            }
-          },
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -277,32 +265,6 @@ class _TopologyViewState extends State<TopologyViewBody> {
     );
   }
 
-  Future<String?> _showNameInputDialog(BuildContext context) async {
-    String nodeName = '';
-    return showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Enter node name'),
-          content: TextField(
-            onChanged: (value) {
-              nodeName = value;
-            },
-            decoration: InputDecoration(hintText: "Name"),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop(nodeName);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Future<void> _loadAndConvertYaml() async {
     setState(() {
       graph = Graph()..isTree = false;
@@ -313,11 +275,17 @@ class _TopologyViewState extends State<TopologyViewBody> {
     final newGraph = await serviceProvider.TopologyGraphFromYaml();
 
     setState(() {
-      graph = newGraph!;
+      if (newGraph != null) {
+        graph = newGraph;
+        // Example of adding self-referential edges to the new graph
+        for (final node in graph.nodes) {
+          graph.addEdge(node, node);
+        }
+      }
     });
   }
 
-  Future<void> _loadNodeDefinitions() async {
+Future<void> _loadNodeDefinitions() async {
     setState(() {
       sidebarItems = [];
     });

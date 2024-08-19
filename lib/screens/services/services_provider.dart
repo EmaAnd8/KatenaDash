@@ -1438,6 +1438,13 @@ class Provider {
     graph.removeEdgeFromPredecessor(sourceNode, destinationNode);
     return graph;
   }
+  Future<Graph?> TopologyRemoveNode( Graph graph, Node sourceNode) async {
+    if(graph.getInEdges(sourceNode).isEmpty && graph.getOutEdges(sourceNode).isEmpty) {
+      graph.removeNode(sourceNode);
+    }
+    return graph;
+  }
+
 
 
   Future<List<String>?> TopologyExamples() async {

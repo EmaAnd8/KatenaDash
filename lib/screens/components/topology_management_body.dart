@@ -161,6 +161,14 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
         },
       });
 
+      String key_node = "Remove Node";
+      sidebarItems.add({
+        'title': key_node,
+        'onTap': () {
+          _promptForNodeRemoval();
+        },
+      });
+
       setState(() {});
     } catch (e) {
       print('Error loading node definitions: $e');
@@ -181,6 +189,26 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
 
     setState(() async {
       graph = await ServiceProvider.TopologyCreatorEdges("Add edge", graph, sourceNode, destinationNode) as Graph;
+    });
+  }
+  Future<void> _promptForNodeRemoval() async {
+    if (graph.nodes.isEmpty) {
+      _showSnackBar("Cannot remove a Node because the graph has no nodes.");
+      return;
+    }
+    if(graph.nodes.length<=1)
+      {
+        _showSnackBar("you cannot have an empty graph");
+        return;
+      }
+
+    Node? sourceNode = await _selectNode("Select source node");
+    if (sourceNode == null) return;
+
+
+
+    setState(() async {
+      graph = await ServiceProvider.TopologyRemoveNode(graph, sourceNode) as Graph;
     });
   }
 
