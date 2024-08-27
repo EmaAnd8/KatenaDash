@@ -75,6 +75,8 @@ class _TopologyViewState extends State<TopologyViewBody> {
       return Image.asset('assets/icons/wallet_4121117.png', width: 24, height: 24);
     } else if (type.contains('contract')) {
       return Image.asset('assets/icons/smart_14210186.png', width: 24, height: 24);
+    }else if(type.contains("diamond")){
+      return Image.asset('assets/icons/diamond.png', width: 24, height: 24);
     }
     return Image.asset('assets/icons/icons8-topology-53.png', width: 24, height: 24);
   }

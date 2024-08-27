@@ -349,158 +349,103 @@ class Provider {
     return _status;
   }
 
-  //this function parse a TOSCA file in a JSON in order to create then a Topology
-  Future<String> Parser(path) async {
-    try {
-      // String where to find the yaml file
-      print(path);
-      // Load YAML from assets
-      String yamlString = await rootBundle.loadString(path);
-      //print(yamlString);
-      // Parse YAML
-      final yamlMap = await loadYaml(yamlString);
-      //  print(yamlMap);
 
-      // Convert to JSON
-      final jsonString = json.encode(yamlMap);
-      //print(jsonString);
-      return jsonString;
-    } catch (e) {
-      print("Error converting YAML to JSON: $e");
-      return ""; // Or handle the error
-    }
-  }
+  Map<String, dynamic> mergeYamlMaps(Map<String, dynamic> map1, Map<String, dynamic> map2) {
+    // Create a new map to store the merged result
+    Map<String, dynamic> result = {};
 
-
-  Future<List<Widget>?> TopologyPrinter() async {
-    Provider serviceProvider = Provider.instance;
-    String JSONfiles = await serviceProvider.Parser(
-        "assets/input/simple-relationship-with-args.yaml");
-    Map<String, dynamic> jsonData = jsonDecode(JSONfiles);
-
-    if (jsonData["topology_template"]["node_templates"].toString() != null) {
-      print(
-          jsonData["topology_template"]["node_templates"].toString()); // Output
-      if (jsonData["topology_template"]["node_templates"]["caller"]
-          .toString() != null &&
-          jsonData["topology_template"]["node_templates"]["callee"]
-              .toString() != null) {
-        print(jsonData["topology_template"]["node_templates"]["caller"]
-            .toString());
-        print(jsonData["topology_template"]["node_templates"]["callee"]
-            .toString());
-
-        List<Widget> nodes = [
-          // In your widget tree:
-          Padding(
-              padding: EdgeInsets.only(top: 10),
-
-              child: Image.asset("assets/icons/wallet_4121117.png",
-                width: 50,
-                height: 50,)
-          ),
-          Padding(padding: EdgeInsets.only(bottom: 40),
-            child: CustomPaint(
-              painter: ArrowPainter(
-                color: Colors.blue,
-                angle: 0,
-                length: 60,
-              ),
-              size: const Size(10, 50),
-            ),
-          ),
-          Padding(
-              padding: EdgeInsets.only(bottom: 10),
-
-              child: Image.asset("assets/icons/wallet_4121117.png",
-                width: 50,
-                height: 50,)
-          ),
-          Padding(padding: EdgeInsets.only(bottom: 40),
-            child: CustomPaint(
-              painter: ArrowPainter(
-                color: Colors.blue,
-                angle: 0,
-                length: 60,
-              ),
-              size: const Size(10, 50),
-            ),
-          ),
-
-
-        ];
-
-
-        return nodes;
+    // Add all keys from map1
+    map1.forEach((key, value) {
+      if (map2.containsKey(key)) {
+        // If both maps contain the same key, handle the merge based on value type
+        if (value is Map && map2[key] is Map) {
+          // If both values are maps, merge them recursively
+          result[key] = mergeYamlMaps(Map<String, dynamic>.from(value), Map<String, dynamic>.from(map2[key]));
+        } else if (key == 'requirements' && value is List && map2[key] is List) {
+          // If the key is 'requirements' and both values are lists, merge them
+          result[key] = List.from(value)..addAll(map2[key]);
+        } else {
+          // Otherwise, take the value from map2
+          result[key] = map2[key];
+        }
+      } else {
+        // If only map1 has the key, add it to the result
+        result[key] = value;
       }
-    }
-    return null;
+    });
+
+    // Add all keys from map2 that are not in map1
+    map2.forEach((key, value) {
+      if (!result.containsKey(key)) {
+        result[key] = value;
+      }
+    });
+
+    return result;
   }
 
 
-  Future<List<Widget>> CreateNode() async
-  {
-    //final yamlString = YamlMap.wrap("" as Map).toString();
-    print("oooo");
-    final ByteData data = await rootBundle.load(
-        'assets/input/simple-node.yaml');
-    print("00000");
-    final buffer = data.buffer;
-    final yamlContent = String.fromCharCodes(
-        buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
-    print(yamlContent);
 
 
-    // final sourceFile = File("assets/input/simple-node.yaml");
-    final destinationFile = File("assets/output/topology.yaml");
-
-    // Read the content of the source file
-    try {
-      await destinationFile.writeAsString(yamlContent, mode: FileMode.write);
-    } catch (e) {
-      print(e.toString());
-    }
-    List<Widget> nodes = [
-      // In your widget tree:
-      Padding(
-          padding: EdgeInsets.only(bottom: 10),
-
-          child: Image.asset("assets/icons/wallet_4121117.png",
-            width: 50,
-            height: 50,)
-      ),
-    ];
-    // Example usage:
-
-    return nodes;
-  }
-
-
-  //method to import a yaml file
-  Future<YamlMap?> ImportYaml() async {
+  Future<Map<String, dynamic>?> ImportYaml() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
+      allowMultiple: true,
       allowedExtensions: ['yaml'],
     );
 
+    Map<String, dynamic>? mergedMap;
+
     if (result != null) {
-      // print('xxxxx');
       try {
-        PlatformFile file = result.files.single;
-        final yamlString = utf8.decode(file.bytes!);
-        final yamlMap = loadYaml(yamlString);
-        return yamlMap;
+        List<PlatformFile> files = result.files;
+
+        for (var file in files) {
+          final yamlString = utf8.decode(file.bytes!);
+          final yamlMap = loadYaml(yamlString) as YamlMap;
+          final Map<String, dynamic> yamlMapAsMap = convertYamlMapToMap(yamlMap);
+          print(yamlMapAsMap);
+          print("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 
 
-        // Access the data in the YAML map
-        print(yamlMap);
+          if (mergedMap == null) {
+            mergedMap = yamlMapAsMap;
+          } else {
+            mergedMap = mergeYamlMaps(mergedMap, yamlMapAsMap);
+          }
+
+
+        }
+        print(mergedMap);
+        return mergedMap;
+
       } catch (e) {
-        print(e);
+        print("Error during YAML import: $e");
+        return null;
       }
     } else {
-      //do nothing
-      print("no file selected");
+      print("No file selected");
+      return null;
     }
+  }
+
+// Helper function to convert YamlMap to Map<String, dynamic>
+  Map<String, dynamic> convertYamlMapToMap(YamlMap yamlMap) {
+    return yamlMap.map((key, value) {
+      if (value is YamlMap) {
+        return MapEntry(key.toString(), convertYamlMapToMap(value));
+      } else if (value is YamlList) {
+        return MapEntry(key.toString(), value.map((item) {
+          if (item is YamlMap) {
+            return convertYamlMapToMap(item);
+          } else {
+            return item;
+          }
+        }).toList());
+      } else {
+        return MapEntry(key.toString(), value);
+      }
+    });
   }
 
 
@@ -580,9 +525,9 @@ class Provider {
             }
 
             if (targetNode != null) {
-              if(node!=targetNode) {
+              if (node != targetNode) {
                 graph.addEdge(node, targetNode);
-              }else{
+              } else {
                 print("the node is connected to itself");
               }
             } else {
@@ -669,8 +614,8 @@ class Provider {
     }
   }
 
-  Future<YamlMap?> graphToYamlParser(Graph graph) async {
-    final yamlWriter = YAMLWriter();
+  Future< Map<String, dynamic>?> graphToYamlParserNodes(Graph graph) async {
+
     Provider serviceProvider = Provider.instance;
 
     final Map<String, dynamic> yamlMap = {
@@ -697,59 +642,189 @@ class Provider {
           'properties': {},
         };
       }
+      return yamlMap;
     } else {
       print("nothing to export");
-      return null;
+      return yamlMap;
+    }
+  }
+
+  Future<YamlMap?> graphToYamlParserEdges(Edge edge) async {
+    Provider serviceProvider = Provider.instance;
+    Map<String, dynamic>? yamlMap;
+    final yamlWriter = YAMLWriter();
+    // Reinitialize for each edge
+    if (graph.nodes.isEmpty) {
+      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph))!;
+      final yamlString = yamlWriter.write(yamlMap);
+      return loadYaml(yamlString) as YamlMap;
+    } else {
+      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph))!;
     }
 
-    for (var edge in graph.edges) {
       String sourceNodeId = edge.source.key?.value;
       String destinationNodeId = edge.destination.key?.value;
 
-      Map<String, String> sourceTypeMap = serviceProvider.parseKeyValuePairs(
-          sourceNodeId);
-      Map<String, String> destinationTypeMap = serviceProvider
-          .parseKeyValuePairs(destinationNodeId);
+      Map<String, String> sourceTypeMap = serviceProvider.parseKeyValuePairs(sourceNodeId);
+      Map<String, String> destinationTypeMap = serviceProvider.parseKeyValuePairs(destinationNodeId);
 
-      var descSource = await GetDescriptionByTypeforManagement(
-          sourceTypeMap["type"]);
+      var descSource = await GetDescriptionByTypeforManagement(sourceTypeMap["type"]);
       if (descSource != null) {
-        var sourceNodeReqs = descSource["requirements"];
+
+        Map<String, dynamic> typeMap2 = {
+        };
         Map<String, dynamic> typeMap3 = {}; // Reinitialize for each edge
+        var sourceNodeReqs = descSource["requirements"];
 
         for (var elem in sourceNodeReqs) {
           var firstReq = elem.values.first;
           if (firstReq["capability"] != null) {
-            String? destCap = await GetCapabilitiesByType(
-                destinationTypeMap["type"]!);
+            String? destCap = await GetCapabilitiesByType(destinationTypeMap["type"]!);
 
-            if ((firstReq["node"] != null && firstReq["capability"] != null) ||
-                (destCap == firstReq["capability"] &&
-                    firstReq["node"] == null)) {
+            if ((firstReq["node"] != null && firstReq["node"]==destinationTypeMap["type"])  || (destCap == firstReq["capability"] && firstReq["node"] == null)) {
               String requirementName = serviceProvider.parseReqName(
                   elem.toString());
-              bool isDuplicate = typeMap3.containsKey(requirementName);
 
-              if (!isDuplicate) {
-                typeMap3 = serviceProvider.addToMap(
-                    typeMap3, requirementName, destinationTypeMap["name"], []);
+              bool isRequirementNameDuplicate = typeMap3.containsKey(
+                  requirementName);
+              bool isDestinationTypeDuplicate = typeMap3.values.any((value) {
+                return value.contains(destinationTypeMap["name"]);
+              });
+              bool isRequirementNameDuplicate2 = typeMap2.containsKey(
+                  requirementName);
+              bool isDestinationTypeDuplicate2 = typeMap2.values.any((value) {
+                return value.contains(destinationTypeMap["name"]);
+              });
+              //refactor for the specific case of library node
+              if (firstReq["node"] != "katena.nodes.library") {
+                if (!isRequirementNameDuplicate &&
+                    !isDestinationTypeDuplicate || (!isRequirementNameDuplicate2 &&
+                    !isDestinationTypeDuplicate2)) {
+                  typeMap3 = serviceProvider.addToMap(
+                      typeMap3, requirementName, destinationTypeMap["name"],
+                      []);
+                }
+
+                Map<String, dynamic> concatenatedMap = {
+                  ...typeMap3,
+                  ...typeMap2,
+                };
+                print(concatenatedMap);
+                print("£££££££££££££££££££££££££££££");
+                if(concatenatedMap.isNotEmpty) {
+                  yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
+                  [concatenatedMap];
+                }
+
+              } else{
+                var descSource2 = await GetDescriptionByTypeforManagement("katena.nodes.library");
+                if (descSource2 != null) {
+
+
+                  var sourceNodeReqs = descSource2["requirements"];
+                  print(sourceNodeReqs);
+                  for (var elem in sourceNodeReqs) {
+                    var firstReq = elem.values.first;
+                    if (firstReq["capability"] != null) {
+                      String? destCap = await GetCapabilitiesByType(
+                          destinationTypeMap["type"]!);
+
+                      if ((firstReq["node"] != null && firstReq["node"]==destinationTypeMap["type"]) ||
+                          (destCap == firstReq["capability"] &&
+                              firstReq["node"] == null)) {
+                        String requirementName = serviceProvider.parseReqName(
+                            elem.toString());
+
+                        bool isRequirementNameDuplicate = typeMap2.containsKey(
+                            requirementName);
+                        bool isDestinationTypeDuplicate = typeMap2.values.any((
+                            value) {
+                          return value.contains(destinationTypeMap["name"]);
+                        });
+                        print(typeMap2);
+                        print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&6");
+                        //refactor for the specific case of library node
+                        // if (firstReq["node"] == "katena.nodes.library") {
+                        if (!isRequirementNameDuplicate &&
+                            !isDestinationTypeDuplicate) {
+                          typeMap2 = serviceProvider.addToMap(
+                              typeMap2, requirementName,
+                              destinationTypeMap["name"],
+                              []);
+                        }
+
+                        Map<String, dynamic> concatenatedMap = {
+                          ...typeMap3,
+                          ...typeMap2,
+                        };
+                        print(concatenatedMap);
+                        print("£££££££££££££££££££££££££££££");
+                        if(concatenatedMap.isNotEmpty) {
+                          yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
+                          [concatenatedMap];
+                        }
+                      }
+                    }
+                  }
+                }
               }
 
-              yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
-              [
-                ...yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'],
-                typeMap3
-              ];
+
             }
           }
         }
       }
-    }
+
+    /*
+      Map<String, dynamic> typeMap3 = {};
+      var some_der_req= await serviceProvider.getInheritedRequirements(sourceTypeMap["type"]!,descSource!);
+      print(some_der_req);
+
+      var sourceReq2 = some_der_req?["requirements"];
+      for(var i_req in sourceReq2)
+      {
+
+        var inreqsource2 = i_req.values.first;
+        print(inreqsource2);
+
+        String? capacity_fatality3= await serviceProvider
+            .GetCapabilitiesByType(destinationTypeMap["type"]!);
+
+        if (inreqsource2["capability"] ==
+            capacity_fatality3|| inreqsource2["node"] == destinationTypeMap["type"]) {
+          String requirementName = serviceProvider.parseReqName(i_req.toString());
+
+          /*
+          bool isRequirementNameDuplicate = typeMap3.containsKey(requirementName);
+          bool isDestinationTypeDuplicate = typeMap3.values.any((value) {
+            return value.contains(destinationTypeMap["name"]);
+          });
+
+          if (!isRequirementNameDuplicate && !isDestinationTypeDuplicate) {
+            typeMap3 = serviceProvider.addToMap(typeMap3, requirementName, destinationTypeMap["name"], []);
+          }
+
+
+           */
+        }
+        else {
+          print("the two nodes are not compatible");
+        }
+
+
+
+
+
+
+      }
+
+       */
+
+
 
     final yamlString = yamlWriter.write(yamlMap);
     return loadYaml(yamlString) as YamlMap;
   }
-
 
 
 // Helper function to parse key-value pairs from a string
@@ -791,26 +866,30 @@ class Provider {
   Future<void> saveFile(Graph graph) async {
     Provider serviceProvider = Provider.instance;
     if(graph.hasNodes()) {
-      YamlMap? grahToYamlData = await serviceProvider.graphToYamlParser(graph);
-      final text = grahToYamlData;
+      for (Edge edge in graph.edges) {
+        YamlMap? grahToYamlData = await serviceProvider.graphToYamlParserEdges(
+            edge);
+        final text = grahToYamlData;
 
-      // Convert the text to bytes and create a Blob
-      final bytes = utf8.encode(text.toString());
-      final blob = html.Blob([bytes]);
+        // Convert the text to bytes and create a Blob
+        final bytes = utf8.encode(text.toString());
+        final blob = html.Blob([bytes]);
 
-      // Create a URL for the Blob and an anchor element
-      //Timestamp added to each topology name to avoid confusion
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download',
-            'topology${serviceProvider.getCurrentTimestampString()}.yaml')
-        ..click();
+        // Create a URL for the Blob and an anchor element
+        //Timestamp added to each topology name to avoid confusion
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        final anchor = html.AnchorElement(href: url)
+          ..setAttribute('download',
+              'topology${serviceProvider.getCurrentTimestampString()}.yaml')
+          ..click();
 
-      // Revoke the object URL
-      html.Url.revokeObjectUrl(url);
-    }else{
+        // Revoke the object URL
+        html.Url.revokeObjectUrl(url);
+      }
+      } else {
       print("nothing to export");
     }
+
 
   }
 
@@ -951,11 +1030,9 @@ class Provider {
       for (var nodeTypeEntry in nodeTypeToBeFound.entries) {
         String nodeTypeName = nodeTypeEntry.key;
         YamlMap nodeType = nodeTypeEntry.value;
-        print(nodeTypeName);
-        print(nodeType);
-        print("hhhhhhhhhhhhhhhhhhhhhhhhhhh");
 
-        if ((nodeType.containsKey('capabilities') && nodeTypeName==type)) {
+
+        if ((nodeType.containsKey('capabilities') && nodeTypeName==type )) {
           var capabilities = nodeType['capabilities'];
 
           //print(capabilities);
@@ -969,6 +1046,7 @@ class Provider {
           capability = getType2(capabilities.toString());
           print(capability);
           return capability;
+
         }else if((!nodeType.containsKey('capabilities') && nodeTypeName==type)) {
           for (var nodeTypeEntry in nodeTypeToBeFound.entries) {
             String nodeTypeName = nodeTypeEntry.key;
@@ -991,7 +1069,7 @@ class Provider {
           }
         }
         else
-  {
+        {
           print("here the two nodes are not compatible");
         }
 
@@ -1169,31 +1247,33 @@ class Provider {
 
             String? capacity_fatality = await serviceProvider
                 .GetCapabilitiesByType(value2);
-            print(value2+"\n"+capacity_fatality!);
+            //print(value2+"\n"+capacity_fatality!);
+            if(capacity_fatality!=null) {
+              if (sreq["capability"] == capacity_fatality) {
+                graph.addEdge(sourceNode, destinationNode);
+              } else {
+                print("es");
+                if (sreq["node"] != null) {
+                  YamlMap? inheritedRequirements = await serviceProvider
+                      .GetDescriptionByTypeforManagement(sreq["node"]);
+                  // print(inheritedRequirements);
 
-            if (sreq["capability"] == capacity_fatality) {
-              graph.addEdge(sourceNode, destinationNode);
-            } else {
-              if (sreq["node"] != null) {
-                YamlMap? inheritedRequirements = await serviceProvider
-                    .GetDescriptionByTypeforManagement(sreq["node"]);
-                // print(inheritedRequirements);
+                  if (inheritedRequirements != null) {
+                    var inReqs = inheritedRequirements["requirements"];
 
-                if (inheritedRequirements != null) {
-                  var inReqs = inheritedRequirements["requirements"];
+                    for (var inreq in inReqs) {
+                      var inreqsource = inreq.values.first;
+                      print(inreqsource);
+                      String? capacity_fatality2 = await serviceProvider
+                          .GetCapabilitiesByType(value2);
 
-                  for (var inreq in inReqs) {
-                    var inreqsource = inreq.values.first;
-                    print(inreqsource);
-                    String? capacity_fatality2 = await serviceProvider
-                        .GetCapabilitiesByType(value2);
-
-                    if (inreqsource["capability"] ==
-                        capacity_fatality2 || inreqsource["node"] == value2) {
-                      graph.addEdge(sourceNode, destinationNode);
-                    }
-                    else {
-                      print("the two nodes are not compatible");
+                      if (inreqsource["capability"] ==
+                          capacity_fatality2 || inreqsource["node"] == value2) {
+                        graph.addEdge(sourceNode, destinationNode);
+                      }
+                      else {
+                        print("the two nodes are not compatible");
+                      }
                     }
                   }
                 }
