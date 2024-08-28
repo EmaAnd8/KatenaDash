@@ -4,6 +4,7 @@ imports:
 - nodes/contract.yaml
 - nodes/network.yaml
 
+
 topology_template:
   node_templates:
     ganache:

@@ -4,6 +4,7 @@ import 'dart:js_interop';
 import 'dart:math';
 import 'dart:html' as html;
 import 'dart:convert'; // For utf8.encode
+import 'package:archive/archive.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:math' as math ;
 import 'dart:convert';
@@ -491,6 +492,38 @@ class Provider {
       print("No imports found in YAML.");
     }
 
+    // Load the AssetManifest.json which contains a list of all assets
+    final manifestContent = await rootBundle.loadString('AssetManifest.json');
+    final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+    for(var key in  nodeProperties.keys)
+    {
+      if(!imports.contains(nodeProperties[key]["type"]))
+      {
+        final yamlFiles = manifestMap.keys
+            .where((String key) =>
+        key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
+            .toList();
+
+        for (var file in yamlFiles) {
+          // Read the YAML file
+          final yamlContent = await rootBundle.loadString(file);
+          final yamlMap = loadYaml(yamlContent) as YamlMap;
+          var nodeTypes = yamlMap["node_types"];
+          if (nodeTypes != null) {
+            for (var entry in nodeTypes.entries) {
+              if (entry.key == nodeProperties[key]["type"]) {
+                imports.addAll(nodeTypes.keys.cast<String>());
+                break;
+              }
+            }
+          }
+        }
+      }else{
+        print("requirement already present or nodes not defined");
+      }
+    }
+
     // Create nodes and add to graph
     Map<String, Node> nodes = {};
     for (var key in nodeProperties.keys) {
@@ -681,7 +714,7 @@ class Provider {
           if (firstReq["capability"] != null) {
             String? destCap = await GetCapabilitiesByType(destinationTypeMap["type"]!);
 
-            if ((firstReq["node"] != null && firstReq["node"]==destinationTypeMap["type"])  || (destCap == firstReq["capability"] && firstReq["node"] == null)) {
+            if ((firstReq["node"] != null && firstReq["node"]=="katena.nodes.library")  || (destCap == firstReq["capability"] && firstReq["node"] == null)) {
               String requirementName = serviceProvider.parseReqName(
                   elem.toString());
 
@@ -731,7 +764,7 @@ class Provider {
 
                       if ((firstReq["node"] != null && firstReq["node"]==destinationTypeMap["type"]) ||
                           (destCap == firstReq["capability"] &&
-                              firstReq["node"] == null)) {
+                              firstReq["node"] == null) ) {
                         String requirementName = serviceProvider.parseReqName(
                             elem.toString());
 
@@ -865,34 +898,43 @@ class Provider {
 
   Future<void> saveFile(Graph graph) async {
     Provider serviceProvider = Provider.instance;
-    if(graph.hasNodes()) {
+
+    if (graph.hasNodes()) {
+      // Initialize a ZipEncoder to collect the files
+      final archive = Archive();
+
       for (Edge edge in graph.edges) {
-        YamlMap? grahToYamlData = await serviceProvider.graphToYamlParserEdges(
-            edge);
-        final text = grahToYamlData;
+        YamlMap? graphToYamlData = await serviceProvider.graphToYamlParserEdges(edge);
+        final text = graphToYamlData.toString();
 
-        // Convert the text to bytes and create a Blob
-        final bytes = utf8.encode(text.toString());
-        final blob = html.Blob([bytes]);
+        // Convert the text to bytes
+        final bytes = utf8.encode(text);
 
-        // Create a URL for the Blob and an anchor element
-        //Timestamp added to each topology name to avoid confusion
+        // Add the file to the archive
+        final fileName = 'topology${serviceProvider.getCurrentTimestampString()}.yaml';
+        archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+      }
+
+      // Encode the archive to zip
+      final zipData = ZipEncoder().encode(archive);
+
+      if (zipData != null) {
+        // Create a Blob from the zip data
+        final blob = html.Blob([zipData]);
+
+        // Create a URL for the Blob and an anchor element to download it
         final url = html.Url.createObjectUrlFromBlob(blob);
         final anchor = html.AnchorElement(href: url)
-          ..setAttribute('download',
-              'topology${serviceProvider.getCurrentTimestampString()}.yaml')
+          ..setAttribute('download', 'topologies.zip')
           ..click();
 
         // Revoke the object URL
         html.Url.revokeObjectUrl(url);
       }
-      } else {
+    } else {
       print("nothing to export");
     }
-
-
   }
-
 
   Future<YamlMap?> GetDescriptionByTypeforManagement(String? type) async {
     try {
@@ -1118,7 +1160,9 @@ class Provider {
       print("No node templates found in YAML.");
       return null;
     }
-
+    // Load the AssetManifest.json which contains a list of all assets
+    final manifestContent = await rootBundle.loadString('AssetManifest.json');
+    final Map<String, dynamic> manifestMap = json.decode(manifestContent);
     Graph graph = Graph()
       ..isTree = false;
     List<String> imports = [];
@@ -1137,8 +1181,37 @@ class Provider {
           print("Error loading import: $importPath - $e");
         }
       }
+
     } else {
       print("No imports found in YAML.");
+    }
+
+    for(var key in  nodeProperties.keys)
+    {
+      if(!imports.contains(nodeProperties[key]["type"]))
+      {
+        final yamlFiles = manifestMap.keys
+            .where((String key) =>
+        key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
+            .toList();
+
+        for (var file in yamlFiles) {
+          // Read the YAML file
+          final yamlContent = await rootBundle.loadString(file);
+          final yamlMap = loadYaml(yamlContent) as YamlMap;
+          var nodeTypes = yamlMap["node_types"];
+          if (nodeTypes != null) {
+            for (var entry in nodeTypes.entries) {
+              if (entry.key == nodeProperties[key]["type"]) {
+                imports.addAll(nodeTypes.keys.cast<String>());
+                break;
+              }
+            }
+          }
+        }
+      }else{
+        print("requirement already present or nodes not defined");
+      }
     }
 
     // Create nodes and add to graph
@@ -1286,10 +1359,19 @@ class Provider {
       } else {
         print("up to now do nothing");
       }
-      print(source);
+     // print(source);
+
       var some_der_req= await serviceProvider.getInheritedRequirements(value,source!);
-      print(some_der_req);
-      var sourceReq2 = some_der_req?["requirements"];
+      //final yamlList = loadYaml(some_der_req as String) as YamlList;
+     print(some_der_req);
+    print("mnnedodenonfeoeonfeofneofnnofenfoeon");
+
+      for(var lreq in some_der_req)
+       {
+       print(lreq);
+      print("KKKKKKKKKKKKKKKKKKKKKK");
+      var sourceReq2 = lreq["requirements"];
+
       for(var i_req in sourceReq2)
       {
 
@@ -1305,6 +1387,9 @@ class Provider {
         else {
           print("the two nodes are not compatible");
         }
+      }
+
+
       }
 
 
@@ -1346,9 +1431,59 @@ class Provider {
             print("Error loading import: $importPath - $e");
           }
         }
+
+
       } else {
         print("No imports found in YAML.");
       }
+
+      for(var key in  nodeProperties.keys)
+      {
+        if(!(imports.contains(nodeProperties[key]["type"])))
+        {
+          YamlMap? yamlMap = await loadYamlFromAssets(
+              "katena-main/nodes/"+nodeProperties[key]["type"]);
+          var nodeTypes = yamlMap?['node_types'];
+          if (nodeTypes != null) {
+            imports.addAll(nodeTypes.keys.cast<String>());
+          }
+        }else{
+          print("requirement already present or nodes not defined");
+        }
+      }
+
+      // Load the AssetManifest.json which contains a list of all assets
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      for(var key in  nodeProperties.keys)
+      {
+        if(!imports.contains(nodeProperties[key]["type"]))
+        {
+          final yamlFiles = manifestMap.keys
+              .where((String key) =>
+          key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
+              .toList();
+
+          for (var file in yamlFiles) {
+            // Read the YAML file
+            final yamlContent = await rootBundle.loadString(file);
+            final yamlMap = loadYaml(yamlContent) as YamlMap;
+            var nodeTypes = yamlMap["node_types"];
+            if (nodeTypes != null) {
+              for (var entry in nodeTypes.entries) {
+                if (entry.key == nodeProperties[key]["type"]) {
+                  imports.addAll(nodeTypes.keys.cast<String>());
+                  break;
+                }
+              }
+            }
+          }
+        }else{
+          print("requirement already present or nodes not defined");
+        }
+      }
+
 
       // Create nodes and add to graph
       Map<String, Node> nodes = {};
@@ -1444,13 +1579,48 @@ class Provider {
             if (nodeTypes != null) {
               imports.addAll(nodeTypes.keys.cast<String>());
             }
+
           } catch (e) {
             print("Error loading import: $importPath - $e");
           }
         }
+
       } else {
         print("No imports found in YAML.");
       }
+
+      // Load the AssetManifest.json which contains a list of all assets
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      for(var key in  nodeProperties.keys)
+      {
+        if(!imports.contains(nodeProperties[key]["type"]))
+        {
+          final yamlFiles = manifestMap.keys
+              .where((String key) =>
+          key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
+              .toList();
+
+          for (var file in yamlFiles) {
+            // Read the YAML file
+            final yamlContent = await rootBundle.loadString(file);
+            final yamlMap = loadYaml(yamlContent) as YamlMap;
+            var nodeTypes = yamlMap["node_types"];
+            if (nodeTypes != null) {
+              for (var entry in nodeTypes.entries) {
+                if (entry.key == nodeProperties[key]["type"]) {
+                  imports.addAll(nodeTypes.keys.cast<String>());
+                  break;
+                }
+              }
+            }
+          }
+        }else{
+          print("requirement already present or nodes not defined");
+        }
+      }
+
 
       // Create nodes and add to graph
       Map<String, Node> nodes = {};
@@ -1520,7 +1690,7 @@ class Provider {
 
   }
 
-  Future<String?> getInheritedType(String derivationType, YamlMap? yamlContent) async {
+  Future<List<String>?> getInheritedType(String derivationType, YamlMap? yamlContent) async {
 
     if (yamlContent!.containsKey('node_types')) {
       var nodeTypes = yamlContent['node_types'];
@@ -1533,21 +1703,36 @@ class Provider {
     }
     return null;
   }
+  Future<List<YamlMap>> getInheritedRequirements(String inType, YamlMap yamlContent) async {
+    Provider serviceProvider = Provider.instance;
+    List<YamlMap> yamlMaps = [];
 
-  Future<YamlMap?> getInheritedRequirements(String inType, YamlMap yamlContent) async
-  {
-    Provider serviceProvider=Provider.instance;
-    print("UUUUUUUUU");
-    var source=await serviceProvider.GetDescriptionByType(yamlContent["derived_from"]);
-    print(source!);
-    print("UUUUUUUUU");
-    if (source["requirements"] != null) {
+    // Retrieve the type this is derived from
+    var source = await serviceProvider.GetDescriptionByType(yamlContent["derived_from"]);
 
-      return source;
+    // Check if the source is valid
+    if (source != null) {
+      // Handle the case where source is a YamlMap
+      if (source is YamlMap) {
+        // Add the current source map to the list
+        yamlMaps.add(source);
+
+        // Check if the derived_from type is not Tosca.Root
+        if (source["derived_from"] != "tosca.nodes.Root") {
+          // Recursively get inherited requirements from parent types
+          var inheritedMaps = await getInheritedRequirements(source["derived_from"], source);
+
+          // Combine the results from the recursive call
+          yamlMaps.addAll(inheritedMaps);
+        }
+      }
+    } else {
+      print("No source found for derived_from type: ${yamlContent["derived_from"]}");
     }
-    return null;
 
+    return yamlMaps;
   }
+
 
   Future<Graph?> TopologyRemoveEdges( Graph graph, Node sourceNode,
       Node destinationNode) async {
