@@ -703,18 +703,41 @@ class Provider {
 
       var descSource = await GetDescriptionByTypeforManagement(sourceTypeMap["type"]);
       if (descSource != null) {
-
         Map<String, dynamic> typeMap2 = {
         };
         Map<String, dynamic> typeMap3 = {}; // Reinitialize for each edge
         var sourceNodeReqs = descSource["requirements"];
-
+         if(sourceNodeReqs!=null){
         for (var elem in sourceNodeReqs) {
           var firstReq = elem.values.first;
           if (firstReq["capability"] != null) {
-            String? destCap = await GetCapabilitiesByType(destinationTypeMap["type"]!);
+            String? destCap = await GetCapabilitiesByType(
+                destinationTypeMap["type"]!);
+            print(firstReq);
+            print("2k2k2k2");
+            //  var req_ex=await serviceProvider.GetDescriptionByType(firstReq["node"]);
 
-            if ((firstReq["node"] != null && firstReq["node"]=="katena.nodes.library")  || (destCap == firstReq["capability"] && firstReq["node"] == null)) {
+            //      var reg_ex_req= req_ex?["requirements"];
+            //    print(reg_ex_req);
+            /*print(firstReq["node"]);
+           bool flag=true;
+
+           for(var elex in reg_ex_req)
+             {
+               var firstReqs = elex.values.first;
+               if(firstReqs["capability"]==destCap)
+                 {
+                   flag=false;
+                   break;
+                 }
+             }
+
+            */
+            if ((firstReq["node"] != null &&
+                firstReq["node"] == "katena.nodes.library") ||
+                (destCap == firstReq["capability"] &&
+                    firstReq["node"] == null) ||
+                (destCap == firstReq["capability"])) {
               String requirementName = serviceProvider.parseReqName(
                   elem.toString());
 
@@ -731,8 +754,9 @@ class Provider {
               //refactor for the specific case of library node
               if (firstReq["node"] != "katena.nodes.library") {
                 if (!isRequirementNameDuplicate &&
-                    !isDestinationTypeDuplicate || (!isRequirementNameDuplicate2 &&
-                    !isDestinationTypeDuplicate2)) {
+                    !isDestinationTypeDuplicate ||
+                    (!isRequirementNameDuplicate2 &&
+                        !isDestinationTypeDuplicate2)) {
                   typeMap3 = serviceProvider.addToMap(
                       typeMap3, requirementName, destinationTypeMap["name"],
                       []);
@@ -744,16 +768,14 @@ class Provider {
                 };
                 print(concatenatedMap);
                 print("£££££££££££££££££££££££££££££");
-                if(concatenatedMap.isNotEmpty) {
+                if (concatenatedMap.isNotEmpty) {
                   yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
                   [concatenatedMap];
                 }
-
-              } else{
-                var descSource2 = await GetDescriptionByTypeforManagement("katena.nodes.library");
+              } else {
+                var descSource2 = await GetDescriptionByTypeforManagement(
+                    "katena.nodes.library");
                 if (descSource2 != null) {
-
-
                   var sourceNodeReqs = descSource2["requirements"];
                   print(sourceNodeReqs);
                   for (var elem in sourceNodeReqs) {
@@ -762,9 +784,10 @@ class Provider {
                       String? destCap = await GetCapabilitiesByType(
                           destinationTypeMap["type"]!);
 
-                      if ((firstReq["node"] != null && firstReq["node"]==destinationTypeMap["type"]) ||
+                      if ((firstReq["node"] != null &&
+                          firstReq["node"] == destinationTypeMap["type"]) ||
                           (destCap == firstReq["capability"] &&
-                              firstReq["node"] == null) ) {
+                              firstReq["node"] == null)) {
                         String requirementName = serviceProvider.parseReqName(
                             elem.toString());
 
@@ -792,7 +815,7 @@ class Provider {
                         };
                         print(concatenatedMap);
                         print("£££££££££££££££££££££££££££££");
-                        if(concatenatedMap.isNotEmpty) {
+                        if (concatenatedMap.isNotEmpty) {
                           yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
                           [concatenatedMap];
                         }
@@ -801,57 +824,135 @@ class Provider {
                   }
                 }
               }
-
-
             }
           }
         }
       }
+      }
 
-    /*
-      Map<String, dynamic> typeMap3 = {};
-      var some_der_req= await serviceProvider.getInheritedRequirements(sourceTypeMap["type"]!,descSource!);
-      print(some_der_req);
 
-      var sourceReq2 = some_der_req?["requirements"];
+      Map<String, dynamic> typeMap3in = {};
+    Map<String, dynamic> typeMap2in = {};
+    var some_der_req= await serviceProvider.getInheritedRequirements(sourceTypeMap["type"]!,descSource!);
+    //final yamlList = loadYaml(some_der_req as String) as YamlList;
+    print(some_der_req);
+    print("mnnedodenonfeoeonfeofneofnnofenfoeon");
+
+    for(var lreq in some_der_req)
+    {
+      print(lreq);
+      print("KKKKKKKKKKKKKKKKKKKKKK");
+      var sourceReq2 = lreq["requirements"];
+
       for(var i_req in sourceReq2)
       {
 
         var inreqsource2 = i_req.values.first;
-        print(inreqsource2);
+        print(destinationTypeMap["type"]);
 
         String? capacity_fatality3= await serviceProvider
             .GetCapabilitiesByType(destinationTypeMap["type"]!);
+        //print(capacity_fatality3!+"cccccccc");
+        if ((inreqsource2["node"] != null && inreqsource2["node"]=="katena.nodes.library")  || (capacity_fatality3 == inreqsource2["capability"] && inreqsource2["node"] == null)  || (capacity_fatality3 == inreqsource2["capability"] ) || (inreqsource2["node"]==destinationTypeMap["type"] && capacity_fatality3==null)) {
+         // graph.addEdge(sourceNode, destinationNode);
+          print(inreqsource2);
+          String requirementName = serviceProvider.parseReqName(
+              i_req.toString());
 
-        if (inreqsource2["capability"] ==
-            capacity_fatality3|| inreqsource2["node"] == destinationTypeMap["type"]) {
-          String requirementName = serviceProvider.parseReqName(i_req.toString());
-
-          /*
-          bool isRequirementNameDuplicate = typeMap3.containsKey(requirementName);
-          bool isDestinationTypeDuplicate = typeMap3.values.any((value) {
+          bool isRequirementNameDuplicate = typeMap3in.containsKey(
+              requirementName);
+          bool isDestinationTypeDuplicate = typeMap3in.values.any((value) {
             return value.contains(destinationTypeMap["name"]);
           });
+          bool isRequirementNameDuplicate2 = typeMap2in.containsKey(
+              requirementName);
+          bool isDestinationTypeDuplicate2 = typeMap2in.values.any((value) {
+            return value.contains(destinationTypeMap["name"]);
+          });
+          //refactor for the specific case of library node
+          if (inreqsource2["node"] != "katena.nodes.library") {
+            if (!isRequirementNameDuplicate &&
+                !isDestinationTypeDuplicate || (!isRequirementNameDuplicate2 &&
+                !isDestinationTypeDuplicate2)) {
+              typeMap3in = serviceProvider.addToMap(
+                  typeMap3in, requirementName, destinationTypeMap["name"],
+                  []);
+            }
 
-          if (!isRequirementNameDuplicate && !isDestinationTypeDuplicate) {
-            typeMap3 = serviceProvider.addToMap(typeMap3, requirementName, destinationTypeMap["name"], []);
+            Map<String, dynamic> concatenatedMap = {
+              ...typeMap3in,
+              ...typeMap2in,
+            };
+            print(concatenatedMap);
+            print("£££££££££££££££££££££££££££££");
+            if(concatenatedMap.isNotEmpty) {
+              yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
+              [concatenatedMap];
+            }
+
+          } else {
+            var descSource2 = await GetDescriptionByTypeforManagement(
+                "katena.nodes.library");
+            if (descSource2 != null) {
+              var sourceNodeReqs = descSource2["requirements"];
+              print(sourceNodeReqs);
+              for (var elem in sourceNodeReqs) {
+                var firstReq = elem.values.first;
+                if (firstReq["capability"] != null) {
+                  String? destCap = await GetCapabilitiesByType(
+                      destinationTypeMap["type"]!);
+
+                  if ((firstReq["node"] != null &&
+                      firstReq["node"] == destinationTypeMap["type"]) ||
+                      (destCap == firstReq["capability"] &&
+                          firstReq["node"] == null) ||destCap==firstReq["capability"]) {
+                    String requirementName = serviceProvider.parseReqName(
+                        elem.toString());
+
+                    bool isRequirementNameDuplicate = typeMap2in.containsKey(
+                        requirementName);
+                    bool isDestinationTypeDuplicate = typeMap2in.values.any((
+                        value) {
+                      return value.contains(destinationTypeMap["name"]);
+                    });
+                    print(typeMap2in);
+                    print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&6");
+                    //refactor for the specific case of library node
+                    // if (firstReq["node"] == "katena.nodes.library") {
+                    if (!isRequirementNameDuplicate &&
+                        !isDestinationTypeDuplicate) {
+                      typeMap2in = serviceProvider.addToMap(
+                          typeMap2in, requirementName,
+                          destinationTypeMap["name"],
+                          []);
+                    }
+
+                    Map<String, dynamic> concatenatedMap = {
+                      ...typeMap3in,
+                      ...typeMap2in,
+                    };
+                    print(concatenatedMap);
+                    print("£££££££££££££££££££££££££££££");
+                    if (concatenatedMap.isNotEmpty) {
+                      yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
+                      [concatenatedMap];
+                    }
+                  }
+                }
+              }
+            }
           }
 
 
-           */
         }
         else {
           print("the two nodes are not compatible");
         }
-
-
-
-
-
-
       }
 
-       */
+
+    }
+
 
 
 
@@ -1308,6 +1409,7 @@ class Provider {
       YamlMap? destination = await serviceProvider
           .GetDescriptionByTypeforManagement(value2!);
 
+
       if (source?["requirements"] != null) {
         var sourceReq = source?["requirements"];
 
@@ -1319,10 +1421,15 @@ class Provider {
             //print(await serviceProvider.GetCapabilitiesByType(destinationNode.key?.value));
 
             String? capacity_fatality = await serviceProvider
-                .GetCapabilitiesByType(value2);
+                .GetCapabilitiesByType(value2!);
+            if(value2 =="katena.nodes.contractReference")
+              {
+                capacity_fatality=null;
+              }
             //print(value2+"\n"+capacity_fatality!);
             if(capacity_fatality!=null) {
-              if (sreq["capability"] == capacity_fatality) {
+              if (sreq["capability"] == capacity_fatality ||
+                  sreq["node"] == value2) {
                 graph.addEdge(sourceNode, destinationNode);
               } else {
                 print("es");
@@ -1351,7 +1458,29 @@ class Provider {
                   }
                 }
               }
-            }
+            }else
+              {
+                print("es");
+                print("hhhhhhhhhh");
+                print(value);
+
+                if(value2=="katena.nodes.contractReference")
+                  {
+                    value2="katena.nodes.contract";
+                  }
+                if (sreq["node"] != null) {
+
+
+                      if ( sreq["node"] == value2) {
+                        graph.addEdge(sourceNode, destinationNode);
+                      }
+                      else {
+                        print("the two nodes are not compatible");
+                      }
+                    }
+
+
+              }
           } else {
             print("if requirement is null the node is not connectable");
           }
@@ -1378,7 +1507,7 @@ class Provider {
         var inreqsource2 = i_req.values.first;
         print(inreqsource2);
         String? capacity_fatality3= await serviceProvider
-            .GetCapabilitiesByType(value2);
+            .GetCapabilitiesByType(value2!);
 
         if (inreqsource2["capability"] ==
             capacity_fatality3|| inreqsource2["node"] == value2) {

@@ -13,7 +13,7 @@ import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../firebase_options.dart';
 import '../settings/settings_screen.dart';
 import '../services/services_provider.dart';
@@ -162,7 +162,8 @@ class _DashboardState extends State<DashboardBody> {
                                   ),
                                 ],
                               ),
-                              child: SfCartesianChart(
+
+                              /*child:SfCartesianChart(
                                 primaryXAxis: CategoryAxis(),
                                 series: <CartesianSeries>[
                                   LineSeries<ChartData, String>(
@@ -177,9 +178,111 @@ class _DashboardState extends State<DashboardBody> {
                                     yValueMapper: (ChartData data, _) => data.y,
                                   ),
                                 ],
+                              ), */
+
+                        child: LineChart(
+                          LineChartData(
+                            titlesData: FlTitlesData(
+                              bottomTitles: AxisTitles(
+                                axisNameWidget: Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+
+                                ),
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 22,
+                                  interval: 1, // Ensures each month is labeled
+                                  getTitlesWidget: (value, _) {
+                                    switch (value.toInt()) {
+                                      case 0:
+                                        return Text('Jan', style: TextStyle(fontSize: 12));
+                                      case 1:
+                                        return Text('Feb', style: TextStyle(fontSize: 12));
+                                      case 2:
+                                        return Text('Mar', style: TextStyle(fontSize: 12));
+                                      case 3:
+                                        return Text('Apr', style: TextStyle(fontSize: 12));
+                                      case 4:
+                                        return Text('May', style: TextStyle(fontSize: 12));
+                                      case 5:
+                                        return Text('Jun', style: TextStyle(fontSize: 12));
+                                      case 6:
+                                        return Text('Jul', style: TextStyle(fontSize: 12));
+                                      case 7:
+                                        return Text('Aug', style: TextStyle(fontSize: 12));
+                                      case 8:
+                                        return Text('Sep', style: TextStyle(fontSize: 12));
+                                      case 9:
+                                        return Text('Oct', style: TextStyle(fontSize: 12));
+                                      case 10:
+                                        return Text('Nov', style: TextStyle(fontSize: 12));
+                                      case 11:
+                                        return Text('Dec', style: TextStyle(fontSize: 12));
+                                      default:
+                                        return Text('');
+                                    }
+                                  },
+                                ),
+                              ),
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 35,
+                                  interval: 20,
+                                  getTitlesWidget: (value, _) {
+                                    return Text('${value.toInt()}%', style: TextStyle(fontSize: 12));
+                                  },
+                                ),
+                              ),
+                              rightTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              topTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
                               ),
                             ),
+                            gridData: FlGridData(show: true), // Display the grid background
+                            borderData: FlBorderData(
+                              show: true,
+                              border: Border(
+                                left: BorderSide(color: Colors.black, width: 2), // Left border
+                                bottom: BorderSide(color: Colors.black, width: 2), // Bottom border
+                              ),
+                            ),
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: [
+                                  FlSpot(0, 10),
+                                  FlSpot(1, 30),
+                                  FlSpot(2, 40),
+                                  FlSpot(3, 70),
+                                  FlSpot(4, 60),
+                                  FlSpot(5, 80),
+                                  FlSpot(6, 50),
+                                  FlSpot(7, 90),
+                                  FlSpot(8, 110),
+                                  FlSpot(9, 100),
+                                  FlSpot(10, 120),
+                                  FlSpot(11, 140),
+                                ],
+                                isCurved: true,
+                                barWidth: 4,
+                                color: Colors.blue, // Set the line color to blue
+                                dotData: FlDotData(show: false),
+                                belowBarData: BarAreaData(show: false),
+                              ),
+                            ],
+                            lineTouchData: LineTouchData(
+                              touchTooltipData: LineTouchTooltipData(
+                               // tooltipBgColor: Colors.blueAccent,
+                              ),
+                              touchCallback: (FlTouchEvent event, LineTouchResponse? response) {},
+                              handleBuiltInTouches: true,
+                            ),
                           ),
+                        ),
+                      ),
+                ),
                           const SizedBox(width: 20),
                           Expanded(
                             child: Container(
@@ -333,3 +436,5 @@ class ChartData {
   final String x;
   final double? y;
 }
+
+
