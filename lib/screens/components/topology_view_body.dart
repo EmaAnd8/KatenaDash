@@ -34,8 +34,6 @@ class _TopologyViewState extends State<TopologyViewBody> {
     graph = Graph()..isTree = false;
     rootnode = Node.Id('Root Node');
     graph.addNode(rootnode!);
-
-
   }
 
   Future<void> _loadNodeDescriptions() async {
@@ -75,7 +73,7 @@ class _TopologyViewState extends State<TopologyViewBody> {
       return Image.asset('assets/icons/wallet_4121117.png', width: 24, height: 24);
     } else if (type.contains('contract')) {
       return Image.asset('assets/icons/smart_14210186.png', width: 24, height: 24);
-    }else if(type.contains("diamond")){
+    } else if (type.contains("diamond")) {
       return Image.asset('assets/icons/diamond.png', width: 24, height: 24);
     }
     return Image.asset('assets/icons/icons8-topology-53.png', width: 24, height: 24);
@@ -156,7 +154,7 @@ class _TopologyViewState extends State<TopologyViewBody> {
                 Expanded(
                   child: InteractiveViewer(
                     constrained: false,
-                    boundaryMargin: const EdgeInsets.all(100),
+                    boundaryMargin: const EdgeInsets.all(double.infinity), // Allow panning in all directions
                     minScale: 0.01,
                     maxScale: 5.6,
                     panEnabled: true, // Enable panning
@@ -279,8 +277,6 @@ class _TopologyViewState extends State<TopologyViewBody> {
     setState(() {
       if (newGraph != null) {
         graph = newGraph;
-
-
       }
     });
   }
