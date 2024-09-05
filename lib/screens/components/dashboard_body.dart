@@ -13,7 +13,7 @@ import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/login/login_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
+/*import 'package:syncfusion_flutter_charts/charts.dart';*/
 import '../../firebase_options.dart';
 import '../settings/settings_screen.dart';
 import '../services/services_provider.dart';
@@ -162,7 +162,7 @@ class _DashboardState extends State<DashboardBody> {
                                   ),
                                 ],
                               ),
-                              child: SfCartesianChart(
+                              /*child: SfCartesianChart(
                                 primaryXAxis: CategoryAxis(),
                                 series: <CartesianSeries>[
                                   LineSeries<ChartData, String>(
@@ -177,7 +177,7 @@ class _DashboardState extends State<DashboardBody> {
                                     yValueMapper: (ChartData data, _) => data.y,
                                   ),
                                 ],
-                              ),
+                              ),*/
                             ),
                           ),
                           const SizedBox(width: 20),
@@ -327,9 +327,10 @@ class Footer extends StatelessWidget {
     );
   }
 }
-
+/*
 class ChartData {
   ChartData(this.x, this.y);
   final String x;
   final double? y;
 }
+*/
