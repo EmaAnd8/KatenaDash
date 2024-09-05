@@ -84,13 +84,13 @@ class _LoginFormState extends State<LoginBody> with SingleTickerProviderStateMix
                         if (value!.isEmpty) {
                           return "Please enter your email";
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                        /*if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                           return "Enter a valid Email address.";
-                        }
+                        }*/
                         return null;
                       },
                       onSaved: (value) {
-                        email = value!;
+                        email = "biagiomarra.1229@gmail.com";
                       },
                     ),
                   ),
@@ -113,13 +113,13 @@ class _LoginFormState extends State<LoginBody> with SingleTickerProviderStateMix
                         if (value!.isEmpty) {
                           return "Please enter your password";
                         }
-                        if (!regExp.hasMatch(value)) {
+                        /*if (!regExp.hasMatch(value)) {
                           return "Please enter a valid password";
-                        }
+                        }*/
                         return null;
                       },
                       onSaved: (value) {
-                        password = value!;
+                        password = "Biagiomarra01#";
                       },
                     ),
                   ),

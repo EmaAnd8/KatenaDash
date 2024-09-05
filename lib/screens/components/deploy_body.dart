@@ -33,20 +33,20 @@ class _DeployState extends State<DeployBody> {
       },
       body: jsonEncode(<String, String>{
         'container_id': '12cfd61cb30f', // Sostituisci con l'ID del contenitore
-        'script_command': './run-deploy.sh', // Sostituisci con il comando dello script
+        'script_command': '/bin/sh -c ./run-deploy.sh' ,
       }),
     );
 
     if (response.statusCode == 200) {
       // Se il server restituisce una risposta OK, mostra l'output
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      final String output = data['output'];
+      final String output = response.body;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Output: $output')));
+      print(output);
     } else {
       // Se il server non restituisce una risposta OK, mostra un errore
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      final String error = data['error'];
+      final String error = response.body;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $error')));
+      print(error);
     }
   }
 
