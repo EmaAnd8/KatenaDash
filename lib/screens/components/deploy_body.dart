@@ -5,6 +5,10 @@ import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:yaml/yaml.dart';
+
+
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -26,10 +30,52 @@ class _DeployState extends State<DeployBody> {
   String? selectedOption; // Allow null for no selection
   String _dynamicText = "Deploy a new topology..."; // Variabile per il testo dinamico
 
+  String? _fileName;
+  String contentFile = "A";
+
+  void _controllPickFile() async {
+
+    contentFile = await _pickFile();
+
+    print(contentFile);
+
+  }
+
+  Future<String> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['yaml'],
+    );
+
+    if (result != null) {
+      try {
+        setState(() {
+          _fileName = result.files.single.name;
+        });
+        PlatformFile file = result.files.single;
+        final yamlString = utf8.decode(file.bytes!);
+        //final yamlMap = loadYaml(yamlString);
+        return yamlString;
+      } catch (e) {
+        print(e);
+      }
+    } else {
+      //do nothing
+      print("no file selected");
+    }
+
+    return "a";
+
+  }
+
+
 
   Future<void> _sendRequest() async {
     final url = Uri.parse(
         'http://localhost:5001/run-script'); // Cambia l'URL se necessario
+
+    //var contentFileJson = jsonEncode(contentFile);
+
 
     final response = await http.post(
       url,
@@ -39,6 +85,7 @@ class _DeployState extends State<DeployBody> {
       body: jsonEncode(<String, String>{
         'container_id': '12cfd61cb30f', // Sostituisci con l'ID del contenitore
         'script_command': '/bin/sh -c ./run-deploy.sh',
+        'content_yaml': contentFile,
       }),
     );
 
@@ -199,67 +246,45 @@ class _DeployState extends State<DeployBody> {
           child: Column(
             children: [
               Container(
-                margin: const EdgeInsets.all(3.0), // Margine esterno
+                margin: const EdgeInsets.all(8.0), // Aumentato il margine esterno per maggiore distanziamento
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2),
-                  // Bordo nero
-                  borderRadius: BorderRadius.circular(
-                      3), // Arrotondamento angoli
+                  border: Border.all(color: Colors.black, width: 2), // Bordo nero
+                  borderRadius: BorderRadius.circular(5), // Arrotondamento angoli più evidente
                 ),
                 child: Column(
                   children: <Widget>[
                     const Padding(
                       padding: EdgeInsets.all(8.0),
                       child: Text(
-                        'Default Topology',
+                        'File selection',
                         style: TextStyle(
-                          fontSize: 15,
-                          // Più grande per maggiore risalto
-                          fontWeight: FontWeight.bold,
-                          // Grassetto per evidenziare il titolo
+                          fontSize: 16, // Dimensione testo leggermente più grande
+                          fontWeight: FontWeight.bold, // Grassetto per evidenziare il titolo
                           color: Colors.black87,
-                          // Colore nero leggermente ammorbidito
                           letterSpacing: 1.0, // Spaziatura delle lettere per eleganza
                         ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0), // Margine interno sui lati e sopra/sotto
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
-                          Row(
-                            children: [
-                              Radio<String?>(
-                                value: 'ens',
-                                groupValue: selectedOption,
-                                onChanged: _handleRadioValueChange,
-                                toggleable: true,
-                              ),
-                              Text('Ens'),
-                            ],
+                          ElevatedButton(
+                            onPressed: _controllPickFile,
+                            child: Text('Pick File...'),
                           ),
-                          Row(
-                            children: [
-                              Radio<String?>(
-                                value: 'dydx',
-                                groupValue: selectedOption,
-                                onChanged: _handleRadioValueChange,
-                                toggleable: true,
+                          SizedBox(width: 20), // Spazio tra il pulsante e il nome del file
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerRight, // Allinea il testo a destra
+                              child: Text(
+                                _fileName ?? 'No file selected',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1, // Limita il testo a una sola linea
+                                style: TextStyle(fontSize: 16),
                               ),
-                              Text('Dydx'),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Radio<String?>(
-                                value: 'dark-forest',
-                                groupValue: selectedOption,
-                                onChanged: _handleRadioValueChange,
-                                toggleable: true,
-                              ),
-                              Text('Dark-forest'),
-                            ],
+                            ),
                           ),
                         ],
                       ),
@@ -267,7 +292,7 @@ class _DeployState extends State<DeployBody> {
                   ],
                 ),
               ),
-              Row(
+      Row(
                 children: [
                   Expanded(
                     child: Container(

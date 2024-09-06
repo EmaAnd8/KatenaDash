@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import docker
 import logging
+import yaml
 
 app = Flask(__name__)
 CORS(app)
@@ -12,6 +13,14 @@ client = docker.from_env()
 def run_script():
     container_id = request.json.get("container_id")
     script_command = request.json.get("script_command")
+    contentFile = request.json.get("content_yaml")
+
+
+    print(contentFile)
+    #contentFileYaml = yaml.dump(contentFile, default_flow_style=False)
+
+
+    #print(contentFileYaml)
 
     if not container_id or not script_command:
         return jsonify({"error": "Resource ID or script command was not provided"}), 400
@@ -19,9 +28,21 @@ def run_script():
     try:
         container = client.containers.get(container_id)
         print(script_command)
+
+        yaml_command = "printf '{}' > /benchmark/file_to_run.yaml".format(contentFile)
+        exec_id_yaml = client.api.exec_create(container.id, cmd=['/bin/sh', '-c', yaml_command], stdout=True, stderr=True)
+        exec_result_yaml = client.api.exec_start(exec_id_yaml, stream=True)
+
+        yaml_output = ''
+        for line in exec_result_yaml:
+            yaml_output += line.decode('utf-8')
+
+        logging.info(f"YAML write output: {yaml_output}")
+
+
+
         # Creiamo il comando da eseguire nel container
         exec_id = client.api.exec_create(container.id, cmd=script_command, stdout=True, stderr=True)
-
         # Eseguiamo il comando
         exec_result = client.api.exec_start(exec_id, stream=True)
 
@@ -45,6 +66,7 @@ def run_script():
     except Exception as e:
         logging.error(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/withdraw', methods=['POST'])
 def withdraw():
