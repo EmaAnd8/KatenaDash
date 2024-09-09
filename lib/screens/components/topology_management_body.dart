@@ -77,7 +77,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       return Image.asset('assets/icons/wallet_4121117.png', width: 24, height: 24);
     } else if (type.contains('contract')) {
       return Image.asset('assets/icons/smart_14210186.png', width: 24, height: 24);
-    }else if(type.contains("diamond")){
+    } else if (type.contains("diamond")) {
       return Image.asset('assets/icons/diamond.png', width: 24, height: 24);
     }
     return Image.asset('assets/icons/icons8-topology-53.png', width: 24, height: 24);
@@ -193,21 +193,19 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       graph = await ServiceProvider.TopologyCreatorEdges("Add edge", graph, sourceNode, destinationNode) as Graph;
     });
   }
+
   Future<void> _promptForNodeRemoval() async {
     if (graph.nodes.isEmpty) {
       _showSnackBar("Cannot remove a Node because the graph has no nodes.");
       return;
     }
-    if(graph.nodes.length<=1)
-      {
-        _showSnackBar("you cannot have an empty graph");
-        return;
-      }
+    if (graph.nodes.length <= 1) {
+      _showSnackBar("You cannot have an empty graph");
+      return;
+    }
 
     Node? sourceNode = await _selectNode("Select source node");
     if (sourceNode == null) return;
-
-
 
     setState(() async {
       graph = await ServiceProvider.TopologyRemoveNode(graph, sourceNode) as Graph;
