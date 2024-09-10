@@ -1,11 +1,21 @@
+import 'dart:io';
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/deploy/deploy_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:yaml/yaml.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'dart:html' as html;
 
 Provider ServiceProvider = Provider.instance;
 String topologyYaml = "";
@@ -16,6 +26,16 @@ String name = '';
 final BuchheimWalkerConfiguration builder = BuchheimWalkerConfiguration();
 Node? rootNode;
 Map<String, String> nodeDescriptions = {};
+List<Map<String, String>> messages = [
+  {
+    "role": "system",
+    "content":
+    "Hi Chat, I am going to create a TOSCA topology assessment tool. Please provide a score from 0 to 100 to each parameter for each set of TOSCA topology I give to you. Here are the parameters: - Topology fault tolerance overall, - Nodes fault tolerance, - Percentage of successful deploy."
+  }
+];
+final String apiKey = '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';
+
+
 
 class TopologyManagementBody extends StatefulWidget {
   const TopologyManagementBody({super.key});
@@ -174,6 +194,103 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       setState(() {});
     } catch (e) {
       print('Error loading node definitions: $e');
+    }
+  }
+  Future<void> _exportResponseAsTextFile(String content) async {
+    if (kIsWeb) {
+      // Web platform: Create a Blob and trigger a download using `universal_html`
+      final bytes = utf8.encode(content);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", "response.txt")
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    } else {
+      // Mobile/desktop: Write the response to a .txt file
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/response.txt';
+      final file = File(filePath);
+
+      await file.writeAsString(content);
+      print('Response saved at: $filePath');
+    }
+  }
+
+
+  Future<String> sendMessageWithFilesOption(String userMessage) async {
+    // Step 1: Pick multiple files (optional)
+    FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true);
+
+    List<String> fileContents = [];
+
+    if (result != null && result.files.isNotEmpty) {
+      for (var file in result.files) {
+        if (kIsWeb) {
+          // Web platform, access file content via `bytes`
+          Uint8List? fileBytes = file.bytes;
+          if (fileBytes != null) {
+            String fileContent = utf8.decode(fileBytes);
+            fileContents.add(fileContent);
+          }
+        } else {
+          // Mobile/desktop platform, access file content via `path`
+          String? filePath = file.path;
+          if (filePath != null) {
+            File file = File(filePath);
+            String fileContent = await file.readAsString();
+            fileContents.add(fileContent);
+          }
+        }
+      }
+    }
+
+    // Step 2: Append the user message to the conversation
+    messages.add({"role": "user", "content": userMessage});
+
+    // Step 3: Append each file content as part of the message
+    for (var i = 0; i < fileContents.length; i++) {
+      messages.add({
+        "role": "user",
+        "content": "File ${i + 1} content:\n${fileContents[i]}"
+      });
+    }
+
+    // Step 4: Prepare the request body
+    final url = Uri.parse('https://api.openai.com/v1/chat/completions');
+    Map<String, dynamic> body = {
+      "model": "gpt-3.5-turbo",
+      "messages": messages
+    };
+
+    // Step 5: Set the headers
+    final headers = {
+      'Authorization': 'Bearer $apiKey',
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      // Step 6: Send the request to OpenAI
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      // Step 7: Handle the response
+      if (response.statusCode == 200) {
+        Map<String, dynamic> responseBody = jsonDecode(response.body);
+        String assistantReply = responseBody['choices'][0]['message']['content'];
+
+        // Append the assistant's reply to the conversation
+        messages.add({"role": "assistant", "content": assistantReply});
+
+        return assistantReply;
+      } else {
+        throw Exception('Failed to connect to OpenAI: ${response.statusCode}');
+      }
+    } catch (e) {
+      return 'Error: $e';
     }
   }
 
@@ -374,8 +491,21 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                     });
                   },
                 ),
+
+                PopupMenuItem<String>(
+                  value: '6',
+                  child: const Text('Assess your Topology'),
+                  onTap: () async {
+                    var  response;
+                    response=await sendMessageWithFilesOption("");
+                    _exportResponseAsTextFile(response);
+
+                  }
+                ),
               ];
             },
+
+
             icon: const Icon(Icons.menu),
           ),
         ],
