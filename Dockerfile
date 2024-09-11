@@ -1,58 +1,73 @@
-# Use an official Canonical Ubuntu image as the base image
-FROM --platform=linux/amd64 ubuntu:20.04
+# Use the latest Ubuntu LTS version as a base
+FROM ubuntu:latest
 
-WORKDIR "$PATH:/new/path"
-ADD . .
-# Set environment variables to specify the Dart and Flutter versions
+# Set non-interactive installation mode
+ENV DEBIAN_FRONTEND=noninteractive
 
+# Install required tools and libraries
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    wget \
+    xz-utils \
+    libglu1-mesa \
+    apt-transport-https \
+    gnupg \
+    ca-certificates \
+    xvfb \
+    libgtk-3-0 \
+    libgbm1 \
+    libnss3 \
+    libxss1 \
+    unzip \
+    python3 \
+    python3-pip  # Python and pip
 
+# Install Chrome for Flutter web builds
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable
 
-ENV DART_VERSION 2.15.1
+# Install Dart SDK
+RUN sh -c 'curl https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /usr/share/keyrings/dart-archive-keyring.gpg' \
+    && echo 'deb [signed-by=/usr/share/keyrings/dart-archive-keyring.gpg] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main' | tee /etc/apt/sources.list.d/dart_stable.list \
+    && apt-get update \
+    && apt-get install -y dart
 
-ENV FLUTTER_VERSION 2.10.5
+# Install Flutter SDK
+RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
+ENV PATH="$PATH:/usr/local/flutter/bin"
+RUN git config --global --add safe.directory /usr/local/flutter
 
-ENV DART_DOWNLOAD_URL https://storage.googleapis.com/dart-archive/channels/stable/release/$DART_VERSION/sdk/dartsdk-linux-x64.tar.xz
+# Create a non-root user to run Flutter
+RUN useradd -m flutteruser \
+    && chown -R flutteruser:flutteruser /usr/local/flutter
 
-ENV FLUTTER_DOWNLOAD_URL https://storage.googleapis.com/flutter_infra/releases/stable/linux/flutter_linux_$FLUTTER_VERSION-stable.tar.xz
-
-
-# Update the package lists and install required dependencies
-
-RUN apt update
-
-RUN apt install -y curl tar wget xz-utils git
-
-
-# Download and extract the Dart SDK
-
-
-RUN dpkg -i dart_3.4.4-1_amd64.deb
-
-
-#RUN tar -xvf *.tar.bz2
-
-
-# Set the PATH environment variable to include the Dart SDK
-
-ENV PATH /usr/local/dart-sdk/bin:$PATH
-
-
-# Verify that Dart is installed correctly
-
-RUN dart --version
-
-#discovering of flutter compiler
-
-
-ENV PATH "$PATH:/flutter/bin"
-
-
+# Copy the entire project directory (where the Dockerfile is located) into the image
 COPY . /app
+COPY chrome-launcher.sh /usr/local/bin/chrome-launcher
 
+# Set executable permissions and configure the custom Chrome launcher
+RUN chmod +x /usr/local/bin/chrome-launcher && \
+    ln -sf /usr/local/bin/chrome-launcher /usr/bin/google-chrome && \
+    chown -R flutteruser:flutteruser /app
+
+# Switch to non-root user
+USER flutteruser
 WORKDIR /app
 
-#build creation
-RUN flutter build web --release
+# Run basic check to download Dart SDK and Flutter SDK
+RUN flutter doctor
 
+# Set up the environment for headless Chrome execution
+ENV DISPLAY=:99
 
-CMD ["flutter", "run"]
+# Expose default port for Flutter web (now using a different port for Python server)
+EXPOSE 8080
+
+# Build the Flutter project (assuming web build output is directly accessible)
+RUN flutter build web
+
+# Set default command to start Python HTTP server on port 8000 serving the build directory
+CMD python3 -m http.server 8080 --directory build/web & google-chrome --headless --disable-gpu --remote-debugging-port=9222 http://localhost:8080
