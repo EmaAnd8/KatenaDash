@@ -7,16 +7,16 @@ import 'package:katena_dashboard/screens/topology/topologymanangement/topology_m
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:yaml/yaml.dart';
-
-
-
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding and decoding
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart';
+
+
+
 
 Provider ServiceProvider = Provider.instance;
 Widget simpleTopology = Container();
-
 
 class DeployBody extends StatefulWidget {
   const DeployBody({super.key});
@@ -26,19 +26,53 @@ class DeployBody extends StatefulWidget {
 }
 
 class _DeployState extends State<DeployBody> {
-  final _formKey = GlobalKey<FormState>();
   String? selectedOption; // Allow null for no selection
   String _dynamicText = "Deploy a new topology..."; // Variabile per il testo dinamico
+
+  WebSocketChannel? _channel;
+  List<String> _items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _connectToWebSocket();
+  }
+
+  void _connectToWebSocket() {
+    _channel = WebSocketChannel.connect(
+      Uri.parse('ws://localhost:8765'),
+    );
+
+    _channel?.stream.listen(
+          (message) {
+        setState(() {
+          var items = message.replaceAll(RegExp(r"[\[\]']"), '');
+          _items = items.split(',');
+        });
+      },
+      onError: (error) {
+        print('WebSocket error: $error');
+      },
+      onDone: () {
+        print('WebSocket connection closed');
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _channel?.sink.close();
+    super.dispose();
+  }
+
 
   String? _fileName;
   String contentFile = "A";
 
+
   void _controllPickFile() async {
-
     contentFile = await _pickFile();
-
     print(contentFile);
-
   }
 
   Future<String> _pickFile() async {
@@ -54,7 +88,6 @@ class _DeployState extends State<DeployBody> {
         });
         PlatformFile file = result.files.single;
         final yamlString = utf8.decode(file.bytes!);
-        //final yamlMap = loadYaml(yamlString);
         return yamlString;
       } catch (e) {
         print(e);
@@ -65,48 +98,36 @@ class _DeployState extends State<DeployBody> {
     }
 
     return "a";
-
   }
 
-
-
   Future<void> _sendRequest() async {
-    final url = Uri.parse(
-        'http://localhost:5001/run-script'); // Cambia l'URL se necessario
-
-    //var contentFileJson = jsonEncode(contentFile);
-
-
+    final url = Uri.parse('http://localhost:5001/run-script');
+    _updateText("Deploying...");
     final response = await http.post(
       url,
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        'container_id': '12cfd61cb30f', // Sostituisci con l'ID del contenitore
+        'container_id': '12cfd61cb30f',
         'script_command': '/bin/sh -c ./run-deploy.sh',
         'content_yaml': contentFile,
       }),
     );
 
     if (response.statusCode == 200) {
-      // Se il server restituisce una risposta OK, mostra l'output
       final String output = response.body;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Output: $output')));
       _updateText(output);
     } else {
-      // Se il server non restituisce una risposta OK, mostra un errore
       final String error = response.body;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $error')));
-      print(error);
+      _updateText(error);
     }
   }
 
   Future<void> _withdrawRequest() async {
-    final url = Uri.parse(
-        'http://localhost:5001/withdraw'); // Cambia l'URL se necessario
+    final url = Uri.parse('http://localhost:5001/withdraw');
 
     final response = await http.post(
       url,
@@ -114,35 +135,22 @@ class _DeployState extends State<DeployBody> {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        'container_id': '12cfd61cb30f', // Sostituisci con l'ID del contenitore
+        'container_id': '12cfd61cb30f',
       }),
     );
 
     if (response.statusCode == 200) {
-      // Se il server restituisce una risposta OK, mostra l'output
       final String output = response.body;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Output: $output')));
       _updateText("Deploy a new topology...");
+      _items.clear();
     } else {
-      // Se il server non restituisce una risposta OK, mostra un errore
       final String error = response.body;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $error')));
       print(error);
     }
-  }
-
-  void _handleRadioValueChange(String? value) {
-    setState(() {
-      // Toggle selection
-      if (selectedOption == value) {
-        selectedOption = null; // Deselect if already selected
-      } else {
-        selectedOption = value; // Select new option
-      }
-    });
-    print('Selected option: $selectedOption'); // Example action
   }
 
   void _updateText(String result) {
@@ -152,11 +160,10 @@ class _DeployState extends State<DeployBody> {
   }
 
 
+
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery
-        .of(context)
-        .size;
+    Size size = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: AppBar(
@@ -204,12 +211,11 @@ class _DeployState extends State<DeployBody> {
                   value: '1',
                   child: Text('Make the Deploy'),
                   onTap: () async {
-                    /*
-                    simpleTopology = await ServiceProvider.CreateNode();
-                    setState(() {
-                      simpleTopology;
-                    });
-                     */
+                    // Uncomment and implement if needed
+                    // simpleTopology = await ServiceProvider.CreateNode();
+                    // setState(() {
+                    //   simpleTopology;
+                    // });
                   },
                 ),
                 PopupMenuItem<String>(
@@ -246,10 +252,10 @@ class _DeployState extends State<DeployBody> {
           child: Column(
             children: [
               Container(
-                margin: const EdgeInsets.all(8.0), // Aumentato il margine esterno per maggiore distanziamento
+                margin: const EdgeInsets.all(8.0),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2), // Bordo nero
-                  borderRadius: BorderRadius.circular(5), // Arrotondamento angoli più evidente
+                  border: Border.all(color: Colors.black, width: 2),
+                  borderRadius: BorderRadius.circular(5),
                 ),
                 child: Column(
                   children: <Widget>[
@@ -258,15 +264,15 @@ class _DeployState extends State<DeployBody> {
                       child: Text(
                         'File selection',
                         style: TextStyle(
-                          fontSize: 16, // Dimensione testo leggermente più grande
-                          fontWeight: FontWeight.bold, // Grassetto per evidenziare il titolo
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                           color: Colors.black87,
-                          letterSpacing: 1.0, // Spaziatura delle lettere per eleganza
+                          letterSpacing: 1.0,
                         ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0), // Margine interno sui lati e sopra/sotto
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
@@ -274,14 +280,14 @@ class _DeployState extends State<DeployBody> {
                             onPressed: _controllPickFile,
                             child: Text('Pick File...'),
                           ),
-                          SizedBox(width: 20), // Spazio tra il pulsante e il nome del file
+                          SizedBox(width: 20),
                           Expanded(
                             child: Align(
-                              alignment: Alignment.centerRight, // Allinea il testo a destra
+                              alignment: Alignment.centerRight,
                               child: Text(
                                 _fileName ?? 'No file selected',
                                 overflow: TextOverflow.ellipsis,
-                                maxLines: 1, // Limita il testo a una sola linea
+                                maxLines: 1,
                                 style: TextStyle(fontSize: 16),
                               ),
                             ),
@@ -292,36 +298,83 @@ class _DeployState extends State<DeployBody> {
                   ],
                 ),
               ),
-      Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.all(8.0),
-                      padding: const EdgeInsets.all(16.0),
+              Container(
+                width: size.width,
+                height: 1000,
+                child: GridView.count(
+                  crossAxisCount: 2,  // Due colonne
+                  crossAxisSpacing: 8.0,  // Spazio orizzontale tra le colonne
+                  mainAxisSpacing: 8.0,  // Spazio verticale tra le righe
+                  padding: EdgeInsets.all(8.0),  // Padding generale per la GridView
+                  children: [
+                    Container(
+                      margin: EdgeInsets.all(8.0),
+                      padding: EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
                         color: Colors.blueAccent,
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      child: SingleChildScrollView(
-                        child: Text(
-                          _dynamicText,
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Center(
+                            child: Text(
+                              'Deployment Log',
+                              style: TextStyle(
+                                fontSize: 18.0, // Font size for the title
+                                fontWeight: FontWeight.bold, // Make title bold
+                                color: Colors.white, // Title color
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 16.0), // Space between title and content
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Text(
+                                _dynamicText,
+                                style: TextStyle(color: Colors.white, fontSize: 16),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.all(8.0),
-                      padding: const EdgeInsets.all(16.0),
+                    Container(
+                      margin: EdgeInsets.all(8.0),
+                      padding: EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: Colors.greenAccent,
                         borderRadius: BorderRadius.circular(8.0),
+                        color: Colors.white, // Set background color if needed
                       ),
-                    ),
-                  ),
-                ],
-              ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Center(
+                            child: Text(
+                              'Deployment Status',
+                              style: TextStyle(
+                                fontSize: 18.0, // Font size for the title
+                                fontWeight: FontWeight.bold, // Make title bold
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 16.0), // Space between title and items
+                          ..._items.map((item) {
+                            return Text(
+                              'Deployment of $item complete',
+                              style: TextStyle(
+                                color: Colors.green, // Text color
+                                fontSize: 16.0, // Text size
+                                fontWeight: FontWeight.bold, // Make text bold
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              )
             ],
           ),
         ),

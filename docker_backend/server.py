@@ -4,11 +4,41 @@ import docker
 import logging
 import time
 import threading
+import re
+import websockets
+import asyncio
 
 app = Flask(__name__)
 CORS(app)
 client = docker.from_env()
 start_time = 0
+
+# Set per tenere traccia dei client connessi
+clients = set()
+
+async def broadcast(message):
+    if clients:  # Invia solo se ci sono client connessi
+        await asyncio.gather(*[client.send(message) for client in clients])
+
+async def register(websocket, path):  # Aggiungi 'path' come secondo argomento
+    clients.add(websocket)
+    try:
+        print("Client connected")
+        async for message in websocket:
+            print(f"Received message: {message}")
+    except websockets.ConnectionClosedError as e:
+        print(f"Connection closed with error: {e}")
+    finally:
+        clients.remove(websocket)
+        print("Client disconnected")
+
+async def start_websocket_server():
+    async with websockets.serve(register, "localhost", 8765):
+        print("Server WebSocket in ascolto su ws://localhost:8765")
+        await asyncio.Future()  # Mantiene il server in esecuzione
+
+
+
 
 # Funzione di monitoraggio del log
 def monitor_log(exec_id3, stop_event, timeout, container):
@@ -49,21 +79,52 @@ def run_script():
         exec_id3 = client.api.exec_create(container.id, cmd=['/bin/sh', '-c', command], stdout=True, stderr=True)
         exec_result3 = client.api.exec_start(exec_id3, stream=True)
 
+        time.sleep(5)
+
         stop_event = threading.Event()
-        timeout = 15  # Timeout in secondi
+        timeout = 10  # Timeout in secondi
         monitor_thread = threading.Thread(target=monitor_log, args=(exec_id3, stop_event, timeout, container))
         monitor_thread.start()
+
+        deploy_data = {
+            #'Deploying': [],
+            'Deployment_of': []
+        }
+
+        #deploying_pattern = r'\bDeploying\s+(\w+)'  # Cattura la parola dopo "Deploying"
+        deployment_of_pattern = r'\bDeployment of\s+(\w+)'  # Cattura la parola dopo "Deployment of"
+
 
         try:
             for line in exec_result3:
                 decoded_line = line.decode('utf-8').strip()
-                print(decoded_line)
+
+                #deploying_matches = re.findall(deploying_pattern, decoded_line)
+
+                deployment_of_matches = re.findall(deployment_of_pattern, decoded_line)
+
+                # Aggiungi le parole trovate al dizionario
+                #deploy_data['Deploying'].extend(deploying_matches)
+
+                if deployment_of_matches:
+                    # Memorizza la dimensione della lista prima di aggiungere
+                    prev_len = len(deploy_data['Deployment_of'])
+
+                    # Aggiungi le parole trovate al dizionario
+                    deploy_data['Deployment_of'].extend(deployment_of_matches)
+
+                    # Verifica se la dimensione è cambiata
+                    if len(deploy_data['Deployment_of']) > prev_len:
+                        asyncio.run(broadcast(str(deploy_data['Deployment_of'])))
+                        print("Deployment of:", deploy_data['Deployment_of'])
+
                 start_time = time.time()  # Assicurati che il timer venga aggiornato correttamente
 
         except Exception as e:
             print(f"Error during file monitoring: {e}")
 
-
+        #print("Deploying:", deploy_data['Deploying'])
+        #print("Deployment of:", deploy_data['Deployment_of'])
         stop_event.set()
         monitor_thread.join()  # Aspetta che il thread termini
 
@@ -119,6 +180,14 @@ def withdraw():
         logging.error(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
+
+def run_flask_server():
     app.run(host='0.0.0.0', port=5001)
+
+if __name__ == '__main__':
+    websocket_thread = threading.Thread(target=lambda: asyncio.run(start_websocket_server()))
+    websocket_thread.start()
+
+    # Avvia il server Flask
+    run_flask_server()
 
