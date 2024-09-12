@@ -35,7 +35,6 @@ class _DeployState extends State<DeployBody> {
   @override
   void initState() {
     super.initState();
-    _connectToWebSocket();
   }
 
   void _connectToWebSocket() {
@@ -103,6 +102,7 @@ class _DeployState extends State<DeployBody> {
   Future<void> _sendRequest() async {
     final url = Uri.parse('http://localhost:5001/run-script');
     _updateText("Deploying...");
+    _connectToWebSocket();
     final response = await http.post(
       url,
       headers: <String, String>{

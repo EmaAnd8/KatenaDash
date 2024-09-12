@@ -10,7 +10,7 @@ import asyncio
 
 app = Flask(__name__)
 CORS(app)
-client = docker.from_env()
+client = docker.from_env(timeout=120)
 start_time = 0
 
 # Set per tenere traccia dei client connessi
@@ -71,6 +71,22 @@ def run_script():
 
     try:
         container = client.containers.get(container_id)
+
+        #print(contentFile)
+        file_path5 = "benchmark/file_to_run.yaml"
+        contentFile_escaped = contentFile.replace('"', '\\"')
+        command3 = f"printf \"%s\" \"{contentFile_escaped}\" > {file_path5}"
+
+
+#print(command)
+
+        exec_id7 = client.api.exec_create(container.id, cmd=['/bin/sh', '-c', command3], stdout=True, stderr=True)
+        client.api.exec_start(exec_id7)
+
+
+        time.sleep(1)
+
+
         exec_id = client.api.exec_create(container.id, cmd=script_command, stdout=True, stderr=True)
         exec_result = client.api.exec_start(exec_id, stream=True)
 
