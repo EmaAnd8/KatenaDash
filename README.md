@@ -12,9 +12,27 @@ has an underling software which is able to use all the potentialities of Katena
 -Flutter 3.22;  
 -Dart 3.40;  
 -All the requirements needed in order to use Katena;   
--Firebase console and configuration files;    
+-Firebase console and configuration files;
+-Docker Engine
 
 ```
+
+# How to execute
+
+```
+docker build -t BlockVerse .
+docker run -d --name container-name -p 8000:8000 BlockVerse
+
+Inside the terminal
+
+
+docker exec flutter-app-container  bash
+
+python3 -m http.server 8000
+
+```
+
+
 
 
 
