@@ -26,6 +26,10 @@ String name = '';
 final BuchheimWalkerConfiguration builder = BuchheimWalkerConfiguration();
 Node? rootNode;
 Map<String, String> nodeDescriptions = {};
+Map<String, Map<String, dynamic>> nodeProperties = {}; // Store properties per node
+
+Map<String, Map<String, dynamic>> yamlMap = {}; //store inputs
+
 List<Map<String, String>> messages = [
   {
     "role": "system",
@@ -34,8 +38,6 @@ List<Map<String, String>> messages = [
   }
 ];
 final String apiKey = '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';
-
-
 
 class TopologyManagementBody extends StatefulWidget {
   const TopologyManagementBody({super.key});
@@ -46,6 +48,7 @@ class TopologyManagementBody extends StatefulWidget {
 
 class _TopologyManagementState extends State<TopologyManagementBody> {
   bool _isDrawerOpen = false;
+
 
   @override
   void initState() {
@@ -191,14 +194,110 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
         },
       });
 
+      String key_properties = "Add properties";
+      sidebarItems.add({
+        'title': key_properties,
+        'onTap': () {
+          _addProperties();
+        },
+      });
+
+      String key_inputs = "Add Inputs";
+      sidebarItems.add({
+        'title': key_inputs,
+        'onTap': () {
+          _addInputs();
+        },
+      });
+
       setState(() {});
     } catch (e) {
       print('Error loading node definitions: $e');
     }
   }
+  Map<String, dynamic> inputs = {};  // Global inputs map
+
+  Future<void> _addInputs() async {
+    // Store the inputs
+    Map<String, dynamic>? result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) {
+        String key = '';
+        String valueType = '';  // This will store the type (like string, boolean, etc.)
+        String requiredValue = ''; // This will store whether the input is required
+
+        return AlertDialog(
+          title: Text('Add Inputs'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: InputDecoration(hintText: "Input Key"),
+                onChanged: (text) {
+                  key = text;
+                },
+              ),
+              TextField(
+                decoration: InputDecoration(hintText: "Input Type (e.g., string, integer)"),
+                onChanged: (text) {
+                  valueType = text;
+                },
+              ),
+              TextField(
+                decoration: InputDecoration(hintText: "Is Required? (true/false)"),
+                onChanged: (text) {
+                  requiredValue = text;
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop({
+                  'key': key,
+                  'type': valueType,
+                  'required': requiredValue.toLowerCase() == 'true'
+                });
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If valid inputs were provided
+    if (result != null && result['key'] != '' && result['type'] != '') {
+      setState(() {
+        // Add the inputs to the global inputs map
+        inputs[result['key']] = {
+          'type': result['type'],
+          'required': result['required']
+        };
+      });
+
+      _saveInputsToYaml();
+    }
+  }
+
+  void _saveInputsToYaml() {
+    final buffer = StringBuffer();
+
+    buffer.write('inputs:\n');
+    inputs.forEach((key, value) {
+      buffer.write('  $key:\n');
+      buffer.write('    type: ${value['type']}\n');
+      buffer.write('    required: ${value['required']}\n');
+    });
+
+    print(buffer.toString()); // Print for debugging, or replace with actual save logic
+  }
+
+
   Future<void> _exportResponseAsTextFile(String content) async {
     if (kIsWeb) {
-      // Web platform: Create a Blob and trigger a download using `universal_html`
+      // Web platform: Create a Blob and trigger a download using universal_html
       final bytes = utf8.encode(content);
       final blob = html.Blob([bytes]);
       final url = html.Url.createObjectUrlFromBlob(blob);
@@ -227,14 +326,14 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     if (result != null && result.files.isNotEmpty) {
       for (var file in result.files) {
         if (kIsWeb) {
-          // Web platform, access file content via `bytes`
+          // Web platform, access file content via bytes
           Uint8List? fileBytes = file.bytes;
           if (fileBytes != null) {
             String fileContent = utf8.decode(fileBytes);
             fileContents.add(fileContent);
           }
         } else {
-          // Mobile/desktop platform, access file content via `path`
+          // Mobile/desktop platform, access file content via path
           String? filePath = file.path;
           if (filePath != null) {
             File file = File(filePath);
@@ -378,6 +477,91 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       graph.addNode(rootNode!);
     });
   }
+  Future<void> _addProperties() async {
+    String selectedNodeName = ''; // Store selected node name
+
+    Map<String, dynamic>? result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) {
+        String key = '';
+        String value = '';
+
+        return AlertDialog(
+          title: Text('Add Properties'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Dropdown to select node name
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(labelText: 'Select Node'),
+                items: graph.nodes.map((node) {
+                  return DropdownMenuItem<String>(
+                    value: node.key?.value,
+                    child: Text(node.key?.value ?? ''),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  selectedNodeName = newValue ?? '';
+                },
+              ),
+              TextField(
+                decoration: InputDecoration(hintText: "Key"),
+                onChanged: (text) {
+                  key = text;
+                },
+              ),
+              TextField(
+                decoration: InputDecoration(hintText: "Value"),
+                onChanged: (text) {
+                  value = text;
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop({
+                  'key': key,
+                  'value': value,
+                  'nodeName': selectedNodeName
+                });
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != null && result['key'] != '' && result['value'] != '' && result['nodeName'] != '') {
+      String nodeName = result['nodeName'];
+
+      setState(() {
+        // Add properties to the corresponding node
+        if (!nodeProperties.containsKey(nodeName)) {
+          nodeProperties[nodeName] = {}; // Initialize if no properties exist
+        }
+        nodeProperties[nodeName]![result['key']] = result['value'];
+      });
+      _savePropertiesToYaml();
+    }
+  }
+
+  void _savePropertiesToYaml() {
+    final buffer = StringBuffer();
+
+    // Write properties for each node
+    nodeProperties.forEach((nodeName, properties) {
+      buffer.write('$nodeName:\n');
+      buffer.write('  properties:\n');
+      properties.forEach((key, value) {
+        buffer.write('    $key: $value\n');
+      });
+    });
+
+    print(buffer.toString()); // For debugging, replace with the actual saving logic
+  }
 
   Future<String?> _showNameInputDialog(BuildContext context) async {
     String nodeName = '';
@@ -448,7 +632,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   child: const Text('Export your Topology'),
                   onTap: () async {
                     if (graph.hasNodes()) {
-                      ServiceProvider.saveFile(graph);
+                      ServiceProvider.saveFile(graph, nodeProperties,yamlMap);
                     } else {
                       _showSnackBar("You cannot export an empty file");
                     }
@@ -488,24 +672,22 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                       graph = Graph()..isTree = false;
                       rootNode = Node.Id('Root Node');
                       graph.addNode(rootNode!);
+                      nodeProperties.clear();
+                      yamlMap.clear();
                     });
                   },
                 ),
-
                 PopupMenuItem<String>(
                   value: '6',
                   child: const Text('Assess your Topology'),
                   onTap: () async {
-                    var  response;
-                    response=await sendMessageWithFilesOption("");
+                    var response;
+                    response = await sendMessageWithFilesOption("");
                     _exportResponseAsTextFile(response);
-
-                  }
+                  },
                 ),
               ];
             },
-
-
             icon: const Icon(Icons.menu),
           ),
         ],

@@ -646,13 +646,12 @@ class Provider {
       requirements.remove(updatedStringMap);
     }
   }
-
-  Future< Map<String, dynamic>?> graphToYamlParserNodes(Graph graph) async {
-
+  Future<Map<String, dynamic>?> graphToYamlParserNodes(Graph graph, Map<String, dynamic> nodeProperties, Map<String, dynamic> inputs) async {
     Provider serviceProvider = Provider.instance;
 
+    // Base YAML structure
     final Map<String, dynamic> yamlMap = {
-      'tosca_definitions_version': 'tosca_simple_yaml_1_3\n',
+      'tosca_definitions_version': 'tosca_simple_yaml_1_3',
       'imports': [
         'nodes/contract.yaml',
         'nodes/network.yaml',
@@ -660,54 +659,83 @@ class Provider {
       ],
       'topology_template': {
         'node_templates': {}
-      }
+      },
+      'inputs': {}  // Initialize the inputs section
     };
 
+    // Add inputs to the global YAML structure
+    inputs.forEach((key, value) {
+      yamlMap['inputs'][key] = value;
+    });
+
+    // Check if the graph has nodes and add them to the YAML structure
     if (graph.nodes.isNotEmpty) {
       for (var node in graph.nodes) {
-        String nodeId = node.key?.value;
-        Map<String, String> typeMap = serviceProvider.parseKeyValuePairs(
-            nodeId);
+        String nodeId = node.key?.value ?? '';
 
-        yamlMap['topology_template']['node_templates'][typeMap["name"]] = {
-          'type': typeMap["type"],
-          'requirements': [],
-          'properties': {},
+        // Parse the nodeId to get the node name and type
+        Map<String, String> typeMap = serviceProvider.parseKeyValuePairs(nodeId);
+        String nodeName = typeMap["name"] ?? '';
+        String nodeType = typeMap["type"] ?? '';
+
+        // Initialize node-specific properties to an empty map
+        Map<String, dynamic> nodeSpecificProperties = {};
+
+        // Find and assign node-specific properties from the nodeProperties map
+        for (var propertyEntry in nodeProperties.entries) {
+          if (propertyEntry.value['name'] == nodeName) {
+            nodeSpecificProperties = propertyEntry.value;
+            break;
+          }
+        }
+
+        // Ensure that the node has both properties and requirements sections
+        yamlMap['topology_template']['node_templates'][nodeName] = {
+          'type': nodeType,
+          'requirements': [],  // Empty requirements, can be updated later
+          'properties': nodeSpecificProperties.isNotEmpty ? nodeSpecificProperties : {}  // Use the properties if found, else an empty map
         };
+
+        // Debugging output to verify the correct properties are added
+        print("Node: $nodeName, Properties: $nodeSpecificProperties");
       }
+
+      // Debugging output to check the complete YAML map
+      print("Generated YAML Map:\n$yamlMap");
+
       return yamlMap;
     } else {
-      print("nothing to export");
+      print("Nothing to export, empty graph");
       return yamlMap;
     }
   }
 
-  Future<YamlMap?> graphToYamlParserEdges(Edge edge) async {
+  Future<YamlMap?> graphToYamlParserEdges(Edge edge,Map<String, dynamic> nodeProperties, Map<String, dynamic> inputs) async {
     Provider serviceProvider = Provider.instance;
     Map<String, dynamic>? yamlMap;
     final yamlWriter = YAMLWriter();
     // Reinitialize for each edge
     if (graph.nodes.isEmpty) {
-      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph))!;
+      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph,nodeProperties,inputs))!;
       final yamlString = yamlWriter.write(yamlMap);
       return loadYaml(yamlString) as YamlMap;
     } else {
-      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph))!;
+      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph,nodeProperties,inputs))!;
     }
 
-      String sourceNodeId = edge.source.key?.value;
-      String destinationNodeId = edge.destination.key?.value;
+    String sourceNodeId = edge.source.key?.value;
+    String destinationNodeId = edge.destination.key?.value;
 
-      Map<String, String> sourceTypeMap = serviceProvider.parseKeyValuePairs(sourceNodeId);
-      Map<String, String> destinationTypeMap = serviceProvider.parseKeyValuePairs(destinationNodeId);
+    Map<String, String> sourceTypeMap = serviceProvider.parseKeyValuePairs(sourceNodeId);
+    Map<String, String> destinationTypeMap = serviceProvider.parseKeyValuePairs(destinationNodeId);
 
-      var descSource = await GetDescriptionByTypeforManagement(sourceTypeMap["type"]);
-      if (descSource != null) {
-        Map<String, dynamic> typeMap2 = {
-        };
-        Map<String, dynamic> typeMap3 = {}; // Reinitialize for each edge
-        var sourceNodeReqs = descSource["requirements"];
-         if(sourceNodeReqs!=null){
+    var descSource = await GetDescriptionByTypeforManagement(sourceTypeMap["type"]);
+    if (descSource != null) {
+      Map<String, dynamic> typeMap2 = {
+      };
+      Map<String, dynamic> typeMap3 = {}; // Reinitialize for each edge
+      var sourceNodeReqs = descSource["requirements"];
+      if(sourceNodeReqs!=null){
         for (var elem in sourceNodeReqs) {
           var firstReq = elem.values.first;
           if (firstReq["capability"] != null) {
@@ -828,10 +856,10 @@ class Provider {
           }
         }
       }
-      }
+    }
 
 
-      Map<String, dynamic> typeMap3in = {};
+    Map<String, dynamic> typeMap3in = {};
     Map<String, dynamic> typeMap2in = {};
     var some_der_req= await serviceProvider.getInheritedRequirements(sourceTypeMap["type"]!,descSource!);
     //final yamlList = loadYaml(some_der_req as String) as YamlList;
@@ -854,7 +882,7 @@ class Provider {
             .GetCapabilitiesByType(destinationTypeMap["type"]!);
         //print(capacity_fatality3!+"cccccccc");
         if ((inreqsource2["node"] != null && inreqsource2["node"]=="katena.nodes.library")  || (capacity_fatality3 == inreqsource2["capability"] && inreqsource2["node"] == null)  || (capacity_fatality3 == inreqsource2["capability"] ) || (inreqsource2["node"]==destinationTypeMap["type"] && capacity_fatality3==null)) {
-         // graph.addEdge(sourceNode, destinationNode);
+          // graph.addEdge(sourceNode, destinationNode);
           print(inreqsource2);
           String requirementName = serviceProvider.parseReqName(
               i_req.toString());
@@ -997,7 +1025,29 @@ class Provider {
     return now.toString();
   }
 
-  Future<void> saveFile(Graph graph) async {
+
+
+// Recursive function to convert YamlMap to a Dart Map<String, dynamic>
+  Map<String, dynamic> yamlMapToMap(YamlMap yamlMap) {
+    final map = <String, dynamic>{};
+    yamlMap.forEach((key, value) {
+      map[key.toString()] = _convertYamlValue(value);
+    });
+    return map;
+  }
+
+// Helper function to handle various Yaml types (YamlList, YamlMap, etc.)
+  dynamic _convertYamlValue(value) {
+    if (value is YamlMap) {
+      return yamlMapToMap(value); // Recursively convert YamlMap
+    } else if (value is YamlList) {
+      return value.map((e) => _convertYamlValue(e)).toList(); // Convert YamlList to Dart List
+    } else {
+      return value; // Return the value as is for non-YamlMap/List types
+    }
+  }
+
+  Future<void> saveFile(Graph graph,Map<String, dynamic> nodeProperties,Map<String, dynamic> inputs) async {
     Provider serviceProvider = Provider.instance;
 
     if (graph.hasNodes()) {
@@ -1005,37 +1055,120 @@ class Provider {
       final archive = Archive();
 
       for (Edge edge in graph.edges) {
-        YamlMap? graphToYamlData = await serviceProvider.graphToYamlParserEdges(edge);
-        final text = graphToYamlData.toString();
+        // Retrieve the parsed YAML data for each edge
+        YamlMap? graphToYamlData = await serviceProvider.graphToYamlParserEdges(edge,nodeProperties,inputs);
 
-        // Convert the text to bytes
-        final bytes = utf8.encode(text);
+        if (graphToYamlData != null) {
+          // Convert the YamlMap to a regular Map<String, dynamic>
+          Map<String, dynamic> yamlData = yamlMapToMap(graphToYamlData);
 
-        // Add the file to the archive
-        final fileName = 'topology${serviceProvider.getCurrentTimestampString()}.yaml';
-        archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+          // Format the YAML data to a string for saving
+          String yamlContent = formatYaml(yamlData);
+
+          // Log the content to ensure it's not empty
+          print('Generated YAML Content:\n$yamlContent');
+
+          if (yamlContent.isNotEmpty) {
+            // Convert the YAML content to bytes
+            final bytes = utf8.encode(yamlContent);
+
+            // Create the YAML file for the edge
+            final fileName = 'topology_${serviceProvider.getCurrentTimestampString()}.yaml';
+            archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+          } else {
+            print('Empty YAML content generated, skipping this edge.');
+          }
+        } else {
+          print('No YAML data found for edge: ${edge.key}');
+        }
       }
 
-      // Encode the archive to zip
-      final zipData = ZipEncoder().encode(archive);
+      if (archive.isNotEmpty) {
+        // Encode the archive to zip
+        final zipData = ZipEncoder().encode(archive);
 
-      if (zipData != null) {
-        // Create a Blob from the zip data
-        final blob = html.Blob([zipData]);
+        if (zipData != null) {
+          // Create a Blob from the zip data
+          final blob = html.Blob([zipData]);
 
-        // Create a URL for the Blob and an anchor element to download it
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        final anchor = html.AnchorElement(href: url)
-          ..setAttribute('download', 'topologies.zip')
-          ..click();
+          // Create a URL for the Blob and an anchor element to download it
+          final url = html.Url.createObjectUrlFromBlob(blob);
+          final anchor = html.AnchorElement(href: url)
+            ..setAttribute('download', 'topologies.zip')
+            ..click();
 
-        // Revoke the object URL
-        html.Url.revokeObjectUrl(url);
+          // Revoke the object URL
+          html.Url.revokeObjectUrl(url);
+        } else {
+          print('Error encoding ZIP data.');
+        }
+      } else {
+        print('No files to export.');
       }
     } else {
-      print("nothing to export");
+      print('The graph has no nodes.');
     }
   }
+
+// This function converts the Map<String, dynamic> to the desired YAML format
+  String formatYaml(Map<String, dynamic> graphToYamlData) {
+    final buffer = StringBuffer();
+
+    // Add the 'tosca_definitions_version' and 'imports'
+    buffer.write('tosca_definitions_version: tosca_simple_yaml_1_3\n\n');
+
+    // Handle imports
+    buffer.write('imports:\n');
+    List<dynamic> imports = graphToYamlData['imports'];
+    if (imports != null) {
+      for (var importFile in imports) {
+        buffer.write('- $importFile\n');
+      }
+    } else {
+      print('No imports found.');
+    }
+
+    // Handle the 'topology_template' and 'node_templates'
+    buffer.write('\ntopology_template:\n');
+    buffer.write('  node_templates:\n');
+
+    Map<String, dynamic> nodeTemplates = graphToYamlData['topology_template']['node_templates'];
+    if (nodeTemplates != null) {
+      nodeTemplates.forEach((nodeName, nodeData) {
+        buffer.write('    $nodeName:\n');
+        buffer.write('      type: ${nodeData['type']}\n');
+
+        // Handle requirements if they exist
+        List<dynamic> requirements = nodeData['requirements'];
+        if (requirements != null && requirements.isNotEmpty) {
+          buffer.write('      requirements:\n');
+          for (var requirement in requirements) {
+            requirement.forEach((key, value) {
+              buffer.write('      - $key: $value\n');
+            });
+          }
+        } else {
+          buffer.write('      requirements: \n');
+        }
+
+        // Handle properties if they exist
+        Map<String, dynamic> properties = nodeData['properties'];
+        if (properties != null && properties.isNotEmpty) {
+          buffer.write('      properties:\n');
+          properties.forEach((key, value) {
+            buffer.write('        $key: $value\n');
+          });
+        } else {
+          buffer.write('      properties: \n');
+        }
+      });
+    } else {
+      print('No node templates found.');
+    }
+
+    return buffer.toString();
+  }
+
 
   Future<YamlMap?> GetDescriptionByTypeforManagement(String? type) async {
     try {
