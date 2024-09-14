@@ -725,18 +725,20 @@ class Provider {
       return yamlMap;
     }
   }
-
-  Future<YamlMap?> graphToYamlParserEdges(Edge edge,Map<String, dynamic> nodeProperties, Map<String, dynamic> inputs) async {
+  Future<YamlMap?> graphToYamlParserEdges(
+      Edge edge,
+      Map<String, dynamic> nodeProperties,
+      Map<String, dynamic> inputs
+      ) async {
     Provider serviceProvider = Provider.instance;
     Map<String, dynamic>? yamlMap;
     final yamlWriter = YAMLWriter();
-    // Reinitialize for each edge
+
+    // Initialize YAML map if graph is empty
     if (graph.nodes.isEmpty) {
-      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph,nodeProperties,inputs))!;
-      final yamlString = yamlWriter.write(yamlMap);
-      return loadYaml(yamlString) as YamlMap;
+      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph, nodeProperties, inputs))!;
     } else {
-      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph,nodeProperties,inputs))!;
+      yamlMap = (await serviceProvider.graphToYamlParserNodes(graph, nodeProperties, inputs))!;
     }
 
     String sourceNodeId = edge.source.key?.value;
@@ -747,121 +749,62 @@ class Provider {
 
     var descSource = await GetDescriptionByTypeforManagement(sourceTypeMap["type"]);
     if (descSource != null) {
-      Map<String, dynamic> typeMap2 = {
-      };
-      Map<String, dynamic> typeMap3 = {}; // Reinitialize for each edge
+      Map<String, dynamic> typeMap3 = {};
+      Map<String, dynamic> typeMap2 = {};
+
       var sourceNodeReqs = descSource["requirements"];
-      if(sourceNodeReqs!=null){
+      if (sourceNodeReqs != null) {
         for (var elem in sourceNodeReqs) {
           var firstReq = elem.values.first;
           if (firstReq["capability"] != null) {
-            String? destCap = await GetCapabilitiesByType(
-                destinationTypeMap["type"]!);
-            print(firstReq);
-            print("2k2k2k2");
-            //  var req_ex=await serviceProvider.GetDescriptionByType(firstReq["node"]);
+            String? destCap = await GetCapabilitiesByType(destinationTypeMap["type"]!);
 
-            //      var reg_ex_req= req_ex?["requirements"];
-            //    print(reg_ex_req);
-            /*print(firstReq["node"]);
-           bool flag=true;
+            bool isValidRequirement = (firstReq["node"] != null && firstReq["node"] == "katena.nodes.library") ||
+                (destCap == firstReq["capability"] && firstReq["node"] == null) ||
+                (destCap == firstReq["capability"]);
 
-           for(var elex in reg_ex_req)
-             {
-               var firstReqs = elex.values.first;
-               if(firstReqs["capability"]==destCap)
-                 {
-                   flag=false;
-                   break;
-                 }
-             }
+            if (isValidRequirement) {
+              String requirementName = serviceProvider.parseReqName(elem.toString());
+              bool isRequirementNameDuplicate = typeMap3.containsKey(requirementName);
+              bool isDestinationTypeDuplicate = typeMap3.values.any((value) => value.contains(destinationTypeMap["name"]));
+              bool isRequirementNameDuplicate2 = typeMap2.containsKey(requirementName);
+              bool isDestinationTypeDuplicate2 = typeMap2.values.any((value) => value.contains(destinationTypeMap["name"]));
 
-            */
-            if ((firstReq["node"] != null &&
-                firstReq["node"] == "katena.nodes.library") ||
-                (destCap == firstReq["capability"] &&
-                    firstReq["node"] == null) ||
-                (destCap == firstReq["capability"])) {
-              String requirementName = serviceProvider.parseReqName(
-                  elem.toString());
-
-              bool isRequirementNameDuplicate = typeMap3.containsKey(
-                  requirementName);
-              bool isDestinationTypeDuplicate = typeMap3.values.any((value) {
-                return value.contains(destinationTypeMap["name"]);
-              });
-              bool isRequirementNameDuplicate2 = typeMap2.containsKey(
-                  requirementName);
-              bool isDestinationTypeDuplicate2 = typeMap2.values.any((value) {
-                return value.contains(destinationTypeMap["name"]);
-              });
-              //refactor for the specific case of library node
               if (firstReq["node"] != "katena.nodes.library") {
-                if (!isRequirementNameDuplicate &&
-                    !isDestinationTypeDuplicate ||
-                    (!isRequirementNameDuplicate2 &&
-                        !isDestinationTypeDuplicate2)) {
-                  typeMap3 = serviceProvider.addToMap(
-                      typeMap3, requirementName, destinationTypeMap["name"],
-                      []);
+                if (!isRequirementNameDuplicate && !isDestinationTypeDuplicate &&
+                    !isRequirementNameDuplicate2 && !isDestinationTypeDuplicate2) {
+                  typeMap3 = serviceProvider.addToMap(typeMap3, requirementName, destinationTypeMap["name"], []);
                 }
 
-                Map<String, dynamic> concatenatedMap = {
-                  ...typeMap3,
-                  ...typeMap2,
-                };
-                print(concatenatedMap);
-                print("£££££££££££££££££££££££££££££");
+                Map<String, dynamic> concatenatedMap = {...typeMap3, ...typeMap2};
                 if (concatenatedMap.isNotEmpty) {
-                  yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
-                  [concatenatedMap];
+                  yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] = [concatenatedMap];
                 }
               } else {
-                var descSource2 = await GetDescriptionByTypeforManagement(
-                    "katena.nodes.library");
+                var descSource2 = await GetDescriptionByTypeforManagement("katena.nodes.library");
                 if (descSource2 != null) {
-                  var sourceNodeReqs = descSource2["requirements"];
-                  print(sourceNodeReqs);
-                  for (var elem in sourceNodeReqs) {
-                    var firstReq = elem.values.first;
-                    if (firstReq["capability"] != null) {
-                      String? destCap = await GetCapabilitiesByType(
-                          destinationTypeMap["type"]!);
+                  var sourceNodeReqs2 = descSource2["requirements"];
+                  for (var elem2 in sourceNodeReqs2) {
+                    var firstReq2 = elem2.values.first;
+                    if (firstReq2["capability"] != null) {
+                      String? destCap2 = await GetCapabilitiesByType(destinationTypeMap["type"]!);
 
-                      if ((firstReq["node"] != null &&
-                          firstReq["node"] == destinationTypeMap["type"]) ||
-                          (destCap == firstReq["capability"] &&
-                              firstReq["node"] == null)) {
-                        String requirementName = serviceProvider.parseReqName(
-                            elem.toString());
+                      bool isValidRequirement2 = (firstReq2["node"] != null && firstReq2["node"] == destinationTypeMap["type"]) ||
+                          (destCap2 == firstReq2["capability"] && firstReq2["node"] == null) ||
+                          destCap2 == firstReq2["capability"];
 
-                        bool isRequirementNameDuplicate = typeMap2.containsKey(
-                            requirementName);
-                        bool isDestinationTypeDuplicate = typeMap2.values.any((
-                            value) {
-                          return value.contains(destinationTypeMap["name"]);
-                        });
-                        print(typeMap2);
-                        print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&6");
-                        //refactor for the specific case of library node
-                        // if (firstReq["node"] == "katena.nodes.library") {
-                        if (!isRequirementNameDuplicate &&
-                            !isDestinationTypeDuplicate) {
-                          typeMap2 = serviceProvider.addToMap(
-                              typeMap2, requirementName,
-                              destinationTypeMap["name"],
-                              []);
+                      if (isValidRequirement2) {
+                        String requirementName2 = serviceProvider.parseReqName(elem2.toString());
+                        bool isRequirementNameDuplicate2 = typeMap2.containsKey(requirementName2);
+                        bool isDestinationTypeDuplicate2 = typeMap2.values.any((value) => value.contains(destinationTypeMap["name"]));
+
+                        if (!isRequirementNameDuplicate2 && !isDestinationTypeDuplicate2) {
+                          typeMap2 = serviceProvider.addToMap(typeMap2, requirementName2, destinationTypeMap["name"], []);
                         }
 
-                        Map<String, dynamic> concatenatedMap = {
-                          ...typeMap3,
-                          ...typeMap2,
-                        };
-                        print(concatenatedMap);
-                        print("£££££££££££££££££££££££££££££");
-                        if (concatenatedMap.isNotEmpty) {
-                          yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
-                          [concatenatedMap];
+                        Map<String, dynamic> concatenatedMap2 = {...typeMap3, ...typeMap2};
+                        if (concatenatedMap2.isNotEmpty) {
+                          yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] = [concatenatedMap2];
                         }
                       }
                     }
@@ -874,135 +817,81 @@ class Provider {
       }
     }
 
-
+    // Ensure consistency with inherited requirements
     Map<String, dynamic> typeMap3in = {};
     Map<String, dynamic> typeMap2in = {};
-    var some_der_req= await serviceProvider.getInheritedRequirements(sourceTypeMap["type"]!,descSource!);
-    //final yamlList = loadYaml(some_der_req as String) as YamlList;
-    print(some_der_req);
-    print("mnnedodenonfeoeonfeofneofnnofenfoeon");
+    var some_der_req = await serviceProvider.getInheritedRequirements(sourceTypeMap["type"]!, descSource!);
 
-    for(var lreq in some_der_req)
-    {
-      print(lreq);
-      print("KKKKKKKKKKKKKKKKKKKKKK");
+    for (var lreq in some_der_req) {
       var sourceReq2 = lreq["requirements"];
-
-      for(var i_req in sourceReq2)
-      {
-
+      for (var i_req in sourceReq2) {
         var inreqsource2 = i_req.values.first;
-        print(destinationTypeMap["type"]);
+        String? capacity_fatality3 = await serviceProvider.GetCapabilitiesByType(destinationTypeMap["type"]!);
 
-        String? capacity_fatality3= await serviceProvider
-            .GetCapabilitiesByType(destinationTypeMap["type"]!);
-        //print(capacity_fatality3!+"cccccccc");
-        if ((inreqsource2["node"] != null && inreqsource2["node"]=="katena.nodes.library")  || (capacity_fatality3 == inreqsource2["capability"] && inreqsource2["node"] == null)  || (capacity_fatality3 == inreqsource2["capability"] ) || (inreqsource2["node"]==destinationTypeMap["type"] && capacity_fatality3==null)) {
-          // graph.addEdge(sourceNode, destinationNode);
-          print(inreqsource2);
-          String requirementName = serviceProvider.parseReqName(
-              i_req.toString());
+        bool isValidInheritedRequirement = (inreqsource2["node"] != null && inreqsource2["node"] == "katena.nodes.library") ||
+            (capacity_fatality3 == inreqsource2["capability"] && inreqsource2["node"] == null) ||
+            (capacity_fatality3 == inreqsource2["capability"]) ||
+            (inreqsource2["node"] == destinationTypeMap["type"] && capacity_fatality3 == null);
 
-          bool isRequirementNameDuplicate = typeMap3in.containsKey(
-              requirementName);
-          bool isDestinationTypeDuplicate = typeMap3in.values.any((value) {
-            return value.contains(destinationTypeMap["name"]);
-          });
-          bool isRequirementNameDuplicate2 = typeMap2in.containsKey(
-              requirementName);
-          bool isDestinationTypeDuplicate2 = typeMap2in.values.any((value) {
-            return value.contains(destinationTypeMap["name"]);
-          });
-          //refactor for the specific case of library node
+        if (isValidInheritedRequirement) {
+          String requirementName = serviceProvider.parseReqName(i_req.toString());
+          bool isRequirementNameDuplicate = typeMap3in.containsKey(requirementName);
+          bool isDestinationTypeDuplicate = typeMap3in.values.any((value) => value.contains(destinationTypeMap["name"]));
+          bool isRequirementNameDuplicate2 = typeMap2in.containsKey(requirementName);
+          bool isDestinationTypeDuplicate2 = typeMap2in.values.any((value) => value.contains(destinationTypeMap["name"]));
+
           if (inreqsource2["node"] != "katena.nodes.library") {
-            if (!isRequirementNameDuplicate &&
-                !isDestinationTypeDuplicate || (!isRequirementNameDuplicate2 &&
-                !isDestinationTypeDuplicate2)) {
-              typeMap3in = serviceProvider.addToMap(
-                  typeMap3in, requirementName, destinationTypeMap["name"],
-                  []);
+            if (!isRequirementNameDuplicate && !isDestinationTypeDuplicate &&
+                !isRequirementNameDuplicate2 && !isDestinationTypeDuplicate2) {
+              typeMap3in = serviceProvider.addToMap(typeMap3in, requirementName, destinationTypeMap["name"], []);
             }
 
-            Map<String, dynamic> concatenatedMap = {
-              ...typeMap3in,
-              ...typeMap2in,
-            };
-            print(concatenatedMap);
-            print("£££££££££££££££££££££££££££££");
-            if(concatenatedMap.isNotEmpty) {
-              yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
-              [concatenatedMap];
+            Map<String, dynamic> concatenatedMap = {...typeMap3in, ...typeMap2in};
+            if (concatenatedMap.isNotEmpty) {
+              yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] = [concatenatedMap];
             }
-
           } else {
-            var descSource2 = await GetDescriptionByTypeforManagement(
-                "katena.nodes.library");
+            var descSource2 = await GetDescriptionByTypeforManagement("katena.nodes.library");
             if (descSource2 != null) {
-              var sourceNodeReqs = descSource2["requirements"];
-              print(sourceNodeReqs);
-              for (var elem in sourceNodeReqs) {
-                var firstReq = elem.values.first;
-                if (firstReq["capability"] != null) {
-                  String? destCap = await GetCapabilitiesByType(
-                      destinationTypeMap["type"]!);
+              var sourceNodeReqs2 = descSource2["requirements"];
+              for (var elem2 in sourceNodeReqs2) {
+                var firstReq2 = elem2.values.first;
+                if (firstReq2["capability"] != null) {
+                  String? destCap2 = await GetCapabilitiesByType(destinationTypeMap["type"]!);
 
-                  if ((firstReq["node"] != null &&
-                      firstReq["node"] == destinationTypeMap["type"]) ||
-                      (destCap == firstReq["capability"] &&
-                          firstReq["node"] == null) ||destCap==firstReq["capability"]) {
-                    String requirementName = serviceProvider.parseReqName(
-                        elem.toString());
+                  bool isValidInheritedRequirement2 = (firstReq2["node"] != null && firstReq2["node"] == destinationTypeMap["type"]) ||
+                      (destCap2 == firstReq2["capability"] && firstReq2["node"] == null) ||
+                      destCap2 == firstReq2["capability"];
 
-                    bool isRequirementNameDuplicate = typeMap2in.containsKey(
-                        requirementName);
-                    bool isDestinationTypeDuplicate = typeMap2in.values.any((
-                        value) {
-                      return value.contains(destinationTypeMap["name"]);
-                    });
-                    print(typeMap2in);
-                    print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&6");
-                    //refactor for the specific case of library node
-                    // if (firstReq["node"] == "katena.nodes.library") {
-                    if (!isRequirementNameDuplicate &&
-                        !isDestinationTypeDuplicate) {
-                      typeMap2in = serviceProvider.addToMap(
-                          typeMap2in, requirementName,
-                          destinationTypeMap["name"],
-                          []);
+                  if (isValidInheritedRequirement2) {
+                    String requirementName2 = serviceProvider.parseReqName(elem2.toString());
+                    bool isRequirementNameDuplicate2 = typeMap2in.containsKey(requirementName2);
+                    bool isDestinationTypeDuplicate2 = typeMap2in.values.any((value) => value.contains(destinationTypeMap["name"]));
+
+                    if (!isRequirementNameDuplicate2 && !isDestinationTypeDuplicate2) {
+                      typeMap2in = serviceProvider.addToMap(typeMap2in, requirementName2, destinationTypeMap["name"], []);
                     }
 
-                    Map<String, dynamic> concatenatedMap = {
-                      ...typeMap3in,
-                      ...typeMap2in,
-                    };
-                    print(concatenatedMap);
-                    print("£££££££££££££££££££££££££££££");
-                    if (concatenatedMap.isNotEmpty) {
-                      yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] =
-                      [concatenatedMap];
+                    Map<String, dynamic> concatenatedMap2 = {...typeMap3in, ...typeMap2in};
+                    if (concatenatedMap2.isNotEmpty) {
+                      yamlMap['topology_template']['node_templates'][sourceTypeMap["name"]]['requirements'] = [concatenatedMap2];
                     }
                   }
                 }
               }
             }
           }
-
-
-        }
-        else {
-          print("the two nodes are not compatible");
+        } else {
+          print("The two nodes are not compatible");
         }
       }
-
-
     }
-
-
-
 
     final yamlString = yamlWriter.write(yamlMap);
     return loadYaml(yamlString) as YamlMap;
   }
+
+
 // Helper function to parse key-value pairs from a string
   String parseReqName(String inputString) {
     String reqName='';
