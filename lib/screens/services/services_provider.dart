@@ -430,6 +430,8 @@ class Provider {
     }
   }
 
+
+
 // Helper function to convert YamlMap to Map<String, dynamic>
   Map<String, dynamic> convertYamlMapToMap(YamlMap yamlMap) {
     return yamlMap.map((key, value) {
@@ -660,13 +662,16 @@ class Provider {
       'topology_template': {
         'node_templates': {}
       },
-      'inputs': {}  // Initialize the inputs section
+      'inputs': {
+        'UserKeyGanache': {
+          'type': 'string',
+          'required': true
+        },
+        'UserWallet': {
+          'type': 'string'
+        }
+      }
     };
-
-    // Add inputs to the global YAML structure
-    inputs.forEach((key, value) {
-      yamlMap['inputs'][key] = value;
-    });
 
     // Check if the graph has nodes and add them to the YAML structure
     if (graph.nodes.isNotEmpty) {
@@ -675,6 +680,9 @@ class Provider {
 
         // Parse the nodeId to get the node name and type
         Map<String, String> typeMap = serviceProvider.parseKeyValuePairs(nodeId);
+        print(typeMap);
+        print("//////////////////////////////");
+        print(nodeProperties);
         String nodeName = typeMap["name"] ?? '';
         String nodeType = typeMap["type"] ?? '';
 
@@ -682,9 +690,17 @@ class Provider {
         Map<String, dynamic> nodeSpecificProperties = {};
 
         // Find and assign node-specific properties from the nodeProperties map
-        for (var propertyEntry in nodeProperties.entries) {
-          if (propertyEntry.value['name'] == nodeName) {
-            nodeSpecificProperties = propertyEntry.value;
+        print("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+        // Iterate through the map keys and print each key
+        for (String key in nodeProperties.keys) {
+          print('Key: $key');
+        }
+        print("name:" + nodeName + "\n" + "type:" + nodeType);
+        print(nodeProperties["name:" + nodeName + "\n" + "type:" + nodeType]);
+        print("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+        for (String key in nodeProperties.keys) {
+          if (key == "name:" + nodeName + "\n" + "type:" + nodeType) {
+            nodeSpecificProperties = nodeProperties["name:" + nodeName + "\n" + "type:" + nodeType];
             break;
           }
         }
@@ -702,7 +718,7 @@ class Provider {
 
       // Debugging output to check the complete YAML map
       print("Generated YAML Map:\n$yamlMap");
-
+      print(yamlMap);
       return yamlMap;
     } else {
       print("Nothing to export, empty graph");
@@ -987,8 +1003,6 @@ class Provider {
     final yamlString = yamlWriter.write(yamlMap);
     return loadYaml(yamlString) as YamlMap;
   }
-
-
 // Helper function to parse key-value pairs from a string
   String parseReqName(String inputString) {
     String reqName='';
@@ -1031,7 +1045,12 @@ class Provider {
   Map<String, dynamic> yamlMapToMap(YamlMap yamlMap) {
     final map = <String, dynamic>{};
     yamlMap.forEach((key, value) {
-      map[key.toString()] = _convertYamlValue(value);
+      // Special handling for requirements if detected
+      if (key == 'requirements' && value is YamlList) {
+        map[key.toString()] = _convertRequirements(value); // Process requirements as a list of maps
+      } else {
+        map[key.toString()] = _convertYamlValue(value);
+      }
     });
     return map;
   }
@@ -1047,36 +1066,49 @@ class Provider {
     }
   }
 
-  Future<void> saveFile(Graph graph,Map<String, dynamic> nodeProperties,Map<String, dynamic> inputs) async {
+// Special handling function for requirements
+  List<Map> _convertRequirements(YamlList yamlList) {
+    // Each requirement in the list is a YamlMap, so convert them to Map<String, dynamic>
+    return yamlList.map((requirement) {
+      if (requirement is YamlMap) {
+        // Convert the YamlMap to a Dart map for each requirement
+        return yamlMapToMap(requirement);
+      }
+      return {}; // Return an empty map if the requirement is not valid
+    }).toList();
+  }
+
+  Future<void> saveFile(Graph graph, Map<String, dynamic> nodeProperties, Map<String, dynamic> inputs) async {
     Provider serviceProvider = Provider.instance;
 
     if (graph.hasNodes()) {
       // Initialize a ZipEncoder to collect the files
       final archive = Archive();
 
+      // Loop through each edge in the graph to generate YAML for each edge
       for (Edge edge in graph.edges) {
-        // Retrieve the parsed YAML data for each edge
-        YamlMap? graphToYamlData = await serviceProvider.graphToYamlParserEdges(edge,nodeProperties,inputs);
+        // Retrieve the parsed YAML data for the edge
+        YamlMap? graphToYamlData = await graphToYamlParserEdges(edge, nodeProperties, inputs);
+        print(yamlMap);
 
         if (graphToYamlData != null) {
           // Convert the YamlMap to a regular Map<String, dynamic>
           Map<String, dynamic> yamlData = yamlMapToMap(graphToYamlData);
-
+          print("okokokokokokkokookoo");
+          print(yamlData);
           // Format the YAML data to a string for saving
           String yamlContent = formatYaml(yamlData);
 
           // Log the content to ensure it's not empty
-          print('Generated YAML Content:\n$yamlContent');
+          print('Generated YAML Content for edge ${edge.key}:\n$yamlContent');
 
           if (yamlContent.isNotEmpty) {
             // Convert the YAML content to bytes
             final bytes = utf8.encode(yamlContent);
 
-            // Create the YAML file for the edge
-            final fileName = 'topology_${serviceProvider.getCurrentTimestampString()}.yaml';
+            // Create a unique YAML file for each edge
+            final fileName = 'topology_${serviceProvider.getCurrentTimestampString()}_${edge.key}.yaml';
             archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
-          } else {
-            print('Empty YAML content generated, skipping this edge.');
           }
         } else {
           print('No YAML data found for edge: ${edge.key}');
@@ -1084,7 +1116,7 @@ class Provider {
       }
 
       if (archive.isNotEmpty) {
-        // Encode the archive to zip
+        // Encode the archive to a single zip file
         final zipData = ZipEncoder().encode(archive);
 
         if (zipData != null) {
@@ -1097,7 +1129,7 @@ class Provider {
             ..setAttribute('download', 'topologies.zip')
             ..click();
 
-          // Revoke the object URL
+          // Revoke the object URL to free memory
           html.Url.revokeObjectUrl(url);
         } else {
           print('Error encoding ZIP data.');
@@ -1109,36 +1141,34 @@ class Provider {
       print('The graph has no nodes.');
     }
   }
-
-// This function converts the Map<String, dynamic> to the desired YAML format
-  String formatYaml(Map<String, dynamic> graphToYamlData) {
+  String formatYaml(Map<String, dynamic> yamlData) {
     final buffer = StringBuffer();
 
-    // Add the 'tosca_definitions_version' and 'imports'
-    buffer.write('tosca_definitions_version: tosca_simple_yaml_1_3\n\n');
+    // Add the 'tosca_definitions_version'
+    buffer.write('tosca_definitions_version: ${yamlData['tosca_definitions_version']}\n\n');
 
-    // Handle imports
+    // Add the 'imports'
     buffer.write('imports:\n');
-    List<dynamic> imports = graphToYamlData['imports'];
-    if (imports != null) {
+    List<dynamic> imports = yamlData['imports'];
+    if (imports != null && imports.isNotEmpty) {
       for (var importFile in imports) {
         buffer.write('- $importFile\n');
       }
-    } else {
-      print('No imports found.');
     }
+    buffer.write('\n');
 
-    // Handle the 'topology_template' and 'node_templates'
-    buffer.write('\ntopology_template:\n');
+    // Add the 'topology_template'
+    buffer.write('topology_template:\n');
+
+    // Add 'node_templates'
+    Map<String, dynamic> nodeTemplates = yamlData['topology_template']['node_templates'];
     buffer.write('  node_templates:\n');
-
-    Map<String, dynamic> nodeTemplates = graphToYamlData['topology_template']['node_templates'];
     if (nodeTemplates != null) {
       nodeTemplates.forEach((nodeName, nodeData) {
         buffer.write('    $nodeName:\n');
         buffer.write('      type: ${nodeData['type']}\n');
 
-        // Handle requirements if they exist
+        // Handle requirements only if they exist and are not empty
         List<dynamic> requirements = nodeData['requirements'];
         if (requirements != null && requirements.isNotEmpty) {
           buffer.write('      requirements:\n');
@@ -1147,27 +1177,186 @@ class Provider {
               buffer.write('      - $key: $value\n');
             });
           }
-        } else {
-          buffer.write('      requirements: \n');
         }
 
-        // Handle properties if they exist
+        // Handle properties only if they exist and are not empty
         Map<String, dynamic> properties = nodeData['properties'];
         if (properties != null && properties.isNotEmpty) {
           buffer.write('      properties:\n');
           properties.forEach((key, value) {
-            buffer.write('        $key: $value\n');
+            if (value is Map) {
+              buffer.write('        $key:\n');
+              value.forEach((innerKey, innerValue) {
+                buffer.write('          $innerKey: $innerValue\n');
+              });
+            } else {
+              buffer.write('        $key: $value\n');
+            }
           });
-        } else {
-          buffer.write('      properties: \n');
         }
       });
-    } else {
-      print('No node templates found.');
+    }
+
+    // Add 'inputs'
+    Map<String, dynamic> inputs = yamlData['inputs'];
+    buffer.write('  inputs:\n');
+    if (inputs != null && inputs.isNotEmpty) {
+      inputs.forEach((inputName, inputData) {
+        buffer.write('    $inputName:\n');
+        buffer.write('      type: ${inputData['type']}\n');
+        buffer.write('      required: ${inputData['required'] ?? false}\n'); // Default to false if null
+      });
     }
 
     return buffer.toString();
   }
+
+
+// Helper method to export the formatted YAML
+  Future<void> exportYamlToFile(String yamlContent) async {
+    // Convert the YAML content to bytes
+    final bytes = utf8.encode(yamlContent);
+
+    // Create a Blob from the bytes
+    final blob = html.Blob([bytes]);
+
+    // Create a URL for the Blob and an anchor element to download it
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', 'merged_topology.yaml')
+      ..click();
+
+    // Revoke the object URL after the download
+    html.Url.revokeObjectUrl(url);
+  }
+
+// Helper method to merge duplicate requirements
+  Map<String, String> _mergeRequirements(List<dynamic> requirements) {
+    Map<String, String> mergedRequirements = {};
+
+    for (var requirement in requirements) {
+      requirement.forEach((key, value) {
+        // Merge duplicates by overwriting the previous value if the key exists
+        mergedRequirements[key] = value;
+      });
+    }
+
+    return mergedRequirements;
+  }
+
+  String formatYamlMap2(Map<String, dynamic> yamlData) {
+    final buffer = StringBuffer();
+
+    // Add the 'tosca_definitions_version'
+    var toscaVersion = yamlData['tosca_definitions_version'];
+    if (toscaVersion != null) {
+      buffer.write('tosca_definitions_version: $toscaVersion\n\n');
+    } else {
+      buffer.write('tosca_definitions_version: tosca_simple_yaml_1_3\n\n'); // Fallback if missing
+    }
+
+    // Add the 'imports'
+    buffer.write('imports:\n');
+    List<dynamic>? imports = yamlData['imports'];
+    if (imports != null && imports.isNotEmpty) {
+      for (var importFile in imports) {
+        buffer.write('- $importFile\n');
+      }
+    }
+    buffer.write('\n');
+
+    // Add the 'topology_template'
+    buffer.write('topology_template:\n');
+
+    // Add 'node_templates'
+    Map<String, dynamic>? nodeTemplates = yamlData['topology_template']?['node_templates'] as Map<String, dynamic>?;
+    buffer.write('  node_templates:\n');
+    if (nodeTemplates != null && nodeTemplates.isNotEmpty) {
+      nodeTemplates.forEach((nodeName, nodeData) {
+        buffer.write('    $nodeName:\n');
+
+        var nodeType = nodeData['type'];
+        if (nodeType != null) {
+          buffer.write('      type: $nodeType\n');
+        }
+
+        // Handle requirements and merge duplicates
+        List<dynamic>? requirements = nodeData['requirements'];
+        if (requirements != null && requirements.isNotEmpty) {
+          Map<String, String> mergedRequirements = _mergeRequirements(requirements);
+          if (mergedRequirements.isNotEmpty) {
+            buffer.write('      requirements:\n');
+            mergedRequirements.forEach((key, value) {
+              buffer.write('        - $key: $value\n');
+            });
+          }
+        }
+
+        // Handle properties if they exist and are not empty
+        Map<String, dynamic>? properties = nodeData['properties'] as Map<String, dynamic>?;
+        if (properties != null && properties.isNotEmpty) {
+          buffer.write('      properties:\n');
+          properties.forEach((key, value) {
+            if (value is Map) {
+              // TOSCA-compliant properties format
+              buffer.write('        $key:\n');
+              if (value.containsKey('description')) {
+                buffer.write('          description: ${value['description']}\n');
+              }
+              if (value.containsKey('type')) {
+                buffer.write('          type: ${value['type']}\n');
+              }
+              if (value.containsKey('required')) {
+                buffer.write('          required: ${value['required']}\n');
+              }
+            }
+          });
+        }
+      });
+    } else {
+      buffer.write('  node_templates: {}\n');
+    }
+
+    // Add 'inputs'
+    Map<String, dynamic>? inputs = yamlData['topology_template']?['inputs'] as Map<String, dynamic>?;
+    buffer.write('\n  inputs:\n');
+    if (inputs != null && inputs.isNotEmpty) {
+      inputs.forEach((inputName, inputData) {
+        buffer.write('    $inputName:\n');
+        buffer.write('      type: ${inputData['type'] ?? 'string'}\n');
+        buffer.write('      required: ${inputData['required'] ?? 'false'}\n');
+      });
+    } else {
+      buffer.write('  inputs: {}\n');
+    }
+
+    return buffer.toString();
+  }
+
+
+
+// Main function to import and export YAML
+  Future<void> importAndExportYaml() async {
+    // Step 1: Import and merge the YAML files
+    Map<String, dynamic>? mergedYaml = await ImportYaml();
+
+    if (mergedYaml != null) {
+      // Step 2: Format the merged YAML into a string
+      String formattedYaml = formatYamlMap2(mergedYaml);
+
+      // Step 3: Export the formatted YAML as a single file
+      await exportYamlToFile(formattedYaml);
+    } else {
+      print('No merged YAML data available for export.');
+    }
+  }
+
+
+
+
+
+// Helper function to merge duplicate requirements
+
 
 
   Future<YamlMap?> GetDescriptionByTypeforManagement(String? type) async {
@@ -2037,8 +2226,175 @@ class Provider {
 
     return null;
   }
+  Future<bool> checkPropertiesCompatibility(String nodeType, Map<String, dynamic> providedProperties, BuildContext context) async {
+    try {
+      // Load the AssetManifest.json which contains a list of all assets
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+      YamlMap? yamlMapToBeFound;
+      YamlMap? nodeTypeToBeFound;
+      List<String> warnings = []; // Store warnings to show in dialog
 
+      // Filter the list to get only the YAML files in the katena-main/nodes directory
+      final yamlFiles = manifestMap.keys
+          .where((String key) =>
+      key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
+          .toList();
 
+      // Iterate over each YAML file to find the node type
+      for (var file in yamlFiles) {
+        // Read the YAML file
+        final yamlContent = await rootBundle.loadString(file);
+        final yamlMap = loadYaml(yamlContent) as YamlMap;
+
+        var nodeTypes = yamlMap["node_types"];
+        if (nodeTypes != null) {
+          for (var entry in nodeTypes.entries) {
+            if (entry.key == nodeType) {
+              // NodeType found, load the full YAML for further processing
+              yamlMapToBeFound = loadYaml(yamlContent) as YamlMap;
+              nodeTypeToBeFound = yamlMapToBeFound["node_types"];
+              break;
+            }
+          }
+        }
+        if (yamlMapToBeFound != null) break; // Exit if we found the node type
+      }
+
+      // If node type not found, return false
+      if (nodeTypeToBeFound == null) {
+        print("NodeType $nodeType not found in the directory.");
+        return false;
+      }
+
+      // Now get the properties, including inherited ones
+      var inheritedProperties = await _getInheritedProperties(nodeType, nodeTypeToBeFound, yamlFiles);
+
+      // Now check compatibility with provided properties
+      bool isCompatible = _checkCompatibility(YamlMap.wrap(inheritedProperties), providedProperties, warnings);
+
+      if (!isCompatible) {
+        // If there are warnings, show a dialog to the user
+        if (warnings.isNotEmpty) {
+          await _showWarningsDialog(context, warnings);
+        }
+      } else {
+        print('The provided properties are compatible with the node type: $nodeType');
+      }
+
+      return isCompatible;
+    } catch (e) {
+      print('Error loading or parsing YAML: $e');
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> _getInheritedProperties(String nodeType, YamlMap nodeTypeToBeFound, List<String> yamlFiles) async {
+    // Get current node's properties
+    Map<String, dynamic> currentNodeMap = Map<String, dynamic>.from(nodeTypeToBeFound[nodeType] ?? {});
+    Map<String, dynamic> currentProperties = Map<String, dynamic>.from(currentNodeMap['properties'] ?? {});
+
+    // Check if this node type derives from another node type
+    if (currentNodeMap.containsKey('derived_from')) {
+      String parentNodeType = currentNodeMap['derived_from'];
+
+      // Find the parent node in the YAML files
+      for (var file in yamlFiles) {
+        final yamlContent = await rootBundle.loadString(file);
+        final yamlMap = loadYaml(yamlContent) as YamlMap;
+        var nodeTypes = yamlMap["node_types"];
+        if (nodeTypes != null && nodeTypes.containsKey(parentNodeType)) {
+          // Recursively get the properties of the parent node
+          Map<String, dynamic> parentProperties = await _getInheritedProperties(parentNodeType, nodeTypes, yamlFiles);
+
+          // Merge parent properties with current node properties
+          currentProperties = {...parentProperties, ...currentProperties}; // Child node overrides parent
+          break;
+        }
+      }
+    }
+
+    return currentProperties;
+  }
+
+  bool _checkCompatibility(YamlMap definedProperties, Map<String, dynamic> providedProperties, List<String> warnings) {
+    // Iterate through the defined properties from the YAML
+    for (var entry in definedProperties.entries) {
+      String propertyName = entry.key;
+      var propertyDefinition = entry.value;
+
+      // Check if the 'required' field exists and is set to true in the YAML
+      bool isRequired = propertyDefinition['required'] == true;
+
+      // If the property is required but missing in the provided properties, issue a warning
+      if (isRequired && !providedProperties.containsKey(propertyName)) {
+        warnings.add('Missing required property: $propertyName');
+      }
+
+      // If the property is not required and not provided, no warning is needed
+      if (!isRequired && !providedProperties.containsKey(propertyName)) {
+        // Property is not required and not provided, so we skip further checks
+        continue;
+      }
+
+      // Additional compatibility checks can be added here (e.g., type matching)
+      if (providedProperties.containsKey(propertyName)) {
+        var providedValue = providedProperties[propertyName];
+        print(providedValue);
+        // Assuming the type is specified in the YAML property definition
+        var expectedType = propertyDefinition['type'];
+        print(expectedType);
+        // Check if the provided value matches the expected base type (e.g., string, int)
+        if (expectedType != null && !_isBaseTypeMatching(expectedType, providedValue["type"])) {
+          warnings.add('Property $propertyName is of incorrect type. Expected base type $expectedType, but got ${providedValue.runtimeType}.');
+        }
+      }
+    }
+
+    // Allow custom properties by not returning false, just issuing warnings
+    return warnings.isEmpty;
+  }
+
+  bool _isBaseTypeMatching(String expectedType, dynamic providedValue) {
+    // Check if the provided value matches the expected base type (ignoring specific custom types)
+    switch (expectedType.toLowerCase()) {
+      case 'string':
+        return providedValue is String;
+      case 'int':
+        return providedValue is int;
+      case 'float':
+        return providedValue is double;
+    // Add other base types as necessary (e.g., boolean, list, etc.)
+      default:
+        return true; // Assume true if no strict base type is enforced
+    }
+  }
+
+// Show a dialog with the warnings
+  Future<void> _showWarningsDialog(BuildContext context, List<String> warnings) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must acknowledge the dialog
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Warning: Property Compatibility'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: warnings.map((warning) => Text(warning)).toList(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
 
 }
