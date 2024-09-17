@@ -1,5 +1,6 @@
 FROM --platform=linux/amd64 ubuntu:20.04
 
+
 WORKDIR /
 ADD . /
 
@@ -17,3 +18,4 @@ RUN ln -s /node-v14.15.4-linux-x64/bin/npx /usr/local/bin/npx
 RUN npm install -g ganache-cli
 RUN npm config set user 0
 RUN pip install -r ./requirements.txt
+RUN apt-get update && apt-get install -y lsof

@@ -109,7 +109,6 @@ class _DeployState extends State<DeployBody> {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        'container_id': '12cfd61cb30f',
         'script_command': '/bin/sh -c ./run-deploy.sh',
         'content_yaml': contentFile,
       }),
@@ -134,9 +133,6 @@ class _DeployState extends State<DeployBody> {
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(<String, String>{
-        'container_id': '12cfd61cb30f',
-      }),
     );
 
     if (response.statusCode == 200) {
@@ -158,6 +154,7 @@ class _DeployState extends State<DeployBody> {
       _dynamicText = result;
     });
   }
+
 
 
 
