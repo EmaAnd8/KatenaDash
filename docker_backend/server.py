@@ -49,33 +49,12 @@ async def start_websocket_server():
 
 
 
-# Funzione di monitoraggio del log
-def monitor_log(exec_id3, stop_event, timeout, container):
-    global start_time
-    start_time = time.time()
-
-    while not stop_event.is_set():
-        print(f"{time.time() - start_time }")
-        if time.time() - start_time > timeout:
-            print("No new data, stopping monitoring due to inactivity.")
-            try:
-                exec_info = client.api.exec_inspect(exec_id3)
-                if exec_info['Running']:
-                    exec_id2 = client.api.exec_create(container, cmd="pkill -f 'tail -f'", stdout=True, stderr=True)
-                    client.api.exec_start(exec_id2, stream=True)
-            except Exception as e:
-                print(f"Error killing exec: {e}")
-            break
-        time.sleep(1)  # Pausa per evitare l'uso eccessivo della CPU
-
-
 
 @app.route('/run-script', methods=['POST'])
 def run_script():
     script_command = request.json.get("script_command")
     contentFile = request.json.get("content_yaml")
-    global start_time
-    # assegno il container id creato
+
     container_id = client.containers.get(container_name).id
     if not container_id or not script_command:
         return jsonify({"error": "Resource ID or script command was not provided"}), 400
@@ -92,13 +71,10 @@ def run_script():
         command3 = f"printf \"%s\" \"{contentFile_escaped}\" > {file_path5}"
 
 
-#print(command)
 
         exec_id7 = client.api.exec_create(container_id, cmd=['/bin/sh', '-c', command3], stdout=True, stderr=True)
         client.api.exec_start(exec_id7)
 
-
-        time.sleep(1)
 
 
         exec_id = client.api.exec_create(container_id, cmd=script_command, stdout=True, stderr=True)
@@ -110,18 +86,10 @@ def run_script():
         exec_result3 = client.api.exec_start(exec_id3, stream=True)
 
 
-
-        stop_event = threading.Event()
-        timeout = 40  # Timeout in secondi
-        monitor_thread = threading.Thread(target=monitor_log, args=(exec_id3, stop_event, timeout, container_id))
-        monitor_thread.start()
-
         deploy_data = {
-            #'Deploying': [],
             'Deployment_of': []
         }
 
-        #deploying_pattern = r'\bDeploying\s+(\w+)'  # Cattura la parola dopo "Deploying"
         deployment_of_pattern = r'\bDeployment of\s+(\w+)'  # Cattura la parola dopo "Deployment of"
 
 
@@ -129,13 +97,11 @@ def run_script():
             for line in exec_result3:
                 decoded_line = line.decode('utf-8').strip()
 
-                #deploying_matches = re.findall(deploying_pattern, decoded_line)
                 print(f"{decoded_line}")
+
 
                 deployment_of_matches = re.findall(deployment_of_pattern, decoded_line)
 
-                # Aggiungi le parole trovate al dizionario
-                #deploy_data['Deploying'].extend(deploying_matches)
 
                 if deployment_of_matches:
                     # Memorizza la dimensione della lista prima di aggiungere
@@ -148,16 +114,15 @@ def run_script():
                     if len(deploy_data['Deployment_of']) > prev_len:
                         asyncio.run(broadcast(str(deploy_data['Deployment_of'])))
                         print("Deployment of:", deploy_data['Deployment_of'])
-                start_time = time.time()  # Assicurati che il timer venga aggiornato correttamente
+
+                if "deploy finished" in decoded_line:
+                    exec_id2 = client.api.exec_create(container_id, cmd="pkill -f 'tail -f")
+                    client.api.exec_start(exec_id2)
+                    break
+
 
         except Exception as e:
             print(f"Error during file monitoring: {e}")
-
-        #print("Deploying:", deploy_data['Deploying'])
-        #print("Deployment of:", deploy_data['Deployment_of'])
-        stop_event.set()
-        monitor_thread.join()  # Aspetta che il thread termini
-
 
         output = ''
         for line in exec_result:  # Raccogliamo l'output dallo stream
