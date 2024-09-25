@@ -13,11 +13,28 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
 import 'dart:io';
 
-
-
-
 Provider ServiceProvider = Provider.instance;
 Widget simpleTopology = Container();
+
+void _showAlertDialog(BuildContext context, String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Files missing'),
+        content: Text("No files were uploaded corresponding to the following ABIs: \n" + message),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop(); // Chiude il dialogo
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
 
 void _showTemporaryPopup(BuildContext context) {
   // Mostra il pop-up come SnackBar
@@ -45,10 +62,8 @@ class _DeployState extends State<DeployBody> {
     'yaml': [],
     'json': [],
   };
-
   // contatore dei nodi
   int nodeCount = 0;
-
 
   WebSocketChannel? _channel;
   List<String> _items = [];
@@ -109,8 +124,63 @@ class _DeployState extends State<DeployBody> {
     return count;
   }
 
+  List<String> extractAbis(dynamic data) {
+    List<String> abiList = [];
+
+    // Controlla se i dati sono una mappa
+    if (data is Map) {
+      data.forEach((key, value) {
+        if (key == 'abi' && value is String) {
+          abiList.add(value);
+        } else {
+          abiList.addAll(extractAbis(value)); // Ricorsione per esplorare ulteriormente
+        }
+      });
+    } else if (data is List) {
+      for (var item in data) {
+        abiList.addAll(extractAbis(item)); // Ricorsione per ogni elemento della lista
+      }
+    }
+
+    return abiList;
+  }
+
+  bool _checkABI(){
+
+    var contents = String.fromCharCodes(filesMap['yaml']!.first.bytes!.toList());
+
+    var yamlData = loadYaml(contents);
+
+    List<String> abiList = extractAbis(yamlData);
+
+    List<String> listERROR = [];
+
+    // Controlla ogni elemento in abiList
+    for (var abi in abiList) {
+      // Controlla se il file corrispondente esiste in filesMap['json']
+      bool exists = filesMap['json']!.any((file) => file.name.replaceAll('.json', '') == abi);
+
+      // Se non esiste, aggiungilo a listERROR
+      if (!exists) {
+        listERROR.add(abi);
+      }
+    }
+
+    if (listERROR.isNotEmpty){
+      String finalErrorString = listERROR.join(', ');
+
+      _showAlertDialog(context, finalErrorString);
+
+      return false;
+    }
+
+    return true;
+
+
+  }
 
   Future<void> _pickFile() async {
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
@@ -118,7 +188,8 @@ class _DeployState extends State<DeployBody> {
     );
 
     if (result != null) {
-
+      filesMap['yaml']!.clear();
+      filesMap['json']!.clear();
       for (var file in result.files) {
         if (file.extension == 'yaml') {
           filesMap['yaml']!.add(file);
@@ -172,12 +243,19 @@ class _DeployState extends State<DeployBody> {
 
   }
 
-
   Future<void> _sendRequest() async {
+
+    if(!_checkABI()){
+      return;
+    }
+
     progressBool=true;
     final url = Uri.parse('http://localhost:5001/run-script');
+
     _updateText("Deploying...");
+
     _connectToWebSocket();
+
     final response = await http.post(
       url,
       headers: <String, String>{

@@ -97,9 +97,6 @@ def run_script():
             for line in exec_result3:
                 decoded_line = line.decode('utf-8').strip()
 
-                print(f"{decoded_line}")
-
-
                 deployment_of_matches = re.findall(deployment_of_pattern, decoded_line)
 
 
