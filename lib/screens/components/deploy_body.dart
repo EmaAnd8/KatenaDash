@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding and decoding
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
+import 'dart:io';
 
 
 
@@ -18,8 +19,21 @@ import 'package:web_socket_channel/io.dart';
 Provider ServiceProvider = Provider.instance;
 Widget simpleTopology = Container();
 
+void _showTemporaryPopup(BuildContext context) {
+  // Mostra il pop-up come SnackBar
+  const snackBar = SnackBar(
+    content: Text('You did not enter the topology file'),
+    duration: Duration(seconds: 3), // Imposta la durata a 1 secondo
+  );
+
+  // Mostra il SnackBar
+  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+}
+
+
 class DeployBody extends StatefulWidget {
   const DeployBody({super.key});
+
 
   @override
   _DeployState createState() => _DeployState();
@@ -28,6 +42,11 @@ class DeployBody extends StatefulWidget {
 class _DeployState extends State<DeployBody> {
   String? selectedOption; // Allow null for no selection
   String _dynamicText = "Deploy a new topology..."; // Variabile per il testo dinamico
+  Map<String, List<PlatformFile>> filesMap = {
+    'yaml': [],
+    'json': [],
+  };
+  int nodeCount = 0;
 
   WebSocketChannel? _channel;
   List<String> _items = [];
@@ -64,40 +83,92 @@ class _DeployState extends State<DeployBody> {
     super.dispose();
   }
 
-
   String? _fileName;
   String contentFile = "A";
 
 
-  void _controllPickFile() async {
-    contentFile = await _pickFile();
-    print(contentFile);
+
+  int _countTopologyTemplateNodes(dynamic topologyTemplate) {
+    // Funzione ricorsiva per contare i nodi
+    int count = 0;
+
+    if (topologyTemplate is YamlMap) {
+      // Controlla se c'è la chiave node_templates
+      if (topologyTemplate['node_templates'] is YamlMap) {
+        count += (topologyTemplate['node_templates'].length as int); // Conta i nodi in node_templates
+      }
+    }
+
+    return count;
   }
 
-  Future<String> _pickFile() async {
+
+  Future<void> _pickFile() async {
+
+    filesMap['yaml']!.clear();
+    filesMap['json']!.clear();
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
       type: FileType.custom,
-      allowedExtensions: ['yaml'],
+      allowedExtensions: ['yaml', 'json'],
     );
 
     if (result != null) {
-      try {
+
+      for (var file in result.files) {
+        if (file.extension == 'yaml') {
+          filesMap['yaml']!.add(file);
+        } else if (file.extension == 'json') {
+          filesMap['json']!.add(file);
+        }
+      }
+
+      if (filesMap['yaml']!.isEmpty) {
+        _showTemporaryPopup(context);
+        filesMap['json']!.clear();
         setState(() {
-          _fileName = result.files.single.name;
+          _fileName = null;
         });
-        PlatformFile file = result.files.single;
-        final yamlString = utf8.decode(file.bytes!);
-        return yamlString;
-      } catch (e) {
-        print(e);
+      } else {
+        print('File YAML selezionato: ${filesMap['yaml']!.first.name}');
+
+        var contents = String.fromCharCodes(filesMap['yaml']!.first.bytes!.toList());
+
+        var yamlData = loadYaml(contents);
+
+        // Contare i nodi nella sezione topology_template
+        if (yamlData['topology_template'] != null) {
+          nodeCount = _countTopologyTemplateNodes(yamlData['topology_template']);
+        }
+
+        print(nodeCount);
+
+        if(filesMap['json']!.isEmpty){
+        setState(() {
+          _fileName =  filesMap['yaml']!.first.name;
+        });
+         } else {
+          setState(() {
+            _fileName =  filesMap['yaml']!.first.name + " and " + filesMap['json']!.length.toString() + ' file json';
+          });
+        }
+      }
+
+      if (filesMap['json']!.isNotEmpty) {
+        print('File JSON selezionati:');
+        for (var jsonFile in filesMap['json']!) {
+          print(jsonFile.name);
+        }
       }
     } else {
-      //do nothing
-      print("no file selected");
+      // L'utente ha annullato la selezione dei file
+      print("Nessun file selezionato.");
     }
 
-    return "a";
+
   }
+
 
   Future<void> _sendRequest() async {
     final url = Uri.parse('http://localhost:5001/run-script');
@@ -141,6 +212,8 @@ class _DeployState extends State<DeployBody> {
           .showSnackBar(SnackBar(content: Text('Output: $output')));
       _updateText("Deploy a new topology...");
       _items.clear();
+      filesMap['yaml']!.clear();
+      filesMap['json']!.clear();
     } else {
       final String error = response.body;
       ScaffoldMessenger.of(context)
@@ -274,8 +347,8 @@ class _DeployState extends State<DeployBody> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
                           ElevatedButton(
-                            onPressed: _controllPickFile,
-                            child: Text('Pick File...'),
+                            onPressed: _pickFile,
+                            child: const Text('Pick File...'),
                           ),
                           SizedBox(width: 20),
                           Expanded(
