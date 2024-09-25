@@ -26,7 +26,7 @@ docker run -d --name container-name -p 8000:8000 BlockVerse
 Inside the terminal
 
 
-docker exec flutter-app-container  bash
+docker exec -it flutter-app-container  bash
 
 python3 -m http.server 8000
 
