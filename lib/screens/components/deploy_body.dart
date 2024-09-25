@@ -34,7 +34,6 @@ void _showTemporaryPopup(BuildContext context) {
 class DeployBody extends StatefulWidget {
   const DeployBody({super.key});
 
-
   @override
   _DeployState createState() => _DeployState();
 }
@@ -46,10 +45,16 @@ class _DeployState extends State<DeployBody> {
     'yaml': [],
     'json': [],
   };
+
+  // contatore dei nodi
   int nodeCount = 0;
+
 
   WebSocketChannel? _channel;
   List<String> _items = [];
+
+  double _percentageValue = 0.0;
+  bool progressBool = false;
 
   @override
   void initState() {
@@ -66,6 +71,7 @@ class _DeployState extends State<DeployBody> {
         setState(() {
           var items = message.replaceAll(RegExp(r"[\[\]']"), '');
           _items = items.split(',');
+          _percentageValue = (_items.length / nodeCount).toDouble();
         });
       },
       onError: (error) {
@@ -82,6 +88,7 @@ class _DeployState extends State<DeployBody> {
     _channel?.sink.close();
     super.dispose();
   }
+
 
   String? _fileName;
   String contentFile = "A";
@@ -104,10 +111,6 @@ class _DeployState extends State<DeployBody> {
 
 
   Future<void> _pickFile() async {
-
-    filesMap['yaml']!.clear();
-    filesMap['json']!.clear();
-
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
@@ -171,6 +174,7 @@ class _DeployState extends State<DeployBody> {
 
 
   Future<void> _sendRequest() async {
+    progressBool=true;
     final url = Uri.parse('http://localhost:5001/run-script');
     _updateText("Deploying...");
     _connectToWebSocket();
@@ -197,6 +201,8 @@ class _DeployState extends State<DeployBody> {
   }
 
   Future<void> _withdrawRequest() async {
+    _percentageValue=0.0;
+    progressBool=false;
     final url = Uri.parse('http://localhost:5001/withdraw');
 
     final response = await http.post(
@@ -206,14 +212,20 @@ class _DeployState extends State<DeployBody> {
       },
     );
 
+    filesMap['yaml']!.clear();
+    filesMap['json']!.clear();
+
+    setState(() {
+      _fileName = null;
+    });
+
+
     if (response.statusCode == 200) {
       final String output = response.body;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Output: $output')));
       _updateText("Deploy a new topology...");
       _items.clear();
-      filesMap['yaml']!.clear();
-      filesMap['json']!.clear();
     } else {
       final String error = response.body;
       ScaffoldMessenger.of(context)
@@ -229,8 +241,6 @@ class _DeployState extends State<DeployBody> {
   }
 
 
-
-
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -240,6 +250,7 @@ class _DeployState extends State<DeployBody> {
         title: const Text('Deploy Viewer'),
         centerTitle: true,
         backgroundColor: CupertinoColors.white,
+
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -251,7 +262,28 @@ class _DeployState extends State<DeployBody> {
             );
           },
         ),
+
         actions: [
+
+          Stack(
+            alignment: Alignment.center, // Allinea i widget al centro
+            children: <Widget>[
+              if(progressBool)
+                  CircularProgressIndicator(
+                    value: _percentageValue,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                    strokeWidth: 5.0,
+                  ),
+                  if(progressBool)
+                  Text(
+                    (_percentageValue*100).floorToDouble().clamp(0, 100).toString() + '%',
+                    style: TextStyle(fontSize: 12, color: Colors.blueAccent), // Puoi cambiare il colore se necessario
+                  ),
+            ],
+
+          ),
+
+          const SizedBox(width: 10), // Spazio tra i pulsanti
           TextButton(
             onPressed: _sendRequest,
             style: TextButton.styleFrom(

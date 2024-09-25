@@ -257,7 +257,7 @@ def create_and_run_container():
         else:
             print(f"Il container {container_name} non esiste. Creazione e avvio in corso...")
             # Crea e avvia il container
-            container = client.containers.run(image_name, name=container_name, stdin_open=True, tty=True, detach=True)
+            container = client.containers.run(image_name, name=container_name, stdin_open=True, tty=True, detach=True, ports={'8545':8545})
             container.reload()
             if container.status == "running":
                 print(f"Container {container_name} avviato con successo!")
