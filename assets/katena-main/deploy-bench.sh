@@ -11,20 +11,21 @@ do
     cp ./benchmark/$APP.yaml .
     rm -r ./nodes/contracts &> /dev/null
     mkdir ./nodes/contracts &> /dev/null
-    abi_strings=$(grep "abi:" ./benchmark/$APP.yaml | awk '{print $2}' | sed 's/"//g')
-    
+    cp ./nodes/temp_ABI/* ./nodes/contracts
+    #abi_strings=$(grep "abi:" ./benchmark/$APP.yaml | awk '{print $2}' | sed 's/"//g')
+
     # Per ogni nome nella variabile abi_strings
-    for abi in $abi_strings; do
-        # Aggiungi l'estensione .json al nome del file
-        json_file="${abi}.json"
-        
+    #for abi in $abi_strings; do
+    #    # Aggiungi l'estensione .json al nome del file
+    #    json_file="${abi}.json"
+
         # Trova i file che corrispondono al nome nella cartella ./nodes e nelle sue sottocartelle
-        find ./nodes -type f -name "$json_file" | while read -r file; do
+    #    find ./nodes -type f -name "$json_file" | while read -r file; do
             # Copia i file trovati nella directory corrente
-            cp "$file" ./nodes/contracts
-        done
-    done
-    
+    #        cp "$file" ./nodes/contracts
+    #    done
+    #done
+
     opera deploy -r -i input.yml ./$APP.yaml -v > deploy.log
     status=$?
     if [ $status -eq 0 ]
@@ -37,11 +38,14 @@ do
     else
         echo "Deployment of ${APP} failed" >> $results_file
         grep -w "stderr" deploy.log | tail -1 >> $results_file
+        rm ./nodes/temp_ABI/*
         exit 2
     fi
+    echo -e "\ndeploy finished" >> deploy.log
     rm ./$APP.yaml &> /dev/null
     rm -r ./nodes/contracts &> /dev/null
 done;
 
+rm ./nodes/temp_ABI/*
 rm accounts.json
 rm accounts-pretty.json

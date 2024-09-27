@@ -106,8 +106,6 @@ class _DeployState extends State<DeployBody> {
 
 
   String? _fileName;
-  String contentFile = "A";
-
 
 
   int _countTopologyTemplateNodes(dynamic topologyTemplate) {
@@ -198,6 +196,7 @@ class _DeployState extends State<DeployBody> {
         }
       }
 
+
       if (filesMap['yaml']!.isEmpty) {
         _showTemporaryPopup(context);
         filesMap['json']!.clear();
@@ -250,21 +249,40 @@ class _DeployState extends State<DeployBody> {
     }
 
     progressBool=true;
+
     final url = Uri.parse('http://localhost:5001/run-script');
 
     _updateText("Deploying...");
 
     _connectToWebSocket();
 
+    var contentYaml = String.fromCharCodes(filesMap['yaml']!.first.bytes!.toList());
+
+    List<String> jsonContents = filesMap['json']!
+        .map((file) => String.fromCharCodes(file.bytes!))
+        .toList();
+
+    int totalBytes = jsonContents.fold(0, (sum, content) => sum + utf8.encode(content).length);
+
+
+    print("Total size in bytes: $totalBytes");
+
+    print(jsonContents.length);
+
+
+
+    final requestBody = jsonEncode(<String, dynamic>{
+      'content_yaml': contentYaml,
+      'json_files': jsonContents,
+    });
+
+
     final response = await http.post(
       url,
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(<String, String>{
-        'script_command': '/bin/sh -c ./run-deploy.sh',
-        'content_yaml': contentFile,
-      }),
+      body: requestBody,
     );
 
     if (response.statusCode == 200) {

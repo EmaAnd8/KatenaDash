@@ -2,18 +2,19 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import docker
 import logging
-import time
 import threading
 import re
 import websockets
 import asyncio
 from docker.errors import NotFound
-import os
+import json
+import sys
 
 app = Flask(__name__)
 CORS(app)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # Limite a 100 MB
 client = docker.from_env(timeout=120)
-start_time = 0
+SIZE_CHUNK = 100
 
 # Set per tenere traccia dei client connessi
 clients = set()
@@ -24,6 +25,47 @@ client = docker.from_env()
 dockerfile_dir = "../assets/katena-main"
 image_name = "katena_image"
 container_name = "katena_container"
+
+def splitchuck(chunk):
+
+    lines_in_chunk = chunk.split('\n')
+    num_lines = len(lines_in_chunk)
+
+    half_index = num_lines // 2
+
+    first_half = lines_in_chunk[:half_index]
+    second_half = lines_in_chunk[half_index:]
+
+    first_half_chunk = "\n".join(first_half)
+    second_half_chunk = "\n".join(second_half)
+
+    byte_size1 = len(first_half_chunk.encode('utf-8'))
+    byte_size2 = len(second_half_chunk.encode('utf-8'))
+
+    kb_size1 = byte_size1 / 1024
+    kb_size2 = byte_size2 / 1024
+
+    if kb_size1 <= SIZE_CHUNK and kb_size2 <= SIZE_CHUNK:
+        return [first_half_chunk, second_half_chunk]
+
+    chunks = []
+    if kb_size1 > SIZE_CHUNK:
+        if len(first_half) > 1:
+            chunks.extend(splitchuck(first_half_chunk))
+        else:
+            chunks.append(first_half_chunk)
+    else:
+        chunks.append(first_half_chunk)
+
+    if kb_size2 > SIZE_CHUNK:
+        if len(second_half) > 1:
+            chunks.extend(splitchuck(second_half_chunk))
+        else:
+            chunks.append(second_half_chunk)
+    else:
+        chunks.append(second_half_chunk)
+
+    return chunks
 
 async def broadcast(message):
     if clients:  # Invia solo se ci sono client connessi
@@ -47,37 +89,82 @@ async def start_websocket_server():
         await asyncio.Future()  # Mantiene il server in esecuzione
 
 
-
-
-
 @app.route('/run-script', methods=['POST'])
 def run_script():
-    script_command = request.json.get("script_command")
+
     contentFile = request.json.get("content_yaml")
 
+    contentJson = request.json.get("json_files")
+
+    jsonContent = []
+
+    for json_string in contentJson:
+        jsonContent.append(json_string)
+
+
     container_id = client.containers.get(container_name).id
-    if not container_id or not script_command:
-        return jsonify({"error": "Resource ID or script command was not provided"}), 400
 
     try:
+
         # pulire il file di log
-        command5="echo -n > deploy.log"
-        exec_log_clean = client.api.exec_create(container_id, cmd=['/bin/sh', '-c', command5])
-        client.api.exec_start(exec_log_clean)
+        command5 = "echo -n > deploy.log"
+        clean_deploy = client.api.exec_create(container_id, cmd=['/bin/sh', '-c', command5])
+        client.api.exec_start(clean_deploy)
 
-        #print(contentFile)
-        file_path5 = "benchmark/file_to_run.yaml"
+
+        file_path_yaml = "benchmark/file_to_run.yaml"
         contentFile_escaped = contentFile.replace('"', '\\"')
-        command3 = f"printf \"%s\" \"{contentFile_escaped}\" > {file_path5}"
+        upload_command_yaml = f"printf \"%s\" \"{contentFile_escaped}\" > {file_path_yaml}"
 
 
 
-        exec_id7 = client.api.exec_create(container_id, cmd=['/bin/sh', '-c', command3], stdout=True, stderr=True)
-        client.api.exec_start(exec_id7)
+        upload_file_yaml = client.api.exec_create(container_id, cmd=['/bin/sh', '-c', upload_command_yaml], stdout=True, stderr=True)
+        client.api.exec_start(upload_file_yaml)
+
+
+        for jsonFile in jsonContent:
+            data = json.loads(jsonFile)
+
+            contract_name = data.get("contractName")
+
+            upload_command_json1 = f"touch nodes/temp_ABI/{contract_name}.json"
+            upload_file_json1 = client.api.exec_create(container_id, cmd=['/bin/sh', '-c', upload_command_json1], stdout=True, stderr=True)
+            client.api.exec_start(upload_file_json1)
+
+            lines = jsonFile.splitlines()  # Divide la stringa per righe
+
+            chunk_size = 2000
+
+            file_path_json = f"nodes/temp_ABI/{contract_name}.json"
 
 
 
-        exec_id = client.api.exec_create(container_id, cmd=script_command, stdout=True, stderr=True)
+
+            for i in range(0, len(lines), chunk_size):
+                chunk = "\n".join(lines[i:i + chunk_size])  # Unisci di nuovo le righe in una stringa
+                chunk_escaped = chunk.replace("'", "'\\''")
+
+                byte_size = len(chunk_escaped.encode('utf-8'))
+
+                kb_size = byte_size / 1024
+
+                chunks = []
+
+                if kb_size > SIZE_CHUNK:
+                    chunks = splitchuck(chunk_escaped)
+
+                if chunks:
+                    for mini_chunk in chunks:
+                        upload_command_json = f"printf '%s\\n' '{mini_chunk}' >> {file_path_json}"
+                        upload_file_json = client.api.exec_create(container_id, cmd=['/bin/sh', '-c', upload_command_json], stdout=True, stderr=True)
+                        client.api.exec_start(upload_file_json)
+                else:
+                    upload_command_json = f"printf '%s\\n' '{chunk_escaped}' >> {file_path_json}"
+                    upload_file_json = client.api.exec_create(container_id, cmd=['/bin/sh', '-c', upload_command_json], stdout=True, stderr=True)
+                    client.api.exec_start(upload_file_json)
+
+
+        exec_id = client.api.exec_create(container_id, cmd="/bin/sh -c ./run-deploy.sh", stdout=True, stderr=True)
         exec_result = client.api.exec_start(exec_id, stream=True)
 
         # Monitoraggio del file di log
@@ -113,7 +200,8 @@ def run_script():
                         print("Deployment of:", deploy_data['Deployment_of'])
 
                 if "deploy finished" in decoded_line:
-                    exec_id2 = client.api.exec_create(container_id, cmd="pkill -f 'tail -f")
+                    print("MAMMMAAAAAAAAAA")
+                    exec_id2 = client.api.exec_create(container_id, cmd="pkill -f 'tail -f'")
                     client.api.exec_start(exec_id2)
                     break
 
@@ -134,7 +222,13 @@ def run_script():
         for line in exec_result2:  # Raccogliamo l'output dallo stream
             output2 += line.decode('utf-8')  # Decodifica il byte stream in stringa
 
+
         return output2
+        
+
+
+
+        #return "A"
 
     except Exception as e:
         logging.error(f"Error: {str(e)}")
