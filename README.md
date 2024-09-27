@@ -21,14 +21,16 @@ has an underling software which is able to use all the potentialities of Katena
 
 ```
 docker build -t BlockVerse .
-docker run -d --name container-name -p 8000:8000 BlockVerse
+docker run -d --name container-name -p 8080:8080 BlockVerse
 
 Inside the terminal
 
 
-docker exec flutter-app-container  bash
+docker exec -it flutter-app-container  bash
 
-python3 -m http.server 8000
+the execution as you can see in the dockerfile is on:
+
+ python3 -m http.server 8080
 
 ```
 
