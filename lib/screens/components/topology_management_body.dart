@@ -479,17 +479,19 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       rootNode = Node.Id('Root Node');
       graph.addNode(rootNode!);
     });
-  }Future<void> _addProperties() async {
+  }
+  Future<void> _addProperties() async {
     String selectedNodeId = ''; // Store selected node ID
     List<Map<String, dynamic>> properties = []; // Store properties added by the user
     String selectedNodeType = ''; // Store the node type of the selected node
+    Map<String, dynamic> fetchedNodeProperties = {}; // Store fetched node properties dynamically
 
     Map<String, dynamic>? result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (BuildContext context) {
-        String key = '';
+        String selectedKey = ''; // Dropdown selected property key
         String description = '';
-        String type = '';
+        String selectedType = ''; // Dropdown selected type
         bool required = false;
         String defaultValue = '';
         String typeError = '';  // To store and display errors if type is invalid
@@ -512,79 +514,107 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                           child: Text(node.key?.value ?? ''),
                         );
                       }).toList(),
-                      onChanged: (String? newValue) {
+                      onChanged: (String? newValue) async {
                         selectedNodeId = newValue ?? '';
                         List<String> parts = selectedNodeId.split('\n');
                         String type = parts.length > 1 ? parts[1].replaceFirst('type:', '').trim() : '';
                         selectedNodeType = type; // Extract the node type from the node ID or properties
+
+                        // Fetch the properties of the selected node type from the TOSCA YAML
+                        fetchedNodeProperties = await serviceProvider.getNodePropertiesFromToscaYaml(selectedNodeType);
                         print('Selected Node ID: $selectedNodeId');  // Debugging
                         print('Selected Node Type: $selectedNodeType');  // Debugging
+
+                        // Update UI to reflect the change in available properties
+                        setState(() {});
                       },
                     ),
                     Divider(),
-                    TextField(
-                      decoration: InputDecoration(hintText: "Property Key"),
-                      onChanged: (text) {
-                        key = text;
-                      },
-                    ),
-                    TextField(
-                      decoration: InputDecoration(hintText: "Description"),
-                      onChanged: (text) {
-                        description = text;
-                      },
-                    ),
-                    TextField(
-                      decoration: InputDecoration(hintText: "Type (e.g., string, integer)"),
-                      onChanged: (text) {
-                        type = text;
-                        // Validate the entered type
-                        if (!_isValidType(type)) {
+                    if (fetchedNodeProperties.isNotEmpty) ...[
+                      // Dropdown to select predefined property key
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(labelText: 'Property Key'),
+                        items: fetchedNodeProperties.keys.map((key) {
+                          return DropdownMenuItem<String>(
+                            value: key,
+                            child: Text(key),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
                           setState(() {
-                            typeError = 'Invalid type. Allowed types: string, int, float, etc.';
+                            selectedKey = newValue ?? '';
+                            selectedType = fetchedNodeProperties[selectedKey]['type'];
+                            required = fetchedNodeProperties[selectedKey]['required'] ?? false;
                           });
-                        } else {
-                          setState(() {
-                            typeError = '';
-                          });
-                        }
-                      },
-                    ),
-                    if (typeError.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          typeError,
-                          style: TextStyle(color: Colors.red),
-                        ),
+                        },
                       ),
-                    Row(
-                      children: [
-                        Text('Required:'),
-                        Checkbox(
-                          value: required,
-                          onChanged: (bool? value) {
-                            setState(() {
-                              required = value ?? false;
-                            });
-                          },
+                      Divider(),
+                      // Dropdown to select predefined property type (pre-selected based on property key)
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(labelText: 'Property Type'),
+                        value: selectedType.isNotEmpty ? selectedType : null,
+                        items: ['string', 'int', 'float', 'boolean'].map((type) {
+                          return DropdownMenuItem<String>(
+                            value: type,
+                            child: Text(type),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedType = newValue ?? '';
+                          });
+                        },
+                      ),
+                      // Error display for invalid type
+                      if (typeError.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            typeError,
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ),
-                      ],
-                    ),
-                    TextField(
-                      decoration: InputDecoration(hintText: "Default Value (Optional)"),
-                      onChanged: (text) {
-                        defaultValue = text;
-                      },
-                    ),
+                      Divider(),
+                      // Checkbox to select if the property is required (pre-checked based on property key)
+                      Row(
+                        children: [
+                          Text('Required:'),
+                          Checkbox(
+                            value: required,
+                            onChanged: (bool? value) {
+                              setState(() {
+                                required = value ?? false;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      Divider(),
+                      // TextField for Description
+                      TextField(
+                        decoration: InputDecoration(hintText: "Description"),
+                        onChanged: (text) {
+                          description = text;
+                        },
+                      ),
+                      // TextField for Default Value (Optional)
+                      TextField(
+                        decoration: InputDecoration(hintText: "Default Value (Optional)"),
+                        onChanged: (text) {
+                          defaultValue = text;
+                        },
+                      ),
+                    ] else
+                      Text('Please select a node to load its properties.'),
+                    // Button to add another property
                     TextButton(
                       onPressed: () {
-                        if (key.isNotEmpty && type.isNotEmpty && typeError.isEmpty) {
+                        if (selectedKey.isNotEmpty && selectedType.isNotEmpty && typeError.isEmpty) {
                           // Add the property to the list of properties
                           Map<String, dynamic> property = {
-                            'key': key,
+                            'key': selectedKey,
                             'description': description,
-                            'type': type,
+                            'type': selectedType,
                             'required': required,
                             if (defaultValue.isNotEmpty) 'default': defaultValue,
                           };
@@ -594,9 +624,9 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
 
                           // Clear the fields for the next property
                           setState(() {
-                            key = '';
+                            selectedKey = '';
                             description = '';
-                            type = '';
+                            selectedType = '';
                             required = false;
                             defaultValue = '';
                           });
@@ -662,12 +692,8 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
           await _showWarningsDialog(context, warnings);
         }
 
-        // If compatible or with warnings, update nodeProperties
-        print('Selected Node to Update (ID): $nodeId');  // Debugging
-        print('Properties to Add: $properties');      // Debugging
-
+        // If compatible or with warnings, update the global nodeProperties
         setState(() {
-          // Check if the node already exists in nodeProperties, if not, initialize it
           if (!nodeProperties.containsKey(nodeId)) {
             nodeProperties[nodeId] = {}; // Initialize the node properties if not already set
           }
@@ -678,13 +704,12 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
               'description': property['description'],
               'type': property['type'],
               'required': property['required'],
-              if (property.containsKey('default')) 'default': property['default'], // Add default if present
+              if (property.containsKey('default')) 'default': property['default'],
             };
           }
-          print('Updated nodeProperties: $nodeProperties');  // Debugging
         });
 
-        _savePropertiesToYaml(); // Save to YAML
+        _savePropertiesToYaml(); // Save to YAML (for debugging)
       } else {
         // If not compatible, show an error message or handle accordingly
         print('Properties are not compatible with the node type: $nodeType');
@@ -693,6 +718,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
       print('No properties added or node not selected');  // Debugging
     }
   }
+
 
 // Helper function to validate the type entered by the user
   bool _isValidType(String type) {
@@ -743,8 +769,9 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
         });
       });
     });
-
+    print(nodeProperties);
     print(buffer.toString()); // For debugging, replace with the actual saving logic
+    print("////////////////////////////////");
   }
 
 
@@ -813,6 +840,7 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                     }), (route) => false);
                   },
                 ),
+                /*
                 PopupMenuItem<String>(
                   value: '2',
                   child: const Text('Export your Topology'),
@@ -824,6 +852,8 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                     }
                   },
                 ),
+
+                 */
                 PopupMenuItem<String>(
                   value: '3',
                   child: const Text('View your Topology'),
@@ -876,7 +906,8 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                   value: '7',
                   child: const Text('Generate your  Topology'),
                   onTap: () async {
-                    await serviceProvider.importAndExportYaml();
+                  //  ServiceProvider.saveFile(graph, nodeProperties,yamlMap);
+                    await serviceProvider.importAndExportYaml(graph, nodeProperties,yamlMap);
                   },
                 ),
               ];

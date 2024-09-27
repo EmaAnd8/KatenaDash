@@ -60,7 +60,7 @@ WORKDIR /app
 # Run basic check to download Dart SDK and Flutter SDK
 RUN flutter doctor
 
-# Set up the environment for headless Chrome execution
+# Set up the environment for headless Chrome executione
 ENV DISPLAY=:99
 
 # Expose default port for Flutter web (now using a different port for Python server)

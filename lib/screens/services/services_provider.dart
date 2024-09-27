@@ -430,7 +430,29 @@ class Provider {
     }
   }
 
+  Future<Map<String, dynamic>?> ImportYaml2(Set<String> yamlContents) async {
+    Map<String, dynamic>? mergedMap;
 
+    try {
+      for (String yamlString in yamlContents) {
+        final yamlMap = loadYaml(yamlString) as YamlMap;
+        final Map<String, dynamic> yamlMapAsMap = convertYamlMapToMap(yamlMap);
+        print(yamlMapAsMap);
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+
+        if (mergedMap == null) {
+          mergedMap = yamlMapAsMap;
+        } else {
+          mergedMap = mergeYamlMaps(mergedMap, yamlMapAsMap);
+        }
+      }
+      print(mergedMap);
+      return mergedMap;
+    } catch (e) {
+      print("Error during YAML import: $e");
+      return null;
+    }
+  }
 
 // Helper function to convert YamlMap to Map<String, dynamic>
   Map<String, dynamic> convertYamlMapToMap(YamlMap yamlMap) {
@@ -967,8 +989,11 @@ class Provider {
     }).toList();
   }
 
-  Future<void> saveFile(Graph graph, Map<String, dynamic> nodeProperties, Map<String, dynamic> inputs) async {
+  Future<Set<String>> saveFile(Graph graph, Map<String, dynamic> nodeProperties, Map<String, dynamic> inputs) async {
     Provider serviceProvider = Provider.instance;
+
+    // Initialize a Set to collect YAML contents from edges
+    Set<String> yamlContents = {};
 
     if (graph.hasNodes()) {
       // Initialize a ZipEncoder to collect the files
@@ -978,13 +1003,14 @@ class Provider {
       for (Edge edge in graph.edges) {
         // Retrieve the parsed YAML data for the edge
         YamlMap? graphToYamlData = await graphToYamlParserEdges(edge, nodeProperties, inputs);
-        print(yamlMap);
+        print(graphToYamlData);
 
         if (graphToYamlData != null) {
           // Convert the YamlMap to a regular Map<String, dynamic>
           Map<String, dynamic> yamlData = yamlMapToMap(graphToYamlData);
           print("okokokokokokkokookoo");
           print(yamlData);
+
           // Format the YAML data to a string for saving
           String yamlContent = formatYaml(yamlData);
 
@@ -992,11 +1018,14 @@ class Provider {
           print('Generated YAML Content for edge ${edge.key}:\n$yamlContent');
 
           if (yamlContent.isNotEmpty) {
+            // Add the YAML content to the set
+            yamlContents.add(yamlContent);
+
             // Convert the YAML content to bytes
             final bytes = utf8.encode(yamlContent);
 
             // Create a unique YAML file for each edge
-            final fileName = 'topology_${serviceProvider.getCurrentTimestampString()}_${edge.key}.yaml';
+            final fileName = 'topology_${serviceProvider.getCurrentTimestampString()}.yaml';
             archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
           }
         } else {
@@ -1029,7 +1058,11 @@ class Provider {
     } else {
       print('The graph has no nodes.');
     }
+
+    // Return the set of YAML contents generated
+    return yamlContents;
   }
+
   String formatYaml(Map<String, dynamic> yamlData) {
     final buffer = StringBuffer();
 
@@ -1225,9 +1258,11 @@ class Provider {
 
 
 // Main function to import and export YAML
-  Future<void> importAndExportYaml() async {
+  Future<void> importAndExportYaml(Graph graph, Map<String, dynamic> nodeProperties, Map<String, dynamic> inputs) async {
     // Step 1: Import and merge the YAML files
-    Map<String, dynamic>? mergedYaml = await ImportYaml();
+    Set<String> yamlContents = await ServiceProvider.saveFile(graph, nodeProperties, inputs);
+    print(yamlContents);
+   Map<String, dynamic>? mergedYaml = await ImportYaml2(yamlContents);
 
     if (mergedYaml != null) {
       // Step 2: Format the merged YAML into a string
@@ -2117,50 +2152,19 @@ class Provider {
   }
   Future<bool> checkPropertiesCompatibility(String nodeType, Map<String, dynamic> providedProperties, BuildContext context) async {
     try {
-      // Load the AssetManifest.json which contains a list of all assets
-      final manifestContent = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-      YamlMap? yamlMapToBeFound;
-      YamlMap? nodeTypeToBeFound;
-      List<String> warnings = []; // Store warnings to show in dialog
+      // Fetch the node's properties from its corresponding TOSCA YAML file
+      Map<String, dynamic> nodeProperties = await getNodePropertiesFromToscaYaml(nodeType);
 
-      // Filter the list to get only the YAML files in the katena-main/nodes directory
-      final yamlFiles = manifestMap.keys
-          .where((String key) =>
-      key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
-          .toList();
-
-      // Iterate over each YAML file to find the node type
-      for (var file in yamlFiles) {
-        // Read the YAML file
-        final yamlContent = await rootBundle.loadString(file);
-        final yamlMap = loadYaml(yamlContent) as YamlMap;
-
-        var nodeTypes = yamlMap["node_types"];
-        if (nodeTypes != null) {
-          for (var entry in nodeTypes.entries) {
-            if (entry.key == nodeType) {
-              // NodeType found, load the full YAML for further processing
-              yamlMapToBeFound = loadYaml(yamlContent) as YamlMap;
-              nodeTypeToBeFound = yamlMapToBeFound["node_types"];
-              break;
-            }
-          }
-        }
-        if (yamlMapToBeFound != null) break; // Exit if we found the node type
-      }
-
-      // If node type not found, return false
-      if (nodeTypeToBeFound == null) {
-        print("NodeType $nodeType not found in the directory.");
+      if (nodeProperties.isEmpty) {
+        print("No properties found for NodeType $nodeType in the YAML.");
         return false;
       }
 
-      // Now get the properties, including inherited ones
-      var inheritedProperties = await _getInheritedProperties(nodeType, nodeTypeToBeFound, yamlFiles);
+      // List to collect warnings
+      List<String> warnings = [];
 
       // Now check compatibility with provided properties
-      bool isCompatible = _checkCompatibility(YamlMap.wrap(inheritedProperties), providedProperties, warnings);
+      bool isCompatible = _checkCompatibility(nodeProperties, providedProperties, warnings);
 
       if (!isCompatible) {
         // If there are warnings, show a dialog to the user
@@ -2173,40 +2177,51 @@ class Provider {
 
       return isCompatible;
     } catch (e) {
-      print('Error loading or parsing YAML: $e');
+      print('Error checking properties compatibility: $e');
       return false;
     }
   }
 
-  Future<Map<String, dynamic>> _getInheritedProperties(String nodeType, YamlMap nodeTypeToBeFound, List<String> yamlFiles) async {
-    // Get current node's properties
-    Map<String, dynamic> currentNodeMap = Map<String, dynamic>.from(nodeTypeToBeFound[nodeType] ?? {});
-    Map<String, dynamic> currentProperties = Map<String, dynamic>.from(currentNodeMap['properties'] ?? {});
+  Future<Map<String, dynamic>> getNodePropertiesFromToscaYaml(String nodeType) async {
+    try {
+      // Load the AssetManifest.json which contains a list of all assets (YAML files)
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
 
-    // Check if this node type derives from another node type
-    if (currentNodeMap.containsKey('derived_from')) {
-      String parentNodeType = currentNodeMap['derived_from'];
+      // Filter the list to get only the YAML files in the 'assets/katena-main/nodes/' directory
+      final yamlFiles = manifestMap.keys
+          .where((String key) => key.startsWith('assets/katena-main/nodes/') && key.endsWith('.yaml'))
+          .toList();
 
-      // Find the parent node in the YAML files
+      YamlMap? nodeTypeToBeFound;
       for (var file in yamlFiles) {
+        // Read the YAML file
         final yamlContent = await rootBundle.loadString(file);
         final yamlMap = loadYaml(yamlContent) as YamlMap;
-        var nodeTypes = yamlMap["node_types"];
-        if (nodeTypes != null && nodeTypes.containsKey(parentNodeType)) {
-          // Recursively get the properties of the parent node
-          Map<String, dynamic> parentProperties = await _getInheritedProperties(parentNodeType, nodeTypes, yamlFiles);
 
-          // Merge parent properties with current node properties
-          currentProperties = {...parentProperties, ...currentProperties}; // Child node overrides parent
+        // Check if the node type exists in the YAML
+        var nodeTypes = yamlMap["node_types"];
+        if (nodeTypes != null && nodeTypes.containsKey(nodeType)) {
+          // Found the node type, extract its properties
+          nodeTypeToBeFound = yamlMap["node_types"][nodeType];
           break;
         }
       }
-    }
 
-    return currentProperties;
+      // If node type is found, return the properties
+      if (nodeTypeToBeFound != null) {
+        return Map<String, dynamic>.from(nodeTypeToBeFound['properties'] ?? {});
+      }
+
+      print("NodeType $nodeType not found in the YAML files.");
+      return {};
+    } catch (e) {
+      print('Error loading or parsing YAML: $e');
+      return {};
+    }
   }
 
-  bool _checkCompatibility(YamlMap definedProperties, Map<String, dynamic> providedProperties, List<String> warnings) {
+  bool _checkCompatibility(Map<String, dynamic> definedProperties, Map<String, dynamic> providedProperties, List<String> warnings) {
     // Iterate through the defined properties from the YAML
     for (var entry in definedProperties.entries) {
       String propertyName = entry.key;
@@ -2226,13 +2241,15 @@ class Provider {
         continue;
       }
 
-      // Additional compatibility checks can be added here (e.g., type matching)
+      // Additional compatibility checks (e.g., type matching)
       if (providedProperties.containsKey(propertyName)) {
         var providedValue = providedProperties[propertyName];
         print(providedValue);
+
         // Assuming the type is specified in the YAML property definition
         var expectedType = propertyDefinition['type'];
         print(expectedType);
+
         // Check if the provided value matches the expected base type (e.g., string, int)
         if (expectedType != null && !_isBaseTypeMatching(expectedType, providedValue["type"])) {
           warnings.add('Property $propertyName is of incorrect type. Expected base type $expectedType, but got ${providedValue.runtimeType}.');
@@ -2253,7 +2270,8 @@ class Provider {
         return providedValue is int;
       case 'float':
         return providedValue is double;
-    // Add other base types as necessary (e.g., boolean, list, etc.)
+      case 'boolean':
+        return providedValue is bool;
       default:
         return true; // Assume true if no strict base type is enforced
     }
@@ -2284,6 +2302,7 @@ class Provider {
       },
     );
   }
+
 
 
 }
