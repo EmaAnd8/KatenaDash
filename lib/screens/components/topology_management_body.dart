@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:html' as html;
 
+String filename="";
 Provider ServiceProvider = Provider.instance;
 String topologyYaml = "";
 List<Map<String, dynamic>> sidebarItems = [];
@@ -78,6 +79,54 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
     } catch (e) {
       print('Error loading node descriptions: $e');
     }
+  }
+  Future<void> _askForFilenameAndExportYaml() async {
+    // Ask the user for the filename
+    String? fileName = await _showFilenameInputDialog(context);
+
+    if (fileName != null && fileName.isNotEmpty) {
+      // Ensure the filename has the '.yaml' extension
+      final fileNameWithExtension = fileName.endsWith('.yaml') ? fileName : '$fileName.yaml';
+
+      // Call the method to export the YAML with the provided filename
+      await serviceProvider.importAndExportYaml(graph, nodeProperties, yamlMap, fileNameWithExtension);
+    } else {
+      // Show a SnackBar if the filename was not provided or is invalid
+      _showSnackBar('Please enter a valid filename.');
+    }
+  }
+
+// Dialog to ask the user for the filename
+  Future<String?> _showFilenameInputDialog(BuildContext context) async {
+    String fileName = '';
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Enter filename for the YAML export'),
+          content: TextField(
+            onChanged: (value) {
+              fileName = value;
+            },
+            decoration: InputDecoration(hintText: "Enter filename without extension"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Save'),
+              onPressed: () {
+                Navigator.of(context).pop(fileName);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   String _formatYamlMap(YamlMap map, int indentLevel) {
@@ -902,14 +951,15 @@ class _TopologyManagementState extends State<TopologyManagementBody> {
                     _exportResponseAsTextFile(response);
                   },
                 ),
-                PopupMenuItem<String>(
-                  value: '7',
-                  child: const Text('Generate your  Topology'),
-                  onTap: () async {
-                  //  ServiceProvider.saveFile(graph, nodeProperties,yamlMap);
-                    await serviceProvider.importAndExportYaml(graph, nodeProperties,yamlMap);
-                  },
-                ),
+              PopupMenuItem<String>(
+                value: '7',
+                child: const Text('Generate your Topology'),
+                onTap: () async {
+                await _askForFilenameAndExportYaml();
+                },
+              ),
+
+
               ];
             },
             icon: const Icon(Icons.menu),

@@ -1134,8 +1134,11 @@ class Provider {
   }
 
 
-// Helper method to export the formatted YAML
-  Future<void> exportYamlToFile(String yamlContent) async {
+  // Function to export YAML file with the specified filename
+  Future<void> exportYamlToFile(String yamlContent, String fileName) async {
+    // Ensure the filename has the '.yaml' extension
+    final fileNameWithExtension = fileName.endsWith('.yaml') ? fileName : '$fileName.yaml';
+
     // Convert the YAML content to bytes
     final bytes = utf8.encode(yamlContent);
 
@@ -1145,7 +1148,7 @@ class Provider {
     // Create a URL for the Blob and an anchor element to download it
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', 'merged_topology.yaml')
+      ..setAttribute('download', fileNameWithExtension)
       ..click();
 
     // Revoke the object URL after the download
@@ -1258,7 +1261,7 @@ class Provider {
 
 
 // Main function to import and export YAML
-  Future<void> importAndExportYaml(Graph graph, Map<String, dynamic> nodeProperties, Map<String, dynamic> inputs) async {
+  Future<void> importAndExportYaml(Graph graph, Map<String, dynamic> nodeProperties, Map<String, dynamic> inputs,String filename) async {
     // Step 1: Import and merge the YAML files
     Set<String> yamlContents = await ServiceProvider.saveFile(graph, nodeProperties, inputs);
     print(yamlContents);
@@ -1269,7 +1272,7 @@ class Provider {
       String formattedYaml = formatYamlMap2(mergedYaml);
 
       // Step 3: Export the formatted YAML as a single file
-      await exportYamlToFile(formattedYaml);
+      await exportYamlToFile(formattedYaml,filename);
     } else {
       print('No merged YAML data available for export.');
     }
