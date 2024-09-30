@@ -67,9 +67,11 @@ class _DeployState extends State<DeployBody> {
 
   WebSocketChannel? _channel;
   List<String> _items = [];
-
   double _percentageValue = 0.0;
   bool progressBool = false;
+  bool _buttonDeploy = false;
+  bool _buttonWithdraw = true;
+
 
   @override
   void initState() {
@@ -202,6 +204,7 @@ class _DeployState extends State<DeployBody> {
         filesMap['json']!.clear();
         setState(() {
           _fileName = null;
+          _buttonDeploy = false;
         });
       } else {
         print('File YAML selezionato: ${filesMap['yaml']!.first.name}');
@@ -220,10 +223,12 @@ class _DeployState extends State<DeployBody> {
         if(filesMap['json']!.isEmpty){
         setState(() {
           _fileName =  filesMap['yaml']!.first.name;
+          _buttonDeploy = true;
         });
          } else {
           setState(() {
             _fileName =  filesMap['yaml']!.first.name + " and " + filesMap['json']!.length.toString() + ' file json';
+            _buttonDeploy = true;
           });
         }
       }
@@ -244,11 +249,20 @@ class _DeployState extends State<DeployBody> {
 
   Future<void> _sendRequest() async {
 
+    setState(() {
+      _buttonDeploy = false;
+      _buttonWithdraw = false;
+    });
+
     if(!_checkABI()){
+      setState(() {
+        _buttonWithdraw = true;
+      });
       return;
     }
 
     progressBool=true;
+
 
     final url = Uri.parse('http://localhost:5001/run-script');
 
@@ -288,11 +302,18 @@ class _DeployState extends State<DeployBody> {
     if (response.statusCode == 200) {
       final String output = response.body;
       _updateText(output);
+      setState(() {
+        _percentageValue = 1;
+        _buttonWithdraw = true;
+      });
     } else {
       final String error = response.body;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $error')));
       _updateText(error);
+      setState(() {
+        _buttonWithdraw = true;
+      });
     }
   }
 
@@ -313,6 +334,7 @@ class _DeployState extends State<DeployBody> {
 
     setState(() {
       _fileName = null;
+      _buttonDeploy = false;
     });
 
 
@@ -381,7 +403,7 @@ class _DeployState extends State<DeployBody> {
 
           const SizedBox(width: 10), // Spazio tra i pulsanti
           TextButton(
-            onPressed: _sendRequest,
+            onPressed: _buttonDeploy ? _sendRequest : null,
             style: TextButton.styleFrom(
               backgroundColor: Colors.green, // Colore verde
               foregroundColor: Colors.white, // Colore del testo
@@ -390,7 +412,7 @@ class _DeployState extends State<DeployBody> {
           ),
           const SizedBox(width: 8), // Spazio tra i pulsanti
           TextButton(
-            onPressed: _withdrawRequest,
+            onPressed: _buttonWithdraw ? _withdrawRequest : null,
             style: TextButton.styleFrom(
               backgroundColor: Colors.red, // Colore rosso
               foregroundColor: Colors.white, // Colore del testo
@@ -464,6 +486,17 @@ class _DeployState extends State<DeployBody> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.all(1.0),
+                      child: Text(
+                        'Insert the topology file and all files required for proper deployment',
+                        style: TextStyle(
+                          fontSize: 14,
                           color: Colors.black87,
                           letterSpacing: 1.0,
                         ),

@@ -242,24 +242,18 @@ def withdraw():
         return jsonify({"error": "Resource ID was not provided"}), 400
 
     try:
-        exec_id = client.api.exec_create(container_id, cmd="lsof -i :8545 -t", stdout=True, stderr=True)
+        exec_id = client.api.exec_create(container_id, cmd="./undeploy-bench.sh", stdout=True, stderr=True)
         exec_result = client.api.exec_start(exec_id, stream=True)
 
-        output = ''
-        for line in exec_result:  # Raccogliamo l'output dallo stream
-            output += line.decode('utf-8').strip()  # Decodifica il byte stream in stringa
-
-        exec_id2 = client.api.exec_create(container_id, cmd=f"kill -9 {output}", stdout=True, stderr=True)
-        exec_result2 = client.api.exec_start(exec_id2, stream=True)
-
         output2 = ''
-        for line in exec_result2:  # Raccogliamo l'output dallo stream
+        for line in exec_result:  # Raccogliamo l'output dallo stream
             output2 += line.decode('utf-8').strip()  # Decodifica il byte stream in stringa
 
         logging.info(f"Command output: {output2}")
         print(output2)
 
         return output2
+
 
     except Exception as e:
         logging.error(f"Error: {str(e)}")
@@ -317,7 +311,7 @@ def create_and_run_container():
             container.reload()
             if container.status == "running":
                 print(f"Container {container_name} avviato con successo!")
-                exec_id = client.api.exec_create(container.id, cmd="chmod 777 run-deploy.sh deploy-bench.sh bootstrap-dev.sh deploy.log")
+                exec_id = client.api.exec_create(container.id, cmd="chmod 777 run-deploy.sh deploy-bench.sh bootstrap-dev.sh deploy.log undeploy-bench.sh")
                 client.api.exec_start(exec_id)
             else:
                 print(f"Container {container_name} NON avviato con successo!")
