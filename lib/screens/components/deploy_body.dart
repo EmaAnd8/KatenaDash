@@ -36,6 +36,27 @@ void _showAlertDialog(BuildContext context, String message) {
   );
 }
 
+void _showAlertDialog2(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Files YAML'),
+        content: Text("More than one yaml file has been inserted"),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop(); // Chiude il dialogo
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
 void _showTemporaryPopup(BuildContext context) {
   // Mostra il pop-up come SnackBar
   const snackBar = SnackBar(
@@ -190,6 +211,7 @@ class _DeployState extends State<DeployBody> {
     if (result != null) {
       filesMap['yaml']!.clear();
       filesMap['json']!.clear();
+
       for (var file in result.files) {
         if (file.extension == 'yaml') {
           filesMap['yaml']!.add(file);
@@ -198,6 +220,7 @@ class _DeployState extends State<DeployBody> {
         }
       }
 
+      print(filesMap['yaml']!.length);
 
       if (filesMap['yaml']!.isEmpty) {
         _showTemporaryPopup(context);
@@ -206,10 +229,11 @@ class _DeployState extends State<DeployBody> {
           _fileName = null;
           _buttonDeploy = false;
         });
-      } else {
+      } else if (filesMap['yaml']!.length == 1) {
         print('File YAML selezionato: ${filesMap['yaml']!.first.name}');
 
-        var contents = String.fromCharCodes(filesMap['yaml']!.first.bytes!.toList());
+        var contents = String.fromCharCodes(
+            filesMap['yaml']!.first.bytes!.toList());
 
         var yamlData = loadYaml(contents);
 
@@ -217,20 +241,27 @@ class _DeployState extends State<DeployBody> {
         if (yamlData['topology_template'] != null) {
           nodeCount = _countTopologyTemplateNodes(yamlData['topology_template']);
         }
-
-        print(nodeCount);
-
-        if(filesMap['json']!.isEmpty){
+      } else {
+        print("AAAAAA");
         setState(() {
-          _fileName =  filesMap['yaml']!.first.name;
+          _buttonDeploy = false;
+        });
+        _showAlertDialog2(context);
+        return;
+      }
+
+      print(nodeCount);
+
+      if (filesMap['json']!.isEmpty) {
+        setState(() {
+          _fileName = filesMap['yaml']!.first.name;
           _buttonDeploy = true;
         });
-         } else {
-          setState(() {
-            _fileName =  filesMap['yaml']!.first.name + " and " + filesMap['json']!.length.toString() + ' file json';
-            _buttonDeploy = true;
-          });
-        }
+      } else {
+        setState(() {
+          _fileName = filesMap['yaml']!.first.name + " and " + filesMap['json']!.length.toString() + ' file json';
+          _buttonDeploy = true;
+        });
       }
 
       if (filesMap['json']!.isNotEmpty) {
@@ -244,7 +275,12 @@ class _DeployState extends State<DeployBody> {
       print("Nessun file selezionato.");
     }
 
-
+    if (!_checkABI()) {
+      setState(() {
+        _buttonDeploy = false;
+      });
+      return;
+    }
   }
 
   Future<void> _sendRequest() async {
@@ -254,12 +290,6 @@ class _DeployState extends State<DeployBody> {
       _buttonWithdraw = false;
     });
 
-    if(!_checkABI()){
-      setState(() {
-        _buttonWithdraw = true;
-      });
-      return;
-    }
 
     progressBool=true;
 
