@@ -6,6 +6,7 @@ import 'package:katena_dashboard/screens/services/services_provider.dart';
 import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
 import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:yaml/yaml.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding and decoding
@@ -220,7 +221,6 @@ class _DeployState extends State<DeployBody> {
         }
       }
 
-      print(filesMap['yaml']!.length);
 
       if (filesMap['yaml']!.isEmpty) {
         _showTemporaryPopup(context);
@@ -242,7 +242,6 @@ class _DeployState extends State<DeployBody> {
           nodeCount = _countTopologyTemplateNodes(yamlData['topology_template']);
         }
       } else {
-        print("AAAAAA");
         setState(() {
           _buttonDeploy = false;
         });
@@ -250,7 +249,6 @@ class _DeployState extends State<DeployBody> {
         return;
       }
 
-      print(nodeCount);
 
       if (filesMap['json']!.isEmpty) {
         setState(() {
@@ -305,15 +303,6 @@ class _DeployState extends State<DeployBody> {
     List<String> jsonContents = filesMap['json']!
         .map((file) => String.fromCharCodes(file.bytes!))
         .toList();
-
-    int totalBytes = jsonContents.fold(0, (sum, content) => sum + utf8.encode(content).length);
-
-
-    print("Total size in bytes: $totalBytes");
-
-    print(jsonContents.length);
-
-
 
     final requestBody = jsonEncode(<String, dynamic>{
       'content_yaml': contentYaml,
@@ -388,6 +377,14 @@ class _DeployState extends State<DeployBody> {
     });
   }
 
+  void _launchURL() async {
+    const url = 'http://localhost:80';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -398,7 +395,6 @@ class _DeployState extends State<DeployBody> {
         title: const Text('Deploy Viewer'),
         centerTitle: true,
         backgroundColor: CupertinoColors.white,
-
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -410,42 +406,39 @@ class _DeployState extends State<DeployBody> {
             );
           },
         ),
-
         actions: [
-
           Stack(
-            alignment: Alignment.center, // Allinea i widget al centro
+            alignment: Alignment.center,
             children: <Widget>[
-              if(progressBool)
-                  CircularProgressIndicator(
-                    value: _percentageValue,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-                    strokeWidth: 5.0,
-                  ),
-                  if(progressBool)
-                  Text(
-                    (_percentageValue*100).floorToDouble().clamp(0, 100).toString() + '%',
-                    style: TextStyle(fontSize: 12, color: Colors.blueAccent), // Puoi cambiare il colore se necessario
-                  ),
+              CircularProgressIndicator(
+                value: _percentageValue,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                strokeWidth: 5.0,
+              ),
+              Visibility(
+                visible: progressBool,
+                child: Text(
+                  (_percentageValue * 100).floorToDouble().clamp(0, 100).toString() + '%',
+                  style: TextStyle(fontSize: 12, color: Colors.blueAccent),
+                ),
+              ),
             ],
-
           ),
-
-          const SizedBox(width: 10), // Spazio tra i pulsanti
+          const SizedBox(width: 10),
           TextButton(
             onPressed: _buttonDeploy ? _sendRequest : null,
             style: TextButton.styleFrom(
-              backgroundColor: Colors.green, // Colore verde
-              foregroundColor: Colors.white, // Colore del testo
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Deploy'),
           ),
-          const SizedBox(width: 8), // Spazio tra i pulsanti
+          const SizedBox(width: 8),
           TextButton(
             onPressed: _buttonWithdraw ? _withdrawRequest : null,
             style: TextButton.styleFrom(
-              backgroundColor: Colors.red, // Colore rosso
-              foregroundColor: Colors.white, // Colore del testo
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Withdraw'),
           ),
@@ -460,33 +453,14 @@ class _DeployState extends State<DeployBody> {
                 PopupMenuItem<String>(
                   value: '1',
                   child: Text('Make the Deploy'),
-                  onTap: () async {
-                    // Uncomment and implement if needed
-                    // simpleTopology = await ServiceProvider.CreateNode();
-                    // setState(() {
-                    //   simpleTopology;
-                    // });
-                  },
                 ),
                 PopupMenuItem<String>(
                   value: '2',
                   child: Text('Edit your Topology'),
-                  onTap: () {
-                    Navigator.pushAndRemoveUntil(context,
-                        MaterialPageRoute(builder: (context) {
-                          return TopologyManagementScreen();
-                        }), (route) => false);
-                  },
                 ),
                 PopupMenuItem<String>(
                   value: '3',
                   child: Text('View a Topology'),
-                  onTap: () async {
-                    Navigator.pushAndRemoveUntil(context,
-                        MaterialPageRoute(builder: (context) {
-                          return TopologyViewScreen();
-                        }), (route) => false);
-                  },
                 ),
               ];
             },
@@ -563,10 +537,10 @@ class _DeployState extends State<DeployBody> {
                 width: size.width,
                 height: 1000,
                 child: GridView.count(
-                  crossAxisCount: 2,  // Due colonne
-                  crossAxisSpacing: 8.0,  // Spazio orizzontale tra le colonne
-                  mainAxisSpacing: 8.0,  // Spazio verticale tra le righe
-                  padding: EdgeInsets.all(8.0),  // Padding generale per la GridView
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8.0,
+                  mainAxisSpacing: 8.0,
+                  padding: EdgeInsets.all(8.0),
                   children: [
                     Container(
                       margin: EdgeInsets.all(8.0),
@@ -582,13 +556,13 @@ class _DeployState extends State<DeployBody> {
                             child: Text(
                               'Deployment Log',
                               style: TextStyle(
-                                fontSize: 18.0, // Font size for the title
-                                fontWeight: FontWeight.bold, // Make title bold
-                                color: Colors.white, // Title color
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                           ),
-                          SizedBox(height: 16.0), // Space between title and content
+                          SizedBox(height: 16.0),
                           Expanded(
                             child: SingleChildScrollView(
                               child: Text(
@@ -605,7 +579,7 @@ class _DeployState extends State<DeployBody> {
                       padding: EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8.0),
-                        color: Colors.white, // Set background color if needed
+                        color: Colors.white,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -614,19 +588,19 @@ class _DeployState extends State<DeployBody> {
                             child: Text(
                               'Deployment Status',
                               style: TextStyle(
-                                fontSize: 18.0, // Font size for the title
-                                fontWeight: FontWeight.bold, // Make title bold
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                          SizedBox(height: 16.0), // Space between title and items
+                          SizedBox(height: 16.0),
                           ..._items.map((item) {
                             return Text(
                               'Deployment of $item complete',
                               style: TextStyle(
-                                color: Colors.green, // Text color
-                                fontSize: 16.0, // Text size
-                                fontWeight: FontWeight.bold, // Make text bold
+                                color: Colors.green,
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.bold,
                               ),
                             );
                           }).toList(),
@@ -635,11 +609,17 @@ class _DeployState extends State<DeployBody> {
                     )
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _launchURL,  // Usa la funzione per aprire l'URL
+        label: const Text('BlockScout', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),),
+        backgroundColor: Colors.blueAccent,
+      ),
     );
   }
 }
+
