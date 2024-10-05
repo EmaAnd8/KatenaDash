@@ -83,6 +83,7 @@ class _DeployState extends State<DeployBody> {
   Map<String, List<PlatformFile>> filesMap = {
     'yaml': [],
     'json': [],
+    'sol': [],
   };
   // contatore dei nodi
   int nodeCount = 0;
@@ -202,22 +203,24 @@ class _DeployState extends State<DeployBody> {
   }
 
   Future<void> _pickFile() async {
-
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
-      allowedExtensions: ['yaml', 'json'],
+      allowedExtensions: ['yaml', 'json', 'sol'],
     );
 
     if (result != null) {
       filesMap['yaml']!.clear();
       filesMap['json']!.clear();
+      filesMap['sol']!.clear();
 
       for (var file in result.files) {
         if (file.extension == 'yaml') {
           filesMap['yaml']!.add(file);
         } else if (file.extension == 'json') {
           filesMap['json']!.add(file);
+        } else if (file.extension == 'sol') {
+          filesMap['sol']!.add(file);
         }
       }
 
@@ -239,7 +242,8 @@ class _DeployState extends State<DeployBody> {
 
         // Contare i nodi nella sezione topology_template
         if (yamlData['topology_template'] != null) {
-          nodeCount = _countTopologyTemplateNodes(yamlData['topology_template']);
+          nodeCount =
+              _countTopologyTemplateNodes(yamlData['topology_template']);
         }
       } else {
         setState(() {
@@ -255,29 +259,28 @@ class _DeployState extends State<DeployBody> {
           _fileName = filesMap['yaml']!.first.name;
           _buttonDeploy = true;
         });
+      } else if (filesMap['sol']!.isNotEmpty) {
+        setState(() {
+          _fileName = filesMap['yaml']!.first.name + ", " +
+              filesMap['json']!.length.toString() + ' file json' + " and " +
+              filesMap['sol']!.length.toString() + ' file sol';
+          _buttonDeploy = true;
+        });
       } else {
         setState(() {
-          _fileName = filesMap['yaml']!.first.name + " and " + filesMap['json']!.length.toString() + ' file json';
+          _fileName = filesMap['yaml']!.first.name + " and " +
+              filesMap['json']!.length.toString() + ' file json';
           _buttonDeploy = true;
         });
       }
 
-      if (filesMap['json']!.isNotEmpty) {
-        print('File JSON selezionati:');
-        for (var jsonFile in filesMap['json']!) {
-          print(jsonFile.name);
-        }
-      }
-    } else {
-      // L'utente ha annullato la selezione dei file
-      print("Nessun file selezionato.");
-    }
 
-    if (!_checkABI()) {
-      setState(() {
-        _buttonDeploy = false;
-      });
-      return;
+      if (!_checkABI()) {
+        setState(() {
+          _buttonDeploy = false;
+        });
+        return;
+      }
     }
   }
 
@@ -304,9 +307,14 @@ class _DeployState extends State<DeployBody> {
         .map((file) => String.fromCharCodes(file.bytes!))
         .toList();
 
+    List<String> solContents = filesMap['sol']!
+        .map((file) => String.fromCharCodes(file.bytes!))
+        .toList();
+
     final requestBody = jsonEncode(<String, dynamic>{
       'content_yaml': contentYaml,
       'json_files': jsonContents,
+      'sol_files': solContents,
     });
 
 

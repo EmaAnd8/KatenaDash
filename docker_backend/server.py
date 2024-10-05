@@ -9,7 +9,7 @@ import re
 import websockets
 import asyncio
 from docker.errors import NotFound
-import psycopg2
+from jinja2 import Template
 
 
 
@@ -138,10 +138,17 @@ def run_script():
 
     contentJson = request.json.get("json_files")
 
+    contentSol = request.json.get("sol_files")
+
     jsonContent = []
 
     for json_string in contentJson:
         jsonContent.append(json_string)
+
+    solContent = []
+
+    for sol_string in contentSol:
+        solContent.append(sol_string)
 
 
     container_id = client.containers.get(container_name).id
