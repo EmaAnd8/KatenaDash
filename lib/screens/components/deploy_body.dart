@@ -88,7 +88,7 @@ class _DeployState extends State<DeployBody> {
   double _percentageValue = 0.0;
   bool progressBool = false;
   bool _buttonDeploy = false;
-  bool _buttonWithdraw = true;
+  bool _buttonReset = true;
 
 
   @override
@@ -105,8 +105,15 @@ class _DeployState extends State<DeployBody> {
           (message) {
         setState(() {
           var items = message.replaceAll(RegExp(r"[\[\]']"), '');
-          _items = items.split(',');
-          _percentageValue = (_items.length / nodeCount).toDouble();
+          var newItems = items.split(',');
+          for (var item in newItems) {
+            if (!_items.contains(item.trim())) {
+              _items.add(item.trim());
+            }
+          }
+          print(newItems);
+          print(newItems.length);
+          _percentageValue = (newItems.length / nodeCount).toDouble();
         });
       },
       onError: (error) {
@@ -276,7 +283,8 @@ class _DeployState extends State<DeployBody> {
 
     setState(() {
       _buttonDeploy = false;
-      _buttonWithdraw = false;
+      _buttonReset = false;
+      _percentageValue = 0.0;
     });
 
     progressBool=true;
@@ -313,7 +321,8 @@ class _DeployState extends State<DeployBody> {
       _updateText(output);
       setState(() {
         _percentageValue = 1;
-        _buttonWithdraw = true;
+        _buttonReset = true;
+        _buttonDeploy = true;
       });
     } else {
       final String error = response.body;
@@ -321,15 +330,16 @@ class _DeployState extends State<DeployBody> {
           .showSnackBar(SnackBar(content: Text('Error: $error')));
       _updateText(error);
       setState(() {
-        _buttonWithdraw = true;
+        _buttonReset = true;
+        _buttonDeploy = true;
       });
     }
   }
 
-  Future<void> _withdrawRequest() async {
+  Future<void> _resetRequest() async {
     _percentageValue=0.0;
     progressBool=false;
-    final url = Uri.parse('http://localhost:5001/withdraw');
+    final url = Uri.parse('http://localhost:5001/reset');
 
     final response = await http.post(
       url,
@@ -344,14 +354,14 @@ class _DeployState extends State<DeployBody> {
     setState(() {
       _fileName = null;
       _buttonDeploy = false;
+      _items.clear();
     });
 
     if (response.statusCode == 200) {
       final String output = response.body;
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Output: $output')));
+          .showSnackBar(SnackBar(content: Text('The entire blockchain network has been reset')));
       _updateText("Deploy a new topology...");
-      _items.clear();
     } else {
       final String error = response.body;
       ScaffoldMessenger.of(context)
@@ -424,12 +434,12 @@ class _DeployState extends State<DeployBody> {
           ),
           const SizedBox(width: 8),
           TextButton(
-            onPressed: _buttonWithdraw ? _withdrawRequest : null,
+            onPressed: _buttonReset ? _resetRequest : null,
             style: TextButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Withdraw'),
+            child: const Text('Reset'),
           ),
           PopupMenuButton<String>(
             onSelected: (String item) {

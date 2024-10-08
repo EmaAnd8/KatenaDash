@@ -199,8 +199,26 @@ def run_script():
                     client.api.exec_start(upload_file_json)
 
 
-        exec_id = client.api.exec_create(container_id, cmd="/bin/sh -c ./run-deploy.sh", stdout=True, stderr=True)
-        exec_result = client.api.exec_start(exec_id, stream=True)
+        exec_id33 = client.api.exec_create(container_id, cmd='/bin/sh -c "ps aux | grep ganache-cli | grep -v grep | awk \'NR==1 {print $2}\'"', stdout=True, stderr=True)
+        exec_result33 = client.api.exec_start(exec_id33, stream=True)
+
+        output33 = ''
+        for line in exec_result33:  # We collect the output from the stream
+            output33 += line.decode('utf-8')  # Decode byte stream into string
+
+        print(output33)
+
+        if output33 == "":
+            print("Fa il bootstrap")
+            exec_id = client.api.exec_create(container_id, cmd="/bin/sh -c ./run-deploy.sh", stdout=True, stderr=True)
+            exec_result = client.api.exec_start(exec_id, stream=True)
+        else:
+            print("Non fa il bootstrap")
+            exec_id = client.api.exec_create(container_id, cmd="/bin/sh -c ./deploy-bench.sh", stdout=True, stderr=True)
+            exec_result = client.api.exec_start(exec_id, stream=True)
+
+
+
 
         # Monitoring the log file
         command = "tail -f deploy.log"
@@ -276,8 +294,8 @@ def run_script():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/withdraw', methods=['POST'])
-def withdraw():
+@app.route('/reset', methods=['POST'])
+def reset():
     # Assignment of the created container id
     container_id = client.containers.get(container_name).id
     if not container_id:

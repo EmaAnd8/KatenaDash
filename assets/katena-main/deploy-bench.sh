@@ -7,7 +7,7 @@ echo "Deployment Results:" > $results_file
 for APP in file_to_run;
 do
     echo "deploying ${APP}..."
-    rm -r ./.opera &> /dev/null
+    #rm -r ./.opera &> /dev/null
     cp ./benchmark/$APP.yaml .
     rm -r ./nodes/contracts &> /dev/null
     mkdir ./nodes/contracts &> /dev/null
@@ -28,8 +28,8 @@ do
         exit 2
     fi
     echo -e "\ndeploy finished" >> deploy.log
-    #rm ./$APP.yaml &> /dev/null
-    #rm -r ./nodes/contracts &> /dev/null
+    rm ./$APP.yaml &> /dev/null
+    rm -r ./nodes/contracts &> /dev/null
 done;
 
 rm ./nodes/temp_ABI/*
