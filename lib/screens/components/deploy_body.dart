@@ -9,6 +9,8 @@ import 'package:yaml/yaml.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding and decoding
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:flutter/gestures.dart';
+
 
 Provider serviceProvider = Provider.instance;
 Widget simpleTopology = Container();
@@ -133,12 +135,14 @@ class _DeployState extends State<DeployBody> {
 
 
   String? _fileName;
+  String? deployOutput;
+  List<String> _clickableItems = [];
+  Map<String, String> _addressMap = {};
 
 
   int _countTopologyTemplateNodes(dynamic topologyTemplate) {
     // Recursive function to count nodes
     int count = 0;
-
     if (topologyTemplate is YamlMap) {
       // Check for the node_templates key
       if (topologyTemplate['node_templates'] is YamlMap) {
@@ -317,13 +321,27 @@ class _DeployState extends State<DeployBody> {
     );
 
     if (response.statusCode == 200) {
+
       final String output = response.body;
+      deployOutput = output;
+
       _updateText(output);
+
+
       setState(() {
         _percentageValue = 1;
         _buttonReset = true;
         _buttonDeploy = true;
+        for (var item in _items) {
+          var address = isContract(item.trimLeft());
+          if (address != null) {
+            _clickableItems.add(item.trimLeft());
+            _addressMap[item.trimLeft()] = address;
+          }
+        }
+        print(_addressMap.toString());
       });
+
     } else {
       final String error = response.body;
       ScaffoldMessenger.of(context)
@@ -354,6 +372,7 @@ class _DeployState extends State<DeployBody> {
     setState(() {
       _fileName = null;
       _buttonDeploy = false;
+      _clickableItems.clear();
       _items.clear();
     });
 
@@ -383,6 +402,41 @@ class _DeployState extends State<DeployBody> {
     } else {
       throw 'Could not launch $url';
     }
+  }
+
+  void _linkItem(String item) async{
+    var address = _addressMap[item];
+    print("{$item} = {$address}");
+    if (address != null) {
+      final url = 'http://localhost:80/address/$address';
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Could not launch $url';
+      }
+    } else {
+      print("Address non trovato per l'item: $item");
+    }
+  }
+
+
+
+
+  String? isContract(item) {
+    String nonNullableOutput = deployOutput ?? '';
+    String pattern = r'Executing configure on (?<registry>[^\s]+)\n.*?"contract_address":\s*"(?<contract_address>0x[0-9a-fA-F]+)"';
+    RegExp regExp = RegExp(pattern, dotAll: true);
+    Iterable<RegExpMatch> matches = regExp.allMatches(nonNullableOutput);
+
+    for (var match in matches) {
+      String registry = match.namedGroup('registry')!;
+      String contractAddress = match.namedGroup('contract_address')!;
+      if (registry == item) {
+        print("TROVATO, è UN CONTRACT: $item");
+          return contractAddress;
+      }
+    }
+      return null;
   }
 
   @override
@@ -594,12 +648,41 @@ class _DeployState extends State<DeployBody> {
                           ),
                           SizedBox(height: 16.0),
                           ..._items.map((item) {
-                            return Text(
-                              'Deployment of $item complete',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.bold,
+                            return RichText(
+                              text: TextSpan(
+                                text: 'Deployment of ',
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                children: <TextSpan>[
+                                  TextSpan(
+                                    text: item,
+                                    style: TextStyle(
+                                      color: (_clickableItems.contains(item.trimLeft()) && _percentageValue == 1)
+                                          ? Colors.blueAccent
+                                          : Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                      decoration: (_clickableItems.contains(item.trimLeft()) && _percentageValue == 1)
+                                          ? TextDecoration.underline
+                                          : TextDecoration.none,
+                                    ),
+                                    recognizer: (_clickableItems.contains(item.trimLeft()) && _percentageValue == 1)
+                                        ? (TapGestureRecognizer()..onTap = () {
+                                      _linkItem(item.trimLeft());
+                                    })
+                                        : null,
+                                  ),
+                                  TextSpan(
+                                    text: ' complete',
+                                    style: TextStyle(
+                                      color: Colors.green,
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             );
                           }).toList(),
