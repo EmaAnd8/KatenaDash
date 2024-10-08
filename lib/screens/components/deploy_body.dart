@@ -3,18 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:katena_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:katena_dashboard/screens/services/services_provider.dart';
-import 'package:katena_dashboard/screens/topology/topologymanangement/topology_management_screen.dart';
-import 'package:katena_dashboard/screens/topology/topologyview/topology_view_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yaml/yaml.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding and decoding
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:web_socket_channel/io.dart';
-import 'dart:io';
 
-Provider ServiceProvider = Provider.instance;
+Provider serviceProvider = Provider.instance;
 Widget simpleTopology = Container();
 
 void _showAlertDialog(BuildContext context, String message) {
@@ -28,7 +24,7 @@ void _showAlertDialog(BuildContext context, String message) {
           TextButton(
             child: const Text('OK'),
             onPressed: () {
-              Navigator.of(context).pop(); // Chiude il dialogo
+              Navigator.of(context).pop(); // Dialog close
             },
           ),
         ],
@@ -48,7 +44,7 @@ void _showAlertDialog2(BuildContext context) {
           TextButton(
             child: const Text('OK'),
             onPressed: () {
-              Navigator.of(context).pop(); // Chiude il dialogo
+              Navigator.of(context).pop(); // Dialog close
             },
           ),
         ],
@@ -59,13 +55,13 @@ void _showAlertDialog2(BuildContext context) {
 
 
 void _showTemporaryPopup(BuildContext context) {
-  // Mostra il pop-up come SnackBar
+  // Show pop-up as SnackBar
   const snackBar = SnackBar(
     content: Text('You did not enter the topology file'),
-    duration: Duration(seconds: 3), // Imposta la durata a 1 secondo
+    duration: Duration(seconds: 3),
   );
 
-  // Mostra il SnackBar
+  // Show SnackBar
   ScaffoldMessenger.of(context).showSnackBar(snackBar);
 }
 
@@ -79,13 +75,12 @@ class DeployBody extends StatefulWidget {
 
 class _DeployState extends State<DeployBody> {
   String? selectedOption; // Allow null for no selection
-  String _dynamicText = "Deploy a new topology..."; // Variabile per il testo dinamico
+  String _dynamicText = "Deploy a new topology...";
   Map<String, List<PlatformFile>> filesMap = {
     'yaml': [],
     'json': [],
     'sol': [],
   };
-  // contatore dei nodi
   int nodeCount = 0;
 
   WebSocketChannel? _channel;
@@ -134,11 +129,11 @@ class _DeployState extends State<DeployBody> {
 
 
   int _countTopologyTemplateNodes(dynamic topologyTemplate) {
-    // Funzione ricorsiva per contare i nodi
+    // Recursive function to count nodes
     int count = 0;
 
     if (topologyTemplate is YamlMap) {
-      // Controlla se c'è la chiave node_templates
+      // Check for the node_templates key
       if (topologyTemplate['node_templates'] is YamlMap) {
         count += (topologyTemplate['node_templates'].length as int); // Conta i nodi in node_templates
       }
@@ -150,18 +145,18 @@ class _DeployState extends State<DeployBody> {
   List<String> extractAbis(dynamic data) {
     List<String> abiList = [];
 
-    // Controlla se i dati sono una mappa
+    // Check if the data is a map
     if (data is Map) {
       data.forEach((key, value) {
         if (key == 'abi' && value is String) {
           abiList.add(value);
         } else {
-          abiList.addAll(extractAbis(value)); // Ricorsione per esplorare ulteriormente
+          abiList.addAll(extractAbis(value)); // Recursion to explore further
         }
       });
     } else if (data is List) {
       for (var item in data) {
-        abiList.addAll(extractAbis(item)); // Ricorsione per ogni elemento della lista
+        abiList.addAll(extractAbis(item)); // Recursion for each element in the list
       }
     }
 
@@ -171,19 +166,15 @@ class _DeployState extends State<DeployBody> {
   bool _checkABI(){
 
     var contents = String.fromCharCodes(filesMap['yaml']!.first.bytes!.toList());
-
     var yamlData = loadYaml(contents);
-
     List<String> abiList = extractAbis(yamlData);
-
     List<String> listERROR = [];
 
-    // Controlla ogni elemento in abiList
+    // Checks each item in abiList
     for (var abi in abiList) {
-      // Controlla se il file corrispondente esiste in filesMap['json']
+      // Checks if the corresponding file exists in filesMap['json']
       bool exists = filesMap['json']!.any((file) => file.name.replaceAll('.json', '') == abi);
 
-      // Se non esiste, aggiungilo a listERROR
       if (!exists) {
         listERROR.add(abi);
       }
@@ -224,7 +215,6 @@ class _DeployState extends State<DeployBody> {
         }
       }
 
-
       if (filesMap['yaml']!.isEmpty) {
         _showTemporaryPopup(context);
         filesMap['json']!.clear();
@@ -233,14 +223,14 @@ class _DeployState extends State<DeployBody> {
           _buttonDeploy = false;
         });
       } else if (filesMap['yaml']!.length == 1) {
-        print('File YAML selezionato: ${filesMap['yaml']!.first.name}');
+        print('YAML file selected: ${filesMap['yaml']!.first.name}');
 
         var contents = String.fromCharCodes(
             filesMap['yaml']!.first.bytes!.toList());
 
         var yamlData = loadYaml(contents);
 
-        // Contare i nodi nella sezione topology_template
+        // Count nodes in the topology_template section
         if (yamlData['topology_template'] != null) {
           nodeCount =
               _countTopologyTemplateNodes(yamlData['topology_template']);
@@ -252,7 +242,6 @@ class _DeployState extends State<DeployBody> {
         _showAlertDialog2(context);
         return;
       }
-
 
       if (filesMap['json']!.isEmpty) {
         setState(() {
@@ -274,7 +263,6 @@ class _DeployState extends State<DeployBody> {
         });
       }
 
-
       if (!_checkABI()) {
         setState(() {
           _buttonDeploy = false;
@@ -291,16 +279,11 @@ class _DeployState extends State<DeployBody> {
       _buttonWithdraw = false;
     });
 
-
     progressBool=true;
 
-
     final url = Uri.parse('http://localhost:5001/run-script');
-
     _updateText("Deploying...");
-
     _connectToWebSocket();
-
     var contentYaml = String.fromCharCodes(filesMap['yaml']!.first.bytes!.toList());
 
     List<String> jsonContents = filesMap['json']!
@@ -316,7 +299,6 @@ class _DeployState extends State<DeployBody> {
       'json_files': jsonContents,
       'sol_files': solContents,
     });
-
 
     final response = await http.post(
       url,
@@ -363,7 +345,6 @@ class _DeployState extends State<DeployBody> {
       _fileName = null;
       _buttonDeploy = false;
     });
-
 
     if (response.statusCode == 200) {
       final String output = response.body;
@@ -623,7 +604,7 @@ class _DeployState extends State<DeployBody> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _launchURL,  // Usa la funzione per aprire l'URL
+        onPressed: _launchURL,  // Function to open BlockScout
         label: const Text('BlockScout', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),),
         backgroundColor: Colors.blueAccent,
       ),
