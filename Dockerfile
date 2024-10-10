@@ -20,8 +20,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3 \
     libxss1 \
     unzip \
-    python3 \
-    python3-pip  # Python and pip
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y python3.10 python3.10-venv python3.10-distutils python3-pip
+  # Python and pip
 
 # Install Chrome for Flutter web builds
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
@@ -57,6 +60,15 @@ RUN chmod +x /usr/local/bin/chrome-launcher && \
 USER flutteruser
 WORKDIR /app
 
+# Crea un ambiente virtuale Python
+RUN python3.10 -m venv venv
+
+COPY req.txt /app
+
+# Attiva l'ambiente virtuale e installa le dipendenze
+RUN . venv/bin/activate && pip install --upgrade pip && pip install -r req.txt
+
+
 # Run basic check to download Dart SDK and Flutter SDK
 RUN flutter doctor
 
@@ -64,10 +76,19 @@ RUN flutter doctor
 ENV DISPLAY=:99
 
 # Expose default port for Flutter web (now using a different port for Python server)
-EXPOSE 8080
+EXPOSE 8080 5001 8765
 
 # Build the Flutter project (assuming web build output is directly accessible)
 RUN flutter build web
 
-# Set default command to start Python HTTP server on port 8000 serving the build directory
-CMD python3 -m http.server 8080 --directory build/web & google-chrome --headless --disable-gpu --remote-debugging-port=9222 http://localhost:8080
+USER root
+
+# Copia lo script di avvio
+COPY script.sh /app/script.sh
+
+# Imposta i permessi di esecuzione
+RUN chmod +x /app/script.sh
+
+# Imposta il comando di avvio
+CMD ["/app/script.sh"]
+

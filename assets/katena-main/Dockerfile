@@ -19,3 +19,5 @@ RUN npm install -g ganache-cli
 RUN npm config set user 0
 RUN pip install -r ./requirements.txt
 RUN apt-get update && apt-get install -y lsof
+RUN mkdir  ./nodes/temp_ABI
+RUN chmod 777 deploy-bench.sh undeploy-bench.sh bootstrap-dev.sh ./benchmark/file_to_run.yaml run-deploy.sh

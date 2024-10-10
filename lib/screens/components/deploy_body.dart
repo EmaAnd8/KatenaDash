@@ -357,7 +357,10 @@ class _DeployState extends State<DeployBody> {
   Future<void> _resetRequest() async {
     _percentageValue=0.0;
     progressBool=false;
+
+
     final url = Uri.parse('http://localhost:5001/reset');
+
 
     final response = await http.post(
       url,

@@ -7,14 +7,11 @@ import threading
 import re
 import websockets
 import asyncio
-from docker.errors import NotFound
 import json
-import sys
 
 app = Flask(__name__)
 CORS(app)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB limits
-client = docker.from_env(timeout=120)
 SIZE_CHUNK = 100
 
 # Set to keep track of connected clients
@@ -25,7 +22,7 @@ client = docker.from_env()
 # Path for dockerfile directory
 dockerfile_dir = "../assets/katena-main"
 image_name = "katena_image"
-container_name = "katena_container"
+container_name = "katena_container1"
 
 def splitchuck(chunk):
     lines_in_chunk = chunk.split('\n')
@@ -84,8 +81,8 @@ async def register(websocket, path):
         print("Client disconnected")
 
 async def start_websocket_server():
-    async with websockets.serve(register, "localhost", 8765):
-        print("WebSocket server listening on ws://localhost:8765")
+    async with websockets.serve(register, "0.0.0.0", 8765):
+        print("WebSocket server listening on ws://0.0.0.0:8765")
         await asyncio.Future()  # Keeps the server running
 
 

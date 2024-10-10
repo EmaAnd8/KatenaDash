@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  blockverse:
+    build: .  # Directory contenente il Dockerfile di service1
+    container_name: BlockVerse
+    networks:
+      - myNetwork
+    user: root
+    ports:
+      - "8080:8080"  # Esponi una porta, se necessario
+      - "5001:5001"
+      - "8765:8765"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    privileged: true
+
+  katena:
+    build: ./assets/katena-main  # Directory contenente il Dockerfile di service2
+    container_name: katena_container1
+    networks:
+      - myNetwork
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    ports:
+      - "8545:8545"  # Esponi una porta, se necessario
+
+networks:
+  myNetwork:
+    driver: bridge  # Usa il driver 'bridge' per creare una rete condivisa
