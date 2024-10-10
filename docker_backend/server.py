@@ -7,11 +7,19 @@ import threading
 import re
 import websockets
 import asyncio
+from docker.errors import NotFound
 import json
+
+import subprocess
+import os
+import sys
+import shutil
+
 
 app = Flask(__name__)
 CORS(app)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB limits
+client = docker.from_env(timeout=120)
 SIZE_CHUNK = 100
 
 # Set to keep track of connected clients
@@ -23,6 +31,8 @@ client = docker.from_env()
 dockerfile_dir = "../assets/katena-main"
 image_name = "katena_image"
 container_name = "katena_container1"
+
+
 
 def splitchuck(chunk):
     lines_in_chunk = chunk.split('\n')
@@ -126,7 +136,47 @@ def verify_contract(contract_address, contract_name, sol_content):
         print(response.text)
 
 
-@app.route('/run-script', methods=['POST'])
+def reset_blockscout():
+    url = "https://github.com/blockscout/blockscout.git"
+    clone_dir ="./Blockscout"
+
+    try:
+        # Function for down the docker compose
+        docker_compose_down()
+
+        # Delete all in Blockscout directory
+        shutil.rmtree(clone_dir)
+
+        # Cloning Blockscout repository
+        print(f"Cloning Blockscout repository into {clone_dir}...")
+        subprocess.run(["git", "clone", url, clone_dir], check=True)
+        print("Blockscout cloned successfully.")
+
+        # Docker Compose
+        docker_compose_dir = os.path.join(clone_dir, "docker-compose")  # Percorso del file docker-compose.yml
+        print("Avviando Docker Compose...")
+        subprocess.run(["docker-compose", "up", "-d"], cwd=docker_compose_dir, check=True)  # Specifica la directory di lavoro
+        print("Blockscout avviato con successo.")
+
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"An error occurred: {e}")
+        sys.exit(1)
+
+
+def docker_compose_down():
+    docker_compose_file = "./Blockscout/docker-compose/docker-compose.yml"
+
+    try:
+        # Command for delete the docker compose end the all images created
+        subprocess.run(['docker-compose', '-f', docker_compose_file, 'down', '--rmi', 'all', '-v'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    except subprocess.CalledProcessError as e:
+        print("An error occurred:")
+        print(e.stderr.decode())
+
+
+
+@app.route('/deployment', methods=['POST'])
 def run_script():
 
     contentFile = request.json.get("content_yaml")
@@ -203,14 +253,10 @@ def run_script():
         for line in exec_result33:  # We collect the output from the stream
             output33 += line.decode('utf-8')  # Decode byte stream into string
 
-        print(output33)
-
         if output33 == "":
-            print("Fa il bootstrap")
             exec_id = client.api.exec_create(container_id, cmd="/bin/sh -c ./run-deploy.sh", stdout=True, stderr=True)
             exec_result = client.api.exec_start(exec_id, stream=True)
         else:
-            print("Non fa il bootstrap")
             exec_id = client.api.exec_create(container_id, cmd="/bin/sh -c ./deploy-bench.sh", stdout=True, stderr=True)
             exec_result = client.api.exec_start(exec_id, stream=True)
 
@@ -308,7 +354,7 @@ def reset():
 
         logging.info(f"Command output: {output2}")
         print(output2)
-
+        reset_blockscout()
         return output2
 
     except Exception as e:

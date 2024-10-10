@@ -293,7 +293,7 @@ class _DeployState extends State<DeployBody> {
 
     progressBool=true;
 
-    final url = Uri.parse('http://localhost:5001/run-script');
+    final url = Uri.parse('http://localhost:5001/deployment');
     _updateText("Deploying...");
     _connectToWebSocket();
     var contentYaml = String.fromCharCodes(filesMap['yaml']!.first.bytes!.toList());
