@@ -44,30 +44,33 @@ mkdir contracts
 ```
 npx hardhat compile
 ```
+-Firebase console and configuration files;
+-Docker Engine
 
-## Compile through Truffle
-1. Install Truffle globally.
 ```
-npm install -g truffle
+
+# How to execute
+
 ```
-2.	Create the Truffle folder and move inside it.
-```
-mkdir MyTruffleProject
-cd MyTruffleProject
-```
-3.  Truffle initialization.
-```
-truffle init
-```
-4. Add contract solidity (.sol) in the directory "contracts" and if you want you can edit the configuration file "truffle-config.js"
-5. Compile the contract and the file json is in directory "build/contracts"
-```
-truffle compile
+docker build -t BlockVerse .
+docker run -d --name container-name -p 8080:8080 BlockVerse
+
+Inside the terminal
+
+
+docker exec -it flutter-app-container  bash
+
+the execution as you can see in the dockerfile is on:
+
+ python3 -m http.server 8080
+
 ```
 
 
 
 # Install and Run with Docker Compose
+
+
 
 
 

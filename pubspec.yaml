@@ -41,6 +41,7 @@ dependencies:
   firebase_storage: ^11.7.5
   cloud_firestore: ^4.17.3
   #syncfusion_flutter_charts: ^25.2.7
+  #syncfusion_flutter_charts: ^25.2.4
   image_picker: ^1.1.1
   shared_preferences: ^2.0.6
   yaml: ^3.1.0
@@ -55,13 +56,20 @@ dependencies:
   path: ^1.8.0
   http: ^1.2.2
   web_socket_channel: ^2.1.0
+  archive: ^3.3.0
+  #syncfusion_flutter_charts: ^26.2.11
+  fl_chart: ^0.69.0
+  http: ^1.0.0
 
 
 
 
 dev_dependencies:
+  build_runner: ^2.4.0
+  build_web_compilers: ^4.0.4
   flutter_test:
     sdk: flutter
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -83,7 +91,6 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/
     - assets/icons/
     - assets/input/
     - assets/output/
@@ -91,6 +98,8 @@ flutter:
     - assets/katena-main/nodes/
     - assets/katena-main/benchmark/
     - assets/katena-main/examples/
+    - assets/katena-main/benchmark/ens.yaml
+    - assets/katena-main/benchmark/dydx.yaml
 
 
 
