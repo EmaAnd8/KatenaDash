@@ -47,7 +47,7 @@ RUN git config --global --add safe.directory /usr/local/flutter
 RUN useradd -m flutteruser \
     && chown -R flutteruser:flutteruser /usr/local/flutter
 
-# Copy the entire project directory (where the Dockerfile is located) into the image
+# Copy the entire project directory (where the Dockerfile_flutter is located) into the image
 COPY . /app
 COPY chrome-launcher.sh /usr/local/bin/chrome-launcher
 
@@ -61,12 +61,12 @@ USER flutteruser
 WORKDIR /app
 
 # Crea un ambiente virtuale Python
-RUN python3.10 -m venv venv
+#RUN python3.10 -m venv venv
 
-COPY req.txt /app
+#COPY req.txt /app
 
 # Attiva l'ambiente virtuale e installa le dipendenze
-RUN . venv/bin/activate && pip install --upgrade pip && pip install -r req.txt
+#RUN . venv/bin/activate && pip install --upgrade pip && pip install -r req.txt
 
 
 # Run basic check to download Dart SDK and Flutter SDK
@@ -76,7 +76,7 @@ RUN flutter doctor
 ENV DISPLAY=:99
 
 # Expose default port for Flutter web (now using a different port for Python server)
-EXPOSE 8080 5001 8765
+EXPOSE 8082
 
 # Build the Flutter project (assuming web build output is directly accessible)
 RUN flutter build web
@@ -84,11 +84,11 @@ RUN flutter build web
 USER root
 
 # Copia lo script di avvio
-COPY script.sh /app/script.sh
+#COPY script.sh /app/script.sh
 
 # Imposta i permessi di esecuzione
-RUN chmod +x /app/script.sh
+#RUN chmod +x /app/script.sh
 
 # Imposta il comando di avvio
-CMD ["/app/script.sh"]
+CMD python3 -m http.server 8082 --directory build/web & google-chrome --headless --disable-gpu --remote-debugging-port=9222 http://localhost:8082
 

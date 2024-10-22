@@ -7,13 +7,7 @@ import threading
 import re
 import websockets
 import asyncio
-from docker.errors import NotFound
 import json
-
-import subprocess
-import os
-import sys
-import shutil
 
 
 app = Flask(__name__)
@@ -98,7 +92,7 @@ async def start_websocket_server():
 
 def verify_contract(contract_address, contract_name, sol_content):
     # API endpoint for contract verification on Blockscout
-    url = f"http://localhost:80/api/v2/smart-contracts/{contract_address}/verification/via/multi-part"
+    url = f"http://host.docker.internal:80/api/v2/smart-contracts/{contract_address}/verification/via/multi-part"
 
     # Parameters needed for verification
     data = {
@@ -137,44 +131,23 @@ def verify_contract(contract_address, contract_name, sol_content):
 
 
 def reset_blockscout():
-    url = "https://github.com/blockscout/blockscout.git"
-    clone_dir ="./Blockscout"
 
-    try:
-        # Function for down the docker compose
-        docker_compose_down()
+    container_db_id = client.containers.get("db").id
+    container_stats_db_id = client.containers.get("stats-db").id
+    container_redis_db_id = client.containers.get("redis-db").id
 
-        # Delete all in Blockscout directory
-        shutil.rmtree(clone_dir)
-
-        # Cloning Blockscout repository
-        print(f"Cloning Blockscout repository into {clone_dir}...")
-        subprocess.run(["git", "clone", url, clone_dir], check=True)
-        print("Blockscout cloned successfully.")
-
-        # Docker Compose
-        docker_compose_dir = os.path.join(clone_dir, "docker-compose")  # Percorso del file docker-compose.yml
-        print("Avviando Docker Compose...")
-        subprocess.run(["docker-compose", "up", "-d"], cwd=docker_compose_dir, check=True)  # Specifica la directory di lavoro
-        print("Blockscout avviato con successo.")
-
-    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        print(f"An error occurred: {e}")
-        sys.exit(1)
+    command_db = "rm -rf var/lib/postgresql/data/*"
+    command_stats_db = "rm -rf var/lib/postgresql/data/*"
+    command_redis_db = "rm dump.rdb"
 
 
-def docker_compose_down():
-    docker_compose_file = "./Blockscout/docker-compose/docker-compose.yml"
+    clean_db = client.api.exec_create(container_db_id, cmd=['/bin/sh', '-c', command_db])
+    clean_stats_db = client.api.exec_create(container_stats_db_id, cmd=['/bin/sh', '-c', command_stats_db])
+    clean_redis_db = client.api.exec_create(container_redis_db_id, cmd=['/bin/sh', '-c', command_redis_db])
 
-    try:
-        # Command for delete the docker compose end the all images created
-        subprocess.run(['docker-compose', '-f', docker_compose_file, 'down', '--rmi', 'all', '-v'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    except subprocess.CalledProcessError as e:
-        print("An error occurred:")
-        print(e.stderr.decode())
-
-
+    client.api.exec_start(clean_db)
+    client.api.exec_start(clean_stats_db)
+    client.api.exec_start(clean_redis_db)
 
 @app.route('/deployment', methods=['POST'])
 def run_script():
@@ -328,7 +301,7 @@ def run_script():
             contract_name = registry.replace('_0', '').lower()
 
             # Function for verify the contract by contract address, contract name and .sol file
-            verify_contract(contract_address, contract_name, solContent)
+            #verify_contract(contract_address, contract_name, solContent)
 
         return output2
 

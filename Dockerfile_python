@@ -1,0 +1,21 @@
+# Usa un'immagine di base Python
+FROM python:3.8-slim
+
+# Imposta la directory di lavoro nel container
+WORKDIR /app
+
+# Copia i file requirements.txt (per le dipendenze) nel container
+COPY requirements_python.txt requirements_python.txt
+
+# Installa le dipendenze Python
+RUN pip install --no-cache-dir -r requirements_python.txt
+
+# Copia il resto del codice dell'applicazione nel container
+COPY ./docker_backend/server.py .
+
+# Espone la porta che il server Flask utilizzerà
+EXPOSE 5001
+EXPOSE 8765
+
+# Comando di avvio per il server Flask e il WebSocket
+CMD ["python", "server.py"]
